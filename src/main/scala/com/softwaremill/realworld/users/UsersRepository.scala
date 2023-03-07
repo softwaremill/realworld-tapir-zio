@@ -1,6 +1,6 @@
 package com.softwaremill.realworld.users
 
-import com.softwaremill.realworld.utils.Exceptions
+import com.softwaremill.realworld.common.Exceptions
 import io.getquill.*
 import zio.{Console, IO, UIO, ZIO, ZLayer}
 

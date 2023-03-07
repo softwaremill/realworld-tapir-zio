@@ -1,4 +1,4 @@
-package com.softwaremill.realworld.utils
+package com.softwaremill.realworld.common
 
 object Exceptions:
 

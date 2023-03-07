@@ -4,8 +4,8 @@ import com.softwaremill.realworld.auth.AuthService
 import com.softwaremill.realworld.db.{Db, DbConfig, DbMigrator}
 import com.softwaremill.realworld.users.UserSessionRepository
 import com.softwaremill.realworld.users.UsersSerialization.{*, given}
-import com.softwaremill.realworld.utils.BaseEndpoints
-import com.softwaremill.realworld.utils.TestUtils.*
+import com.softwaremill.realworld.common.BaseEndpoints
+import com.softwaremill.realworld.common.TestUtils.*
 import sttp.client3.testing.SttpBackendStub
 import sttp.client3.ziojson.*
 import sttp.client3.{HttpError, Response, ResponseException, UriContext, basicRequest}

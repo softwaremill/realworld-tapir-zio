@@ -3,9 +3,9 @@ package com.softwaremill.realworld.auth
 import com.password4j.{Argon2Function, Password}
 import com.softwaremill.realworld.auth.AuthService.maxSessionLifetime
 import com.softwaremill.realworld.auth.PasswordHashing.Argon2Config.*
+import com.softwaremill.realworld.common.Exceptions
+import com.softwaremill.realworld.common.Exceptions.BadRequest
 import com.softwaremill.realworld.users.{UserData, UserSession, UserSessionRepository}
-import com.softwaremill.realworld.utils.Exceptions
-import com.softwaremill.realworld.utils.Exceptions.BadRequest
 import zio.{Clock, IO, RIO, ZIO, ZLayer}
 
 import java.time.Duration
@@ -42,8 +42,8 @@ object PasswordHashing {
       case _                       => ZIO.fail(BadRequest("Problem with password."))
     }
 
-  def verifyPassword(password: String, passwordHash: String): IO[Exception, Boolean] = {
-    if (Password.check(password, passwordHash) `with` PasswordHashing.Argon2) ZIO.succeed(true)
+  def verifyPassword(password: String, passwordHash: String): IO[Exception, Unit] = {
+    if (Password.check(password, passwordHash) `with` PasswordHashing.Argon2) ZIO.succeed(())
     else ZIO.fail(Exceptions.InvalidCredentials(s"Incorrect Credentials."))
   }
 }

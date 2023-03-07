@@ -1,7 +1,7 @@
 package com.softwaremill.realworld.users
 
 import com.softwaremill.realworld.db.{Db, DbConfig}
-import com.softwaremill.realworld.utils.*
+import com.softwaremill.realworld.common.*
 import io.getquill.SnakeCase
 import sttp.model.StatusCode
 import sttp.tapir.generic.auto.*

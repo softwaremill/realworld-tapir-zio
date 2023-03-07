@@ -2,7 +2,7 @@ package com.softwaremill.realworld.users
 
 import com.softwaremill.realworld.auth.PasswordHashing
 import com.softwaremill.realworld.profiles.ProfileRow
-import com.softwaremill.realworld.utils.{Exceptions, Pagination}
+import com.softwaremill.realworld.common.{Exceptions, Pagination}
 import zio.{Console, IO, ZIO, ZLayer}
 
 import java.sql.SQLException
