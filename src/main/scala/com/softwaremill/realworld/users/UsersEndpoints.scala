@@ -43,6 +43,7 @@ class UsersEndpoints(usersService: UsersService, base: BaseEndpoints):
         .logError
         .mapError {
           case _: Exceptions.AlreadyInUse => Conflict()
+          case _: Exceptions.BadRequest   => BadRequest()
           case _                          => InternalServerError()
         }
     )

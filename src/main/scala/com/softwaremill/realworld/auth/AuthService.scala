@@ -5,6 +5,7 @@ import com.softwaremill.realworld.auth.AuthService.maxSessionLifetime
 import com.softwaremill.realworld.auth.PasswordHashing.Argon2Config.*
 import com.softwaremill.realworld.users.{UserData, UserSession, UserSessionRepository}
 import com.softwaremill.realworld.utils.Exceptions
+import com.softwaremill.realworld.utils.Exceptions.BadRequest
 import zio.{Clock, IO, RIO, ZIO, ZLayer}
 
 import java.time.Duration
@@ -38,7 +39,7 @@ object PasswordHashing {
   def encryptPassword(password: String): IO[Exception, String] =
     Try(Password.hash(password).`with`(Argon2).getResult) match {
       case Success(hashedPassword) => ZIO.succeed(hashedPassword)
-      case _                       => ZIO.fail(Exceptions.NotFound("TODO"))
+      case _                       => ZIO.fail(BadRequest("Problem with password."))
     }
 
   def verifyPassword(password: String, passwordHash: String): IO[Exception, Boolean] = {

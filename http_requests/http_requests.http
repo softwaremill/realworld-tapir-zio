@@ -4,6 +4,12 @@ Authorization: Token admin-user-token
 
 ###
 
+GET http://localhost:8080/api/articles?limit=-1
+Accept: application/json
+Authorization: Token admin-user-token
+
+###
+
 GET http://localhost:8080/api/articles/how-to-train-your-dragon
 Accept: application/json
 Authorization: Token admin-user-token
