@@ -44,7 +44,7 @@ object PasswordHashing {
 
   def verifyPassword(password: String, passwordHash: String): IO[Exception, Unit] = {
     if (Password.check(password, passwordHash) `with` PasswordHashing.Argon2) ZIO.succeed(())
-    else ZIO.fail(Exceptions.InvalidCredentials(s"Incorrect Credentials."))
+    else ZIO.fail(Exceptions.InvalidCredentials())
   }
 }
 

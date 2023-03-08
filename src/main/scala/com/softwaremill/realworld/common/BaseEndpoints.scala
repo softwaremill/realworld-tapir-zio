@@ -2,10 +2,10 @@ package com.softwaremill.realworld.common
 
 import com.softwaremill.realworld.articles.{ArticlesEndpoints, ArticlesService}
 import com.softwaremill.realworld.auth.AuthService
-import com.softwaremill.realworld.db.{Db, DbConfig}
-import com.softwaremill.realworld.users.UserSession
 import com.softwaremill.realworld.common.*
 import com.softwaremill.realworld.common.BaseEndpoints.{authHeader, defaultErrorOutputs}
+import com.softwaremill.realworld.db.{Db, DbConfig}
+import com.softwaremill.realworld.users.UserSession
 import io.getquill.SnakeCase
 import sttp.model.{HeaderNames, StatusCode}
 import sttp.tapir.generic.auto.*
@@ -40,7 +40,7 @@ object BaseEndpoints:
 
   val defaultErrorOutputs: EndpointOutput.OneOf[ErrorInfo, ErrorInfo] = oneOf[ErrorInfo](
     oneOfVariant(statusCode(StatusCode.BadRequest).and(jsonBody[BadRequest])),
-    oneOfVariant(statusCode(StatusCode.Forbidden).and(jsonBody[InternalServerError])),
+    oneOfVariant(statusCode(StatusCode.Forbidden).and(jsonBody[Forbidden])),
     oneOfVariant(statusCode(StatusCode.NotFound).and(jsonBody[NotFound])),
     oneOfVariant(statusCode(StatusCode.Conflict).and(jsonBody[Conflict])),
     oneOfVariant(statusCode(StatusCode.Unauthorized).and(jsonBody[Unauthorized])),

@@ -1,9 +1,9 @@
 package com.softwaremill.realworld.articles
 
 import com.softwaremill.realworld.auth.AuthService
+import com.softwaremill.realworld.common.*
 import com.softwaremill.realworld.db.{Db, DbConfig}
 import com.softwaremill.realworld.users.UserSession
-import com.softwaremill.realworld.common.*
 import io.getquill.SnakeCase
 import sttp.model.StatusCode
 import sttp.tapir.generic.auto.*
@@ -53,7 +53,7 @@ class ArticlesEndpoints(articlesService: ArticlesService, base: BaseEndpoints):
     .serverLogic(session =>
       slug =>
         articlesService.find(slug).logError.mapError {
-          case _: Exceptions.NotFound => NotFound()
+          case e: Exceptions.NotFound => NotFound(e.message)
           case _                      => InternalServerError()
         }
     )

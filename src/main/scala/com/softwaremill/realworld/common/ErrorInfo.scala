@@ -15,6 +15,8 @@ object ErrorInfo:
 
   given badRequestEncoder: zio.json.JsonEncoder[BadRequest] = DeriveJsonEncoder.gen[BadRequest]
   given badRequestDecoder: zio.json.JsonDecoder[BadRequest] = DeriveJsonDecoder.gen[BadRequest]
+  given forbiddenEncoder: zio.json.JsonEncoder[Forbidden] = DeriveJsonEncoder.gen[Forbidden]
+  given forbiddenDecoder: zio.json.JsonDecoder[Forbidden] = DeriveJsonDecoder.gen[Forbidden]
   given notFoundEncoder: zio.json.JsonEncoder[NotFound] = DeriveJsonEncoder.gen[NotFound]
   given notFoundDecoder: zio.json.JsonDecoder[NotFound] = DeriveJsonDecoder.gen[NotFound]
   given conflictEncoder: zio.json.JsonEncoder[Conflict] = DeriveJsonEncoder.gen[Conflict]

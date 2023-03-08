@@ -1,8 +1,9 @@
 package com.softwaremill.realworld.users
 
 import com.softwaremill.realworld.auth.PasswordHashing
-import com.softwaremill.realworld.profiles.ProfileRow
+import com.softwaremill.realworld.common.Exceptions.InvalidCredentials
 import com.softwaremill.realworld.common.{Exceptions, Pagination}
+import com.softwaremill.realworld.profiles.ProfileRow
 import zio.{Console, IO, ZIO, ZLayer}
 
 import java.sql.SQLException
@@ -48,8 +49,7 @@ class UsersService(usersRepository: UsersRepository):
 
     for {
       maybeUser <- usersRepository.findUserWithPasswordByEmail(emailClean)
-      _ <- ZIO.fail(Exceptions.InvalidCredentials()).when(maybeUser.isEmpty)
-      userWithPassword = maybeUser.get // TODO should be changed
+      userWithPassword <- ZIO.fromOption(maybeUser).mapError(_ => InvalidCredentials())
       _ <- PasswordHashing.verifyPassword(passwordClean, userWithPassword.hashedPassword)
     } yield userWithPassword.user
   }

@@ -61,7 +61,7 @@ object ArticlesEndpointsSpec extends ZIOSpecDefault:
                 .send(backendStub)
                 .map(_.body)
             }
-        )(isLeft(equalTo(HttpError("{\"error\":\"Not found.\"}", sttp.model.StatusCode(404)))))
+        )(isLeft(equalTo(HttpError("{\"error\":\"Article with slug unknown-article doesn't exist.\"}", sttp.model.StatusCode(404)))))
       }
     ) @@ TestAspect.before(withAuthData())
       @@ TestAspect.after(clearDb),

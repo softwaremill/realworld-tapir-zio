@@ -1,7 +1,7 @@
 package com.softwaremill.realworld.users
 
-import com.softwaremill.realworld.db.{Db, DbConfig}
 import com.softwaremill.realworld.common.*
+import com.softwaremill.realworld.db.{Db, DbConfig}
 import io.getquill.SnakeCase
 import sttp.model.StatusCode
 import sttp.tapir.generic.auto.*
@@ -27,7 +27,7 @@ class UsersEndpoints(usersService: UsersService, base: BaseEndpoints):
           .findById(session.id)
           .logError
           .mapError {
-            case _: Exceptions.NotFound => NotFound()
+            case e: Exceptions.NotFound => NotFound(e.message)
             case _                      => InternalServerError()
           }
           .map(User.apply)
@@ -42,8 +42,8 @@ class UsersEndpoints(usersService: UsersService, base: BaseEndpoints):
         .registerNewUser(data.user)
         .logError
         .mapError {
-          case _: Exceptions.AlreadyInUse => Conflict()
-          case _: Exceptions.BadRequest   => BadRequest()
+          case e: Exceptions.AlreadyInUse => Conflict(e.message)
+          case e: Exceptions.BadRequest   => BadRequest(e.message)
           case _                          => InternalServerError()
         }
     )
@@ -57,7 +57,7 @@ class UsersEndpoints(usersService: UsersService, base: BaseEndpoints):
         .userLogin(data.user)
         .logError
         .mapError {
-          case _: Exceptions.InvalidCredentials => Forbidden()
+          case e: Exceptions.InvalidCredentials => Forbidden(e.message)
           case _                                => InternalServerError()
         }
         .map(User.apply)
