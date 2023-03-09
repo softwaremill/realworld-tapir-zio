@@ -15,6 +15,7 @@ lazy val rootProject = (project in file(".")).settings(
       "com.softwaremill.sttp.tapir" %% "tapir-swagger-ui-bundle" % tapirVersion,
       // Security
       "com.password4j" % "password4j" % "1.7.0",
+      "com.auth0" % "java-jwt" % "4.3.0",
       // DB
       "org.xerial" % "sqlite-jdbc" % "3.40.0.0",
       "org.flywaydb" % "flyway-core" % "9.12.0",

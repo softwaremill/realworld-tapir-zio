@@ -21,7 +21,7 @@ case class UserWithPassword(
 
 case class UserData(
     email: String,
-    token: String,
+    token: Option[String],
     username: String,
     bio: Option[String],
     image: Option[String]
@@ -46,3 +46,5 @@ case class UserRow(
     bio: String,
     image: String
 )
+
+case class UserSession(email: String)

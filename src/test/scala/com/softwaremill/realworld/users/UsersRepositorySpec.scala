@@ -1,8 +1,8 @@
 package com.softwaremill.realworld.users
 
-import com.softwaremill.realworld.db.{Db, DbConfig, DbMigrator}
 import com.softwaremill.realworld.common.Pagination
 import com.softwaremill.realworld.common.TestUtils.*
+import com.softwaremill.realworld.db.{Db, DbConfig, DbMigrator}
 import sttp.client3.testing.SttpBackendStub
 import sttp.client3.ziojson.*
 import sttp.client3.{HttpError, Response, ResponseException, UriContext, basicRequest}
@@ -23,13 +23,13 @@ object UsersRepositorySpec extends ZIOSpecDefault:
       test("check user found") {
         for {
           repo <- ZIO.service[UsersRepository]
-          v <- repo.findById(1)
+          v <- repo.findByEmail("admin@example.com")
         } yield zio.test.assert(v)(
           Assertion.equalTo(
             Option(
               UserData(
                 "admin@example.com",
-                "admin-user-token",
+                None,
                 "admin",
                 Some("I dont work"),
                 Some("")
@@ -44,7 +44,7 @@ object UsersRepositorySpec extends ZIOSpecDefault:
       test("check user not found") {
         for {
           repo <- ZIO.service[UsersRepository]
-          v <- repo.findById(1)
+          v <- repo.findByEmail("admin@example.com")
         } yield zio.test.assert(v)(
           Assertion.equalTo(
             Option.empty
@@ -55,6 +55,5 @@ object UsersRepositorySpec extends ZIOSpecDefault:
       @@ TestAspect.after(clearDb)
   ).provide(
     UsersRepository.live,
-    UserSessionRepository.live,
     testDbConfigLayer
   )

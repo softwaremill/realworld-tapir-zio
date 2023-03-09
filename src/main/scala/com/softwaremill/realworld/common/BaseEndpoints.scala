@@ -1,9 +1,9 @@
 package com.softwaremill.realworld.common
 
 import com.softwaremill.realworld.articles.{ArticlesEndpoints, ArticlesService}
-import com.softwaremill.realworld.auth.AuthService
+import com.softwaremill.realworld.auth.JwtHandling
 import com.softwaremill.realworld.common.*
-import com.softwaremill.realworld.common.BaseEndpoints.{authHeader, defaultErrorOutputs}
+import com.softwaremill.realworld.common.BaseEndpoints.defaultErrorOutputs
 import com.softwaremill.realworld.db.{Db, DbConfig}
 import com.softwaremill.realworld.users.UserSession
 import io.getquill.SnakeCase
@@ -16,27 +16,27 @@ import sttp.tapir.{Endpoint, EndpointIO, EndpointInput, EndpointOutput, PublicEn
 import zio.json.{DeriveJsonDecoder, DeriveJsonEncoder}
 import zio.{Cause, Exit, IO, ZIO, ZLayer}
 
-class BaseEndpoints(authService: AuthService):
-
+class BaseEndpoints:
   val secureEndpoint: ZPartialServerEndpoint[Any, String, UserSession, Unit, ErrorInfo, Unit, Any] = endpoint
     .errorOut(defaultErrorOutputs)
-    .securityIn(authHeader)
+    .securityIn(auth.bearer[String]())
     .zServerSecurityLogic[Any, UserSession](handleAuth)
 
   val publicEndpoint: PublicEndpoint[Unit, ErrorInfo, Unit, Any] = endpoint
     .errorOut(defaultErrorOutputs)
 
   private def handleAuth(token: String): IO[ErrorInfo, UserSession] = {
-    if (token.startsWith("Token ")) authService.getActiveUserSession(token.substring("Token ".length)).logError.mapError {
-      case _: Exceptions.NotFound => Unauthorized()
-      case _                      => InternalServerError()
+    (for {
+      email <- JwtHandling.verifyJwt(token)
+    } yield UserSession(email)).logError.mapError {
+      case e: Exceptions.Unauthorized => Unauthorized(e.message)
+      case _                          => InternalServerError()
     }
-    else ZIO.fail(Unauthorized())
   }
 
 object BaseEndpoints:
 
-  val live: ZLayer[AuthService, Nothing, BaseEndpoints] = ZLayer.fromFunction(new BaseEndpoints(_))
+  val live: ZLayer[Any, Nothing, BaseEndpoints] = ZLayer.succeed(new BaseEndpoints())
 
   val defaultErrorOutputs: EndpointOutput.OneOf[ErrorInfo, ErrorInfo] = oneOf[ErrorInfo](
     oneOfVariant(statusCode(StatusCode.BadRequest).and(jsonBody[BadRequest])),
@@ -47,5 +47,3 @@ object BaseEndpoints:
     oneOfVariant(statusCode(StatusCode.UnprocessableEntity).and(jsonBody[ValidationFailed])),
     oneOfVariant(statusCode(StatusCode.InternalServerError).and(jsonBody[InternalServerError]))
   )
-
-  val authHeader: EndpointIO.Header[String] = header[String](HeaderNames.Authorization)

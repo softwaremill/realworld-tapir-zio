@@ -1,11 +1,9 @@
 package com.softwaremill.realworld.articles
 
 import com.softwaremill.realworld.articles.ArticlesSerialization.{*, given}
-import com.softwaremill.realworld.auth.AuthService
-import com.softwaremill.realworld.db.{Db, DbConfig, DbMigrator}
-import com.softwaremill.realworld.users.UserSessionRepository
 import com.softwaremill.realworld.common.BaseEndpoints
 import com.softwaremill.realworld.common.TestUtils.*
+import com.softwaremill.realworld.db.{Db, DbConfig, DbMigrator}
 import sttp.client3.testing.SttpBackendStub
 import sttp.client3.ziojson.*
 import sttp.client3.{HttpError, Response, ResponseException, UriContext, basicRequest}
@@ -314,7 +312,5 @@ object ArticlesEndpointsSpec extends ZIOSpecDefault:
     ArticlesService.live,
     ArticlesEndpoints.live,
     BaseEndpoints.live,
-    AuthService.live,
-    UserSessionRepository.live,
     testDbConfigLayer
   )

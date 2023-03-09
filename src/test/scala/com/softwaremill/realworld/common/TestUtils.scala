@@ -31,7 +31,7 @@ object TestUtils:
   def withAuthData(): RIO[TestDbLayer, Any] = for {
     migrator <- ZIO.service[DbMigrator]
     _ <- migrator.migrate()
-    _ <- loadFixture("fixtures/articles/admin.sql")
+    _ <- loadFixture("fixtures/articles/admin.sql") // TODO register admin and use JWT instead
   } yield ()
 
   def withEmptyDb(): RIO[TestDbLayer, Any] = for {

@@ -1,10 +1,9 @@
 package com.softwaremill.realworld
 
 import com.softwaremill.realworld.articles.{ArticlesEndpoints, ArticlesRepository, ArticlesService}
-import com.softwaremill.realworld.auth.AuthService
-import com.softwaremill.realworld.db.{Db, DbConfig, DbMigrator}
-import com.softwaremill.realworld.users.{UserSessionRepository, UsersEndpoints, UsersRepository, UsersService}
 import com.softwaremill.realworld.common.{BaseEndpoints, Exceptions}
+import com.softwaremill.realworld.db.{Db, DbConfig, DbMigrator}
+import com.softwaremill.realworld.users.{UsersEndpoints, UsersRepository, UsersService}
 import sttp.model.StatusCode
 import sttp.tapir.DecodeResult
 import sttp.tapir.server.interceptor.decodefailure.DefaultDecodeFailureHandler
@@ -54,8 +53,6 @@ object Main extends ZIOAppDefault:
         UsersEndpoints.live,
         UsersService.live,
         UsersRepository.live,
-        AuthService.live,
-        UserSessionRepository.live,
         BaseEndpoints.live,
         ServerConfig.live(ServerConfig.default.port(port)),
         Server.live

@@ -1,6 +1,6 @@
 package com.softwaremill.realworld.users
 
-import zio.json.{DeriveJsonDecoder, DeriveJsonEncoder}
+import zio.json.{DeriveJsonDecoder, DeriveJsonEncoder, JsonEncoder}
 
 object UsersSerialization:
 

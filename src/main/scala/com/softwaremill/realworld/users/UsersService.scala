@@ -1,7 +1,7 @@
 package com.softwaremill.realworld.users
 
-import com.softwaremill.realworld.auth.PasswordHashing
-import com.softwaremill.realworld.common.Exceptions.InvalidCredentials
+import com.softwaremill.realworld.auth.{JwtHandling, PasswordHashing}
+import com.softwaremill.realworld.common.Exceptions.Unauthorized
 import com.softwaremill.realworld.common.{Exceptions, Pagination}
 import com.softwaremill.realworld.profiles.ProfileRow
 import zio.{Console, IO, ZIO, ZLayer}
@@ -11,11 +11,11 @@ import javax.sql.DataSource
 
 class UsersService(usersRepository: UsersRepository):
 
-  def findById(id: Int): IO[Exception, UserData] = usersRepository
-    .findById(id) // TODO to be changed when JWT is implemented
+  def findByEmail(email: String): IO[Exception, UserData] = usersRepository
+    .findByEmail(email)
     .flatMap {
       case Some(a) => ZIO.succeed(a)
-      case None    => ZIO.fail(Exceptions.NotFound(s"User with provided token doesn't exist."))
+      case None    => ZIO.fail(Exceptions.NotFound(s"User doesn't exist."))
     }
 
   def registerNewUser(user: UserRegisterData): IO[Exception, User] = {
@@ -29,14 +29,12 @@ class UsersService(usersRepository: UsersRepository):
         _ <- ZIO.fail(Exceptions.AlreadyInUse("E-mail already in use!")).when(maybeUser.isDefined)
       } yield ()
 
-    def generateJwt(): ZIO[Any, Nothing, String] = ZIO.succeed("tempJWT") // TODO add JWT generation
-
     for {
       _ <- checkUserDoesNotExist(emailClean)
       user <- {
         for {
           hashedPassword <- PasswordHashing.encryptPassword(passwordClean)
-          jwt <- generateJwt()
+          jwt <- JwtHandling.generateJwt(emailClean)
           _ <- usersRepository.addUser(UserRegisterData(emailClean, usernameClean, hashedPassword))
         } yield User(userWithToken(emailClean, usernameClean, jwt))
       }
@@ -49,15 +47,16 @@ class UsersService(usersRepository: UsersRepository):
 
     for {
       maybeUser <- usersRepository.findUserWithPasswordByEmail(emailClean)
-      userWithPassword <- ZIO.fromOption(maybeUser).mapError(_ => InvalidCredentials())
+      userWithPassword <- ZIO.fromOption(maybeUser).mapError(_ => Unauthorized())
       _ <- PasswordHashing.verifyPassword(passwordClean, userWithPassword.hashedPassword)
-    } yield userWithPassword.user
+      jwt <- JwtHandling.generateJwt(emailClean)
+    } yield userWithPassword.user.copy(token = Some(jwt))
   }
 
   private def userWithToken(email: String, username: String, jwt: String): UserData = {
     UserData(
       email,
-      jwt,
+      Some(jwt),
       username,
       None,
       None
