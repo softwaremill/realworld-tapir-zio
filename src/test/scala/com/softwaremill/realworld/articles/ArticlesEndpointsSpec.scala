@@ -1,5 +1,6 @@
 package com.softwaremill.realworld.articles
 
+import com.softwaremill.realworld.auth.AuthService
 import com.softwaremill.realworld.common.BaseEndpoints
 import com.softwaremill.realworld.common.TestUtils.*
 import com.softwaremill.realworld.db.{Db, DbConfig, DbMigrator}
@@ -33,7 +34,7 @@ object ArticlesEndpointsSpec extends ZIOSpecDefault:
                   .backend()
               basicRequest
                 .get(uri"http://test.com/api/articles")
-                .headers(Map("Authorization" -> "Token admin-user-token"))
+                .headers(validAuthorizationHeader())
                 .response(asJson[List[Article]])
                 .send(backendStub)
                 .map(_.body)
@@ -53,14 +54,14 @@ object ArticlesEndpointsSpec extends ZIOSpecDefault:
                   .backend()
               basicRequest
                 .get(uri"http://test.com/api/articles/unknown-article")
-                .headers(Map("Authorization" -> "Token admin-user-token"))
+                .headers(validAuthorizationHeader())
                 .response(asJson[Article])
                 .send(backendStub)
                 .map(_.body)
             }
         )(isLeft(equalTo(HttpError("{\"error\":\"Article with slug unknown-article doesn't exist.\"}", sttp.model.StatusCode(404)))))
       }
-    ) @@ TestAspect.before(withAuthData())
+    ) @@ TestAspect.before(withEmptyDb())
       @@ TestAspect.after(clearDb),
     suite("with populated db")(
       test("validation failed on filter") {
@@ -78,7 +79,7 @@ object ArticlesEndpointsSpec extends ZIOSpecDefault:
                 .get(
                   uri"http://test.com/api/articles?tag=invalid-tag"
                 )
-                .headers(Map("Authorization" -> "Token admin-user-token"))
+                .headers(validAuthorizationHeader())
                 .response(asJson[List[Article]])
                 .send(backendStub)
                 .map(_.body)
@@ -109,7 +110,7 @@ object ArticlesEndpointsSpec extends ZIOSpecDefault:
                 .get(
                   uri"http://test.com/api/articles?limit=invalid-limit&offset=invalid-offset"
                 )
-                .headers(Map("Authorization" -> "Token admin-user-token"))
+                .headers(validAuthorizationHeader())
                 .response(asJson[List[Article]])
                 .send(backendStub)
                 .map(_.body)
@@ -138,7 +139,7 @@ object ArticlesEndpointsSpec extends ZIOSpecDefault:
                   .backend()
               basicRequest
                 .get(uri"http://test.com/api/articles?limit=1&offset=1")
-                .headers(Map("Authorization" -> "Token admin-user-token"))
+                .headers(validAuthorizationHeader())
                 .response(asJson[List[Article]])
                 .send(backendStub)
                 .map(_.body)
@@ -176,7 +177,7 @@ object ArticlesEndpointsSpec extends ZIOSpecDefault:
                   .backend()
               basicRequest
                 .get(uri"http://test.com/api/articles?author=jake&favorited=john&tag=goats")
-                .headers(Map("Authorization" -> "Token admin-user-token"))
+                .headers(validAuthorizationHeader())
                 .response(asJson[List[Article]])
                 .send(backendStub)
                 .map(_.body)
@@ -214,7 +215,7 @@ object ArticlesEndpointsSpec extends ZIOSpecDefault:
                   .backend()
               basicRequest
                 .get(uri"http://test.com/api/articles")
-                .headers(Map("Authorization" -> "Token admin-user-token"))
+                .headers(validAuthorizationHeader())
                 .response(asJson[List[Article]])
                 .send(backendStub)
                 .map(_.body)
@@ -280,7 +281,7 @@ object ArticlesEndpointsSpec extends ZIOSpecDefault:
                   .backend()
               basicRequest
                 .get(uri"http://test.com/api/articles/how-to-train-your-dragon-2")
-                .headers(Map("Authorization" -> "Token admin-user-token"))
+                .headers(validAuthorizationHeader())
                 .response(asJson[Article])
                 .send(backendStub)
                 .map(_.body)
@@ -304,9 +305,10 @@ object ArticlesEndpointsSpec extends ZIOSpecDefault:
           )
         )
       }
-    ) @@ TestAspect.before(withAuthDataAndFixture("fixtures/articles/basic-data.sql"))
+    ) @@ TestAspect.before(withFixture("fixtures/articles/basic-data.sql"))
       @@ TestAspect.after(clearDb)
   ).provide(
+    AuthService.live,
     ArticlesRepository.live,
     ArticlesService.live,
     ArticlesEndpoints.live,

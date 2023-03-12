@@ -17,9 +17,18 @@ import java.time.{Instant, ZonedDateTime}
 import javax.sql.DataSource
 
 object UsersRepositorySpec extends ZIOSpecDefault:
-  // TODO add user add tests
   def spec = suite("Check user repository features")(
-    suite("with auth data only")(
+    suite("find user by email")(
+      test("check user not found") {
+        for {
+          repo <- ZIO.service[UsersRepository]
+          v <- repo.findByEmail("notExisting@example.com")
+        } yield zio.test.assert(v)(
+          Assertion.equalTo(
+            Option.empty
+          )
+        )
+      },
       test("check user found") {
         for {
           repo <- ZIO.service[UsersRepository]
@@ -38,18 +47,48 @@ object UsersRepositorySpec extends ZIOSpecDefault:
           )
         )
       }
-    ) @@ TestAspect.before(withAuthData())
+    ) @@ TestAspect.before(withEmptyDb())
       @@ TestAspect.after(clearDb),
-    suite("with empty db")(
-      test("check user not found") {
+    suite("find user with password by email")(
+      test("check user with password found") {
         for {
           repo <- ZIO.service[UsersRepository]
-          v <- repo.findByEmail("admin@example.com")
+          v <- repo.findUserWithPasswordByEmail("admin@example.com")
+        } yield zio.test.assert(v)(
+          Assertion.equalTo(
+            Option(
+              UserWithPassword(
+                UserData(
+                  "admin@example.com",
+                  None,
+                  "admin",
+                  Some("I dont work"),
+                  Some("")
+                ),
+                "$argon2id$v=19$m=12,t=20,p=2$LGVt7F82NPRc6pTfwwvOQBgMrPMcW/JVamGdmKvc8fich+qrr9lF6J/TQiBGnjavunldHYhA8B01yrajDzu/Og$aImjH6G1kWWBMI0Ysn+vyNaOpVDvEBg7BU7tp7cKjIo" // TODO: usingRecursiveComparison + skip this field
+              )
+            )
+          )
+        )
+      },
+      test("check user with password not found") {
+        for {
+          repo <- ZIO.service[UsersRepository]
+          v <- repo.findUserWithPasswordByEmail("notExisting@example.com")
         } yield zio.test.assert(v)(
           Assertion.equalTo(
             Option.empty
           )
         )
+      }
+    ) @@ TestAspect.before(withEmptyDb())
+      @@ TestAspect.after(clearDb),
+    suite("add user")(
+      test("check user added") {
+        for {
+          repo <- ZIO.service[UsersRepository]
+          v <- repo.addUser(UserRegisterData(email = "test@test.com", username = "tested", password = "tested"))
+        } yield zio.test.assert(v)(isUnit) // TODO check DB?
       }
     ) @@ TestAspect.before(withEmptyDb())
       @@ TestAspect.after(clearDb)
