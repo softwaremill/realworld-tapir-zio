@@ -1,6 +1,5 @@
 package com.softwaremill.realworld.articles
 
-import com.softwaremill.realworld.articles.ArticlesSerialization.{*, given}
 import com.softwaremill.realworld.common.BaseEndpoints
 import com.softwaremill.realworld.common.TestUtils.*
 import com.softwaremill.realworld.db.{Db, DbConfig, DbMigrator}

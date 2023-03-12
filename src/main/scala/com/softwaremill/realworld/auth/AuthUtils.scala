@@ -73,7 +73,7 @@ object JwtHandling {
 
   def verifyJwt(jwtToken: String): IO[Exception, String] = {
     Try(verifier.verify(jwtToken)) match {
-      case Success(decodedJwt) => ZIO.succeed(decodedJwt.getClaim.toString())
+      case Success(decodedJwt) => ZIO.succeed(decodedJwt.getClaim(ClaimName).asString())
       case _                   => ZIO.fail(Unauthorized("Invalid token!"))
     }
   }

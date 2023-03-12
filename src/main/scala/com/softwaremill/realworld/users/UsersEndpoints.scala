@@ -16,8 +16,6 @@ import javax.sql.DataSource
 
 class UsersEndpoints(usersService: UsersService, base: BaseEndpoints):
 
-  import UsersSerialization.given
-
   val getCurrentUser: ZServerEndpoint[Any, Any] = base.secureEndpoint.get
     .in("api" / "user")
     .out(jsonBody[User])

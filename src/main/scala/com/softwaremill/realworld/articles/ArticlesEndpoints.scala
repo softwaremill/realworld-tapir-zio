@@ -15,8 +15,6 @@ import javax.sql.DataSource
 
 class ArticlesEndpoints(articlesService: ArticlesService, base: BaseEndpoints):
 
-  import ArticlesSerialization.given
-
   val listArticles: ZServerEndpoint[Any, Any] = base.secureEndpoint.get
     .in("api" / "articles")
     .in(

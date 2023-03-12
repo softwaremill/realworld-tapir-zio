@@ -17,6 +17,7 @@ class UsersService(usersRepository: UsersRepository):
       case Some(a) => ZIO.succeed(a)
       case None    => ZIO.fail(Exceptions.NotFound(s"User doesn't exist."))
     }
+  
 
   def registerNewUser(user: UserRegisterData): IO[Exception, User] = {
     val emailClean = user.email.toLowerCase.trim()

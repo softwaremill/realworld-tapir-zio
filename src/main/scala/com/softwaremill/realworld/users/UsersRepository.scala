@@ -39,28 +39,20 @@ class UsersRepository(quill: SqliteZioJdbcContext[SnakeCase], dataSource: DataSo
   ).unit
     .provide(dsLayer)
 
+  private def userWithPassword(userRow: UserRow): UserWithPassword = {
+    UserWithPassword(
+      user(userRow),
+      userRow.password
+    )
+  }
+
   private def user(userRow: UserRow): UserData = {
     UserData(
       userRow.email,
       None,
       userRow.username,
-      Some(userRow.bio),
-      Some(userRow.image)
-    )
-  }
-
-  private def userWithPassword(userRow: UserRow): UserWithPassword = {
-    UserWithPassword(
-      UserData(
-        userRow.email,
-        None,
-        userRow.username,
-        None,
-        None // TODO Some(null) returned by repository and app crashes
-//        Some(userRow.bio),
-//        Some(userRow.image)
-      ),
-      userRow.password
+      Option(userRow.bio),
+      Option(userRow.image)
     )
   }
 
