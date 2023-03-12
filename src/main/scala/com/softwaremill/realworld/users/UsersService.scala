@@ -1,6 +1,6 @@
 package com.softwaremill.realworld.users
 
-import com.softwaremill.realworld.auth.{JwtHandling, PasswordHashing}
+import com.softwaremill.realworld.auth.AuthService
 import com.softwaremill.realworld.common.Exceptions.Unauthorized
 import com.softwaremill.realworld.common.{Exceptions, Pagination}
 import com.softwaremill.realworld.profiles.ProfileRow
@@ -9,7 +9,7 @@ import zio.{Console, IO, ZIO, ZLayer}
 import java.sql.SQLException
 import javax.sql.DataSource
 
-class UsersService(usersRepository: UsersRepository):
+class UsersService(authService: AuthService, usersRepository: UsersRepository):
 
   def findByEmail(email: String): IO[Exception, UserData] = usersRepository
     .findByEmail(email)
@@ -17,7 +17,6 @@ class UsersService(usersRepository: UsersRepository):
       case Some(a) => ZIO.succeed(a)
       case None    => ZIO.fail(Exceptions.NotFound(s"User doesn't exist."))
     }
-  
 
   def registerNewUser(user: UserRegisterData): IO[Exception, User] = {
     val emailClean = user.email.toLowerCase.trim()
@@ -34,8 +33,8 @@ class UsersService(usersRepository: UsersRepository):
       _ <- checkUserDoesNotExist(emailClean)
       user <- {
         for {
-          hashedPassword <- PasswordHashing.encryptPassword(passwordClean)
-          jwt <- JwtHandling.generateJwt(emailClean)
+          hashedPassword <- authService.encryptPassword(passwordClean)
+          jwt <- authService.generateJwt(emailClean)
           _ <- usersRepository.addUser(UserRegisterData(emailClean, usernameClean, hashedPassword))
         } yield User(userWithToken(emailClean, usernameClean, jwt))
       }
@@ -49,8 +48,8 @@ class UsersService(usersRepository: UsersRepository):
     for {
       maybeUser <- usersRepository.findUserWithPasswordByEmail(emailClean)
       userWithPassword <- ZIO.fromOption(maybeUser).mapError(_ => Unauthorized())
-      _ <- PasswordHashing.verifyPassword(passwordClean, userWithPassword.hashedPassword)
-      jwt <- JwtHandling.generateJwt(emailClean)
+      _ <- authService.verifyPassword(passwordClean, userWithPassword.hashedPassword)
+      jwt <- authService.generateJwt(emailClean)
     } yield userWithPassword.user.copy(token = Some(jwt))
   }
 
@@ -65,4 +64,4 @@ class UsersService(usersRepository: UsersRepository):
   }
 
 object UsersService:
-  val live: ZLayer[UsersRepository, Nothing, UsersService] = ZLayer.fromFunction(UsersService(_))
+  val live: ZLayer[AuthService with UsersRepository, Nothing, UsersService] = ZLayer.fromFunction(UsersService(_, _))

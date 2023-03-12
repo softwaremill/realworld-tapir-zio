@@ -1,6 +1,7 @@
 package com.softwaremill.realworld
 
 import com.softwaremill.realworld.articles.{ArticlesEndpoints, ArticlesRepository, ArticlesService}
+import com.softwaremill.realworld.auth.AuthService
 import com.softwaremill.realworld.common.{BaseEndpoints, Exceptions}
 import com.softwaremill.realworld.db.{Db, DbConfig, DbMigrator}
 import com.softwaremill.realworld.users.{UsersEndpoints, UsersRepository, UsersService}
@@ -47,6 +48,7 @@ object Main extends ZIOAppDefault:
         Db.quillLive,
         DbMigrator.live,
         Endpoints.live,
+        AuthService.live,
         ArticlesEndpoints.live,
         ArticlesService.live,
         ArticlesRepository.live,
