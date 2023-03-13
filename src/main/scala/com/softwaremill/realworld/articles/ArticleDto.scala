@@ -16,10 +16,9 @@ case class Article(
     favoritesCount: Int,
     author: ArticleAuthor
 )
-object Article {
-  implicit val articleEncoder: zio.json.JsonEncoder[Article] = DeriveJsonEncoder.gen[Article]
-  implicit val articleDecoder: zio.json.JsonDecoder[Article] = DeriveJsonDecoder.gen[Article]
-}
+object Article:
+  given articleEncoder: zio.json.JsonEncoder[Article] = DeriveJsonEncoder.gen[Article]
+  given articleDecoder: zio.json.JsonDecoder[Article] = DeriveJsonDecoder.gen[Article]
 
 case class ArticleAuthor(
     username: String,
@@ -28,10 +27,9 @@ case class ArticleAuthor(
     following: Boolean
 )
 
-object ArticleAuthor {
-  implicit val articleAuthorEncoder: zio.json.JsonEncoder[ArticleAuthor] = DeriveJsonEncoder.gen[ArticleAuthor]
-  implicit val articleAuthorDecoder: zio.json.JsonDecoder[ArticleAuthor] = DeriveJsonDecoder.gen[ArticleAuthor]
-}
+object ArticleAuthor:
+  given articleAuthorEncoder: zio.json.JsonEncoder[ArticleAuthor] = DeriveJsonEncoder.gen[ArticleAuthor]
+  given articleAuthorDecoder: zio.json.JsonDecoder[ArticleAuthor] = DeriveJsonDecoder.gen[ArticleAuthor]
 
 case class ArticleTagRow(
     tag: String,

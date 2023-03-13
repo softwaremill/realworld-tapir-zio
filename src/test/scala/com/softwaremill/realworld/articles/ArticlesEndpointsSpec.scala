@@ -1,8 +1,8 @@
 package com.softwaremill.realworld.articles
 
 import com.softwaremill.realworld.auth.AuthService
-import com.softwaremill.realworld.common.BaseEndpoints
 import com.softwaremill.realworld.common.TestUtils.*
+import com.softwaremill.realworld.common.{BaseEndpoints, Configuration}
 import com.softwaremill.realworld.db.{Db, DbConfig, DbMigrator}
 import sttp.client3.testing.SttpBackendStub
 import sttp.client3.ziojson.*
@@ -308,6 +308,7 @@ object ArticlesEndpointsSpec extends ZIOSpecDefault:
     ) @@ TestAspect.before(withFixture("fixtures/articles/basic-data.sql"))
       @@ TestAspect.after(clearDb)
   ).provide(
+    Configuration.live,
     AuthService.live,
     ArticlesRepository.live,
     ArticlesService.live,

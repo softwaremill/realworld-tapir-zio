@@ -37,7 +37,7 @@ object TestUtils:
   def validAuthorizationHeader(email: String = "admin@example.com"): Map[String, String] = {
     // start TODO [This is workaround. Need to replace below with service's function call]
     val now: Instant = Instant.now()
-    val Issuer = "Softwaremill"
+    val Issuer = "SoftwareMill"
     val ClaimName = "userEmail"
     val YouShouldNotKeepSecretsHardcoded = "#>!IEd!G-L70@OTr$t8E[4.#[A;zo2@{"
     val algorithm: Algorithm = Algorithm.HMAC256(YouShouldNotKeepSecretsHardcoded)

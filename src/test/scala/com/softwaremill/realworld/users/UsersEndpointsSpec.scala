@@ -1,7 +1,7 @@
 package com.softwaremill.realworld.users
 
 import com.softwaremill.realworld.auth.AuthService
-import com.softwaremill.realworld.common.BaseEndpoints
+import com.softwaremill.realworld.common.{BaseEndpoints, Configuration}
 import com.softwaremill.realworld.common.TestUtils.*
 import com.softwaremill.realworld.db.{Db, DbConfig, DbMigrator}
 import sttp.client3.testing.SttpBackendStub
@@ -183,6 +183,7 @@ object UsersEndpointsSpec extends ZIOSpecDefault:
     ) @@ TestAspect.before(withEmptyDb())
       @@ TestAspect.after(clearDb)
   ).provide(
+    Configuration.live,
     AuthService.live,
     UsersRepository.live,
     UsersService.live,
