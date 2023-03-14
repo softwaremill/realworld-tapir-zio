@@ -1,5 +1,6 @@
 package com.softwaremill.realworld.users
 
+import com.softwaremill.diffx.{Diff, compare}
 import com.softwaremill.realworld.common.Pagination
 import com.softwaremill.realworld.common.TestUtils.*
 import com.softwaremill.realworld.db.{Db, DbConfig, DbMigrator}
@@ -10,7 +11,7 @@ import sttp.tapir.EndpointOutput.StatusCode
 import sttp.tapir.server.stub.TapirStubInterpreter
 import sttp.tapir.ztapir.{RIOMonadError, ZServerEndpoint}
 import zio.test.Assertion.*
-import zio.test.{Assertion, TestAspect, TestRandom, ZIOSpecDefault, assertZIO}
+import zio.test.{Assertion, TestAspect, TestRandom, ZIOSpecDefault, assertTrue, assertZIO}
 import zio.{RIO, Random, ZIO, ZLayer}
 
 import java.time.{Instant, ZonedDateTime}
@@ -53,23 +54,24 @@ object UsersRepositorySpec extends ZIOSpecDefault:
       test("check user with password found") {
         for {
           repo <- ZIO.service[UsersRepository]
-          v <- repo.findUserWithPasswordByEmail("admin@example.com")
-        } yield zio.test.assert(v)(
-          Assertion.equalTo(
-            Option(
-              UserWithPassword(
-                UserData(
-                  "admin@example.com",
-                  None,
-                  "admin",
-                  Some("I dont work"),
-                  Some("")
-                ),
-                "$argon2id$v=19$m=12,t=20,p=2$LGVt7F82NPRc6pTfwwvOQBgMrPMcW/JVamGdmKvc8fich+qrr9lF6J/TQiBGnjavunldHYhA8B01yrajDzu/Og$aImjH6G1kWWBMI0Ysn+vyNaOpVDvEBg7BU7tp7cKjIo" // TODO: usingRecursiveComparison + skip this field
-              )
+          result <- repo.findUserWithPasswordByEmail("admin@example.com")
+        } yield assertTrue {
+          // TODO there must be better way to implement this...
+          import com.softwaremill.realworld.common.UserWithPasswordDiff.{*, given}
+          compare(
+            result.get,
+            UserWithPassword(
+              UserData(
+                "admin@example.com",
+                None,
+                "admin",
+                Some("I dont work"),
+                Some("")
+              ),
+              "password"
             )
-          )
-        )
+          ).isIdentical
+        }
       },
       test("check user with password not found") {
         for {

@@ -18,7 +18,7 @@ class UsersService(authService: AuthService, usersRepository: UsersRepository):
       case None    => ZIO.fail(Exceptions.NotFound(s"User doesn't exist."))
     }
 
-  def registerNewUser(user: UserRegisterData): IO[Exception, User] = {
+  def registerNewUser(user: UserRegisterData): IO[Throwable, User] = {
     val emailClean = user.email.toLowerCase.trim()
     val usernameClean = user.username.trim()
     val passwordClean = user.password.trim()
@@ -41,7 +41,7 @@ class UsersService(authService: AuthService, usersRepository: UsersRepository):
     } yield user
   }
 
-  def userLogin(user: UserLoginData): IO[Exception, UserData] = {
+  def userLogin(user: UserLoginData): IO[Throwable, UserData] = {
     val emailClean = user.email.toLowerCase.trim()
     val passwordClean = user.password.trim()
 

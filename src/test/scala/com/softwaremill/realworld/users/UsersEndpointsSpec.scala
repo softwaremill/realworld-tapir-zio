@@ -1,8 +1,9 @@
 package com.softwaremill.realworld.users
 
+import com.softwaremill.diffx.{Diff, compare}
 import com.softwaremill.realworld.auth.AuthService
-import com.softwaremill.realworld.common.{BaseEndpoints, Configuration}
 import com.softwaremill.realworld.common.TestUtils.*
+import com.softwaremill.realworld.common.{BaseEndpoints, Configuration}
 import com.softwaremill.realworld.db.{Db, DbConfig, DbMigrator}
 import sttp.client3.testing.SttpBackendStub
 import sttp.client3.ziojson.*
@@ -11,7 +12,7 @@ import sttp.tapir.EndpointOutput.StatusCode
 import sttp.tapir.server.stub.TapirStubInterpreter
 import sttp.tapir.ztapir.{RIOMonadError, ZServerEndpoint}
 import zio.test.Assertion.*
-import zio.test.{TestAspect, TestRandom, ZIOSpecDefault, assertZIO}
+import zio.test.{Assertion, TestAspect, TestRandom, ZIOSpecDefault, assertTrue, assertZIO}
 import zio.{RIO, Random, ZIO, ZLayer}
 
 import java.time.{Instant, ZonedDateTime}
@@ -116,10 +117,10 @@ object UsersEndpointsSpec extends ZIOSpecDefault:
                 .map(_.body)
             }
         )(isLeft(equalTo(HttpError("{\"error\":\"E-mail already in use!\"}", sttp.model.StatusCode(409)))))
-      }
-      /*test("return registered user") { // TODO: usingRecursiveComparison + skip token field
-        assertZIO(
-          ZIO
+      },
+      test("return registered user") {
+        for {
+          result <- ZIO
             .service[UsersEndpoints]
             .map(_.userRegister)
             .flatMap { endpoint =>
@@ -135,8 +136,15 @@ object UsersEndpointsSpec extends ZIOSpecDefault:
                 .send(backendStub)
                 .map(_.body)
             }
-        )(isRight(equalTo(User(UserData(email = "new_user@example.com", token = None, username = "user", bio = None, image = None)))))
-      }*/
+        } yield assertTrue {
+          // TODO there must be better way to implement this...
+          import com.softwaremill.realworld.common.UserDiff.{*, given}
+          compare(
+            result.toOption.get,
+            User(UserData(email = "new_user@example.com", token = None, username = "user", bio = None, image = None))
+          ).isIdentical
+        }
+      }
     ) @@ TestAspect.before(withEmptyDb())
       @@ TestAspect.after(clearDb),
     suite("User login")(
@@ -159,10 +167,10 @@ object UsersEndpointsSpec extends ZIOSpecDefault:
                 .map(_.body)
             }
         )(isLeft(equalTo(HttpError("{\"error\":\"Invalid email or password!\"}", sttp.model.StatusCode(401)))))
-      }
-      /*test("return logged in user") { // TODO: usingRecursiveComparison + skip token field
-        assertZIO(
-          ZIO
+      },
+      test("return logged in user") {
+        for {
+          result <- ZIO
             .service[UsersEndpoints]
             .map(_.userLogin)
             .flatMap { endpoint =>
@@ -178,8 +186,15 @@ object UsersEndpointsSpec extends ZIOSpecDefault:
                 .send(backendStub)
                 .map(_.body)
             }
-        )(isRight(equalTo(User(UserData(email = "admin@example.com", token = None, username = "admin", bio = Some("I dont work"), image = Some(""))))))
-      }*/
+        } yield assertTrue {
+          // TODO there must be better way to implement this...
+          import com.softwaremill.realworld.common.UserDiff.{*, given}
+          compare(
+            result.toOption.get,
+            User(UserData(email = "admin@example.com", token = None, username = "admin", bio = Some("I dont work"), image = Some("")))
+          ).isIdentical
+        }
+      }
     ) @@ TestAspect.before(withEmptyDb())
       @@ TestAspect.after(clearDb)
   ).provide(

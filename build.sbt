@@ -26,6 +26,7 @@ lazy val rootProject = (project in file(".")).settings(
       "com.zaxxer" % "HikariCP" % "5.0.1",
       "io.getquill" %% "quill-jdbc-zio" % "4.6.0.1",
       // Tests
+      "com.softwaremill.diffx" %% "diffx-core" % "0.8.2",
       "com.softwaremill.sttp.tapir" %% "tapir-sttp-stub-server" % tapirVersion % Test,
       "dev.zio" %% "zio-logging" % zioLoggingVersion,
       "dev.zio" %% "zio-logging-slf4j" % zioLoggingVersion,
