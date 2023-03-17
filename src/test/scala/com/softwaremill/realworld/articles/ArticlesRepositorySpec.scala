@@ -1,9 +1,9 @@
 package com.softwaremill.realworld.articles
 
 import com.softwaremill.realworld.articles.ArticlesEndpoints.{*, given}
-import com.softwaremill.realworld.db.{Db, DbConfig, DbMigrator}
 import com.softwaremill.realworld.common.Pagination
 import com.softwaremill.realworld.common.TestUtils.*
+import com.softwaremill.realworld.db.{Db, DbConfig, DbMigrator}
 import sttp.client3.testing.SttpBackendStub
 import sttp.client3.ziojson.*
 import sttp.client3.{HttpError, Response, ResponseException, UriContext, basicRequest}
@@ -46,7 +46,7 @@ object ArticlesRepositorySpec extends ZIOSpecDefault:
         } yield zio.test.assert(v)(
           hasSize(equalTo(1))
             && contains(
-              Article(
+              ArticleData(
                 "how-to-train-your-dragon-2",
                 "How to train your dragon 2",
                 "So toothless",
@@ -56,7 +56,7 @@ object ArticlesRepositorySpec extends ZIOSpecDefault:
                 Instant.ofEpochMilli(1455767315824L),
                 false,
                 1,
-                ArticleAuthor("jake", "I work at statefarm", "https://i.stack.imgur.com/xHWG8.jpg", following = false)
+                ArticleAuthor("jake", Some("I work at statefarm"), Some("https://i.stack.imgur.com/xHWG8.jpg"), following = false)
               )
             )
         )
@@ -68,7 +68,7 @@ object ArticlesRepositorySpec extends ZIOSpecDefault:
         } yield zio.test.assert(v)(
           hasSize(equalTo(3))
             && contains(
-              Article(
+              ArticleData(
                 "how-to-train-your-dragon",
                 "How to train your dragon",
                 "Ever wonder how?",
@@ -78,11 +78,11 @@ object ArticlesRepositorySpec extends ZIOSpecDefault:
                 Instant.ofEpochMilli(1455767315824L),
                 false,
                 2,
-                ArticleAuthor("jake", "I work at statefarm", "https://i.stack.imgur.com/xHWG8.jpg", following = false)
+                ArticleAuthor("jake", Some("I work at statefarm"), Some("https://i.stack.imgur.com/xHWG8.jpg"), following = false)
               )
             )
             && contains(
-              Article(
+              ArticleData(
                 "how-to-train-your-dragon-2",
                 "How to train your dragon 2",
                 "So toothless",
@@ -92,11 +92,11 @@ object ArticlesRepositorySpec extends ZIOSpecDefault:
                 Instant.ofEpochMilli(1455767315824L),
                 false,
                 1,
-                ArticleAuthor("jake", "I work at statefarm", "https://i.stack.imgur.com/xHWG8.jpg", following = false)
+                ArticleAuthor("jake", Some("I work at statefarm"), Some("https://i.stack.imgur.com/xHWG8.jpg"), following = false)
               )
             )
             && contains(
-              Article(
+              ArticleData(
                 "how-to-train-your-dragon-3",
                 "How to train your dragon 3",
                 "The tagless one",
@@ -106,7 +106,7 @@ object ArticlesRepositorySpec extends ZIOSpecDefault:
                 Instant.ofEpochMilli(1455767315824L),
                 false,
                 0,
-                ArticleAuthor("john", "I no longer work at statefarm", "https://i.stack.imgur.com/xHWG8.jpg", following = false)
+                ArticleAuthor("john", Some("I no longer work at statefarm"), Some("https://i.stack.imgur.com/xHWG8.jpg"), following = false)
               )
             )
         )
@@ -121,7 +121,7 @@ object ArticlesRepositorySpec extends ZIOSpecDefault:
         } yield zio.test.assert(v)(
           hasSize(equalTo(2))
             && contains(
-              Article(
+              ArticleData(
                 "how-to-train-your-dragon",
                 "How to train your dragon",
                 "Ever wonder how?",
@@ -131,11 +131,11 @@ object ArticlesRepositorySpec extends ZIOSpecDefault:
                 Instant.ofEpochMilli(1455767315824L),
                 false,
                 2,
-                ArticleAuthor("jake", "I work at statefarm", "https://i.stack.imgur.com/xHWG8.jpg", following = false)
+                ArticleAuthor("jake", Some("I work at statefarm"), Some("https://i.stack.imgur.com/xHWG8.jpg"), following = false)
               )
             )
             && contains(
-              Article(
+              ArticleData(
                 "how-to-train-your-dragon-2",
                 "How to train your dragon 2",
                 "So toothless",
@@ -145,7 +145,7 @@ object ArticlesRepositorySpec extends ZIOSpecDefault:
                 Instant.ofEpochMilli(1455767315824L),
                 false,
                 1,
-                ArticleAuthor("jake", "I work at statefarm", "https://i.stack.imgur.com/xHWG8.jpg", following = false)
+                ArticleAuthor("jake", Some("I work at statefarm"), Some("https://i.stack.imgur.com/xHWG8.jpg"), following = false)
               )
             )
         )
@@ -160,7 +160,7 @@ object ArticlesRepositorySpec extends ZIOSpecDefault:
         } yield zio.test.assert(v)(
           hasSize(equalTo(1))
             && contains(
-              Article(
+              ArticleData(
                 "how-to-train-your-dragon",
                 "How to train your dragon",
                 "Ever wonder how?",
@@ -170,7 +170,7 @@ object ArticlesRepositorySpec extends ZIOSpecDefault:
                 Instant.ofEpochMilli(1455767315824L),
                 false,
                 2,
-                ArticleAuthor("jake", "I work at statefarm", "https://i.stack.imgur.com/xHWG8.jpg", following = false)
+                ArticleAuthor("jake", Some("I work at statefarm"), Some("https://i.stack.imgur.com/xHWG8.jpg"), following = false)
               )
             )
         )
@@ -185,7 +185,7 @@ object ArticlesRepositorySpec extends ZIOSpecDefault:
         } yield zio.test.assert(v)(
           hasSize(equalTo(1))
             && contains(
-              Article(
+              ArticleData(
                 "how-to-train-your-dragon-3",
                 "How to train your dragon 3",
                 "The tagless one",
@@ -195,7 +195,7 @@ object ArticlesRepositorySpec extends ZIOSpecDefault:
                 Instant.ofEpochMilli(1455767315824L),
                 false,
                 0,
-                ArticleAuthor("john", "I no longer work at statefarm", "https://i.stack.imgur.com/xHWG8.jpg", following = false)
+                ArticleAuthor("john", Some("I no longer work at statefarm"), Some("https://i.stack.imgur.com/xHWG8.jpg"), following = false)
               )
             )
         )
