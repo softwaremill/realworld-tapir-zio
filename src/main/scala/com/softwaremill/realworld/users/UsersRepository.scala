@@ -59,7 +59,7 @@ class UsersRepository(quill: SqliteZioJdbcContext[SnakeCase], dataSource: DataSo
         .update(
           record => record.email -> lift(updateData.email.orNull),
           record => record.username -> lift(updateData.username.orNull),
-          record => record.password -> lift(updateData.username.orNull),
+          record => record.password -> lift(updateData.password.orNull),
           record => record.bio -> lift(updateData.bio.orNull),
           record => record.image -> lift(updateData.image.orNull)
         )
