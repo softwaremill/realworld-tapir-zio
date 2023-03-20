@@ -288,24 +288,26 @@ object ArticlesEndpointsSpec extends ZIOSpecDefault:
               basicRequest
                 .get(uri"http://test.com/api/articles/how-to-train-your-dragon-2")
                 .headers(validAuthorizationHeader())
-                .response(asJson[ArticleData])
+                .response(asJson[Article])
                 .send(backendStub)
                 .map(_.body)
             }
         )(
           isRight(
             equalTo(
-              ArticleData(
-                "how-to-train-your-dragon-2",
-                "How to train your dragon 2",
-                "So toothless",
-                "Its a dragon",
-                List("dragons", "goats", "training"),
-                Instant.ofEpochMilli(1455765776637L),
-                Instant.ofEpochMilli(1455767315824L),
-                false,
-                1,
-                ArticleAuthor("jake", Some("I work at statefarm"), Some("https://i.stack.imgur.com/xHWG8.jpg"), following = false)
+              Article(
+                ArticleData(
+                  "how-to-train-your-dragon-2",
+                  "How to train your dragon 2",
+                  "So toothless",
+                  "Its a dragon",
+                  List("dragons", "goats", "training"),
+                  Instant.ofEpochMilli(1455765776637L),
+                  Instant.ofEpochMilli(1455767315824L),
+                  false,
+                  1,
+                  ArticleAuthor("jake", Some("I work at statefarm"), Some("https://i.stack.imgur.com/xHWG8.jpg"), following = false)
+                )
               )
             )
           )

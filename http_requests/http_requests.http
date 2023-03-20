@@ -10,7 +10,7 @@ Authorization: Bearer {{JWT}}
 
 ###
 
-GET http://localhost:8080/api/articles/how-to-train-your-dragon
+GET http://localhost:8080/api/articles/how-to-train-your-dragon-2
 Accept: application/json
 Authorization: Bearer {{JWT}}
 
@@ -42,6 +42,21 @@ Authorization: Bearer {{JWT}}
     "title": "How to train your dragon VI",
     "description": "Ever wonder how?",
     "body": "You have to believe"
+  }
+}
+
+###
+
+PUT http://localhost:8080/api/articles/how-to-train-your-dragon-2
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer {{JWT}}
+
+{
+  "article": {
+    "title": "How to train your dragon VI",
+    "description": "changed description",
+    "body": "changed body"
   }
 }
 
@@ -104,20 +119,5 @@ Authorization: Bearer {{JWT}}
     "username": "changed username",
     "password": "changed password",
     "bio": "changed bio"
-  }
-}
-
-###
-
-PUT http://localhost:8080/api/articles?slug=how-to-train-your-dragon-2
-Accept: application/json
-Content-Type: application/json
-Authorization: Bearer {{JWT}}
-
-{
-  "article": {
-    "title": "How to train your dragon VI",
-    "description": "changed description",
-    "body": "changed body"
   }
 }

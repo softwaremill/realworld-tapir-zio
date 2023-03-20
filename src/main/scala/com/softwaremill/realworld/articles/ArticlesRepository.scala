@@ -6,7 +6,7 @@ import com.softwaremill.realworld.common.{Exceptions, Pagination}
 import com.softwaremill.realworld.profiles.ProfileRow
 import com.softwaremill.realworld.users.UserRow
 import io.getquill.*
-import zio.{IO, UIO, Console, ZIO, ZLayer}
+import zio.{Console, IO, UIO, ZIO, ZLayer}
 
 import java.sql.SQLException
 import java.time.Instant
@@ -51,34 +51,36 @@ class ArticlesRepository(quill: SqliteZioJdbcContext[SnakeCase], dataSource: Dat
       .provide(dsLayer)
   }
 
-  def findBySlug(slug: String): IO[SQLException, Option[ArticleData]] = run(for {
-    ar <- querySchema[ArticleRow](entity = "articles") if ar.slug == lift(slug)
-    tr <- querySchema[ArticleTagRow](entity = "tags_articles")
-      .groupByMap(_.articleSlug)(atr => (atr.articleSlug, tagsConcat(atr.tag)))
-      .leftJoin(a => a._1 == ar.slug)
-    fr <- querySchema[ArticleFavoriteRow](entity = "favorites_articles")
-      .groupByMap(_.articleSlug)(fr => (fr.articleSlug, count(fr.profileId)))
-      .leftJoin(f => f._1 == ar.slug)
-    pr <- querySchema[ProfileRow](entity = "users") if ar.authorId == pr.userId
-  } yield (ar, pr, tr.map(_._2), fr.map(_._2)))
-    .map(_.headOption)
-    .map(_.map(article))
-    .provide(dsLayer)
+  def findBySlug(slug: String): IO[SQLException, Option[ArticleData]] =
+    run(for { // TODO findBySlug methods will be merged into one (byEmail) and it doesn't work yet
+      ar <- querySchema[ArticleRow](entity = "articles") if ar.slug == lift(slug)
+      tr <- querySchema[ArticleTagRow](entity = "tags_articles")
+        .groupByMap(_.articleSlug)(atr => (atr.articleSlug, tagsConcat(atr.tag)))
+        .leftJoin(a => a._1 == ar.slug)
+      fr <- querySchema[ArticleFavoriteRow](entity = "favorites_articles")
+        .groupByMap(_.articleSlug)(fr => (fr.articleSlug, count(fr.profileId)))
+        .leftJoin(f => f._1 == ar.slug)
+      pr <- querySchema[ProfileRow](entity = "users") if ar.authorId == pr.userId
+    } yield (ar, pr, tr.map(_._2), fr.map(_._2)))
+      .map(_.headOption)
+      .map(_.map(article))
+      .provide(dsLayer)
 
-  def findBySlugAndEmail(slug: String, userEmail: String): IO[SQLException, Option[ArticleData]] = run(for {
-    user <- querySchema[UserRow](entity = "users") if user.email == lift(userEmail)
-    ar <- querySchema[ArticleRow](entity = "articles") if ar.slug == lift(slug) && ar.authorId == user.userId
-    tr <- querySchema[ArticleTagRow](entity = "tags_articles")
-      .groupByMap(_.articleSlug)(atr => (atr.articleSlug, tagsConcat(atr.tag)))
-      .leftJoin(a => a._1 == ar.slug)
-    fr <- querySchema[ArticleFavoriteRow](entity = "favorites_articles")
-      .groupByMap(_.articleSlug)(fr => (fr.articleSlug, count(fr.profileId)))
-      .leftJoin(f => f._1 == ar.slug)
-    pr <- querySchema[ProfileRow](entity = "users") if ar.authorId == pr.userId
-  } yield (ar, pr, tr.map(_._2), fr.map(_._2)))
-    .map(_.headOption)
-    .map(_.map(article))
-    .provide(dsLayer)
+  def findBySlugAndEmail(slug: String, userEmail: String): IO[SQLException, Option[ArticleData]] =
+    run(for { // TODO fix an issue with "ProfileRow" and make it work
+      user <- querySchema[UserRow](entity = "users") if user.email == lift(userEmail)
+      ar <- querySchema[ArticleRow](entity = "articles") if ar.slug == lift(slug) && ar.authorId == user.userId
+      tr <- querySchema[ArticleTagRow](entity = "tags_articles")
+        .groupByMap(_.articleSlug)(atr => (atr.articleSlug, tagsConcat(atr.tag)))
+        .leftJoin(a => a._1 == ar.slug)
+      fr <- querySchema[ArticleFavoriteRow](entity = "favorites_articles")
+        .groupByMap(_.articleSlug)(fr => (fr.articleSlug, count(fr.profileId)))
+        .leftJoin(f => f._1 == ar.slug)
+      pr <- querySchema[ProfileRow](entity = "users") if ar.authorId == pr.userId
+    } yield (ar, pr, tr.map(_._2), fr.map(_._2)))
+      .map(_.headOption)
+      .map(_.map(article))
+      .provide(dsLayer)
 
   def addTag(tag: String, slug: String): IO[Exception, Unit] = run(
     quote(

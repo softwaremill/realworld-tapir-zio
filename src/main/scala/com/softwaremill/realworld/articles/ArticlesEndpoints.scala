@@ -47,7 +47,7 @@ class ArticlesEndpoints(articlesService: ArticlesService, base: BaseEndpoints):
 
   val get: ZServerEndpoint[Any, Any] = base.secureEndpoint.get
     .in("api" / "articles" / path[String]("slug")) // TODO Input Validation
-    .out(jsonBody[ArticleData]) // TODO Article Outer class
+    .out(jsonBody[Article])
     .serverLogic(session =>
       slug =>
         articlesService
@@ -57,13 +57,13 @@ class ArticlesEndpoints(articlesService: ArticlesService, base: BaseEndpoints):
             case e: Exceptions.NotFound => NotFound(e.message)
             case _                      => InternalServerError()
           }
-//          .map(Article.apply)
+          .map(Article.apply)
     )
 
   val create: ZServerEndpoint[Any, Any] = base.secureEndpoint.post
     .in("api" / "articles")
     .in(jsonBody[ArticleCreate]) // TODO Input Validation
-    .out(jsonBody[ArticleData]) // TODO Article Outer class
+    .out(jsonBody[Article])
     .serverLogic(session =>
       data =>
         articlesService
@@ -74,24 +74,24 @@ class ArticlesEndpoints(articlesService: ArticlesService, base: BaseEndpoints):
             case e: Exceptions.NotFound     => NotFound(e.message)
             case _                          => InternalServerError()
           }
-        // .map(Article.apply)
+          .map(Article.apply)
     )
 
   val update: ZServerEndpoint[Any, Any] = base.secureEndpoint.put
     .in("api" / "articles" / path[String]("slug"))
     .in(jsonBody[ArticleUpdate]) // TODO Input Validation
-    .out(jsonBody[ArticleData]) // TODO Article Outer class
+    .out(jsonBody[Article])
     .serverLogic(session =>
       data =>
         articlesService
-          .update(data._2.article, session.email, data._1)
+          .update(articleUpdateData = data._2.article, slug = data._1, email = session.email)
           .logError
           .mapError {
             case e: Exceptions.AlreadyInUse => Conflict(e.message)
             case e: Exceptions.NotFound     => NotFound(e.message)
             case _                          => InternalServerError()
           }
-//          .map(Article.apply)
+          .map(Article.apply)
     )
 
   val endpoints: List[ZServerEndpoint[Any, Any]] = List(listArticles, get, update, create)
@@ -105,5 +105,4 @@ class ArticlesEndpoints(articlesService: ArticlesService, base: BaseEndpoints):
   }
 
 object ArticlesEndpoints:
-
   val live: ZLayer[ArticlesService with BaseEndpoints, Nothing, ArticlesEndpoints] = ZLayer.fromFunction(new ArticlesEndpoints(_, _))
