@@ -4,7 +4,7 @@ import com.softwaremill.realworld.auth.AuthService
 import com.softwaremill.realworld.common.Exceptions.{NotFound, Unauthorized}
 import com.softwaremill.realworld.common.{Exceptions, Pagination}
 import com.softwaremill.realworld.profiles.ProfileRow
-import com.softwaremill.realworld.users.UserMapper.toUserData
+import com.softwaremill.realworld.users.UserMapper.{toUserData, toUserUpdateDataWithFallback}
 import zio.{Console, IO, ZIO, ZLayer}
 
 import java.sql.SQLException
@@ -62,11 +62,7 @@ class UsersService(authService: AuthService, usersRepository: UsersRepository):
         .map(newPassword => authService.encryptPassword(newPassword))
         .getOrElse(ZIO.succeed(oldUser.hashedPassword))
       updatedData <- usersRepository.updateByEmail(
-        updateData.copy(
-          email = updateData.email.map(_.toLowerCase).map(_.trim), // TODO consider moving it to endpoint "preprocessing phase" (the same in other cases)
-          username = updateData.username.map(_.trim),
-          password = Option(password)
-        ),
+        toUserUpdateDataWithFallback(updateData, oldUser.copy(hashedPassword = password)),
         email
       )
     } yield toUserData(updatedData)

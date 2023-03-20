@@ -53,7 +53,7 @@ object ArticleCreateData:
   given articleCreateDataDecoder: zio.json.JsonDecoder[ArticleCreateData] = DeriveJsonDecoder.gen[ArticleCreateData]
 
 case class ArticleUpdateData(
-    slug: Option[String],
+    slug: Option[String], // TODO add additional class without slug
     title: Option[String],
     description: Option[String],
     body: Option[String]

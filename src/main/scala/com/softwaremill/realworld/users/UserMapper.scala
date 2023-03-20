@@ -22,3 +22,15 @@ object UserMapper: // TODO probably this mapper can be replaced with something b
     bio = userUpdateData.bio,
     image = userUpdateData.image
   )
+
+  def toUserUpdateDataWithFallback(updateData: UserUpdateData, oldUserData: UserWithPassword): UserUpdateData =
+    updateData.copy(
+      email = updateData.email
+        .map(_.toLowerCase) // TODO consider moving it to endpoint "preprocessing phase" (the same in other cases)
+        .map(_.trim)
+        .orElse(Option(oldUserData.user.email)),
+      username = updateData.username.map(_.trim).orElse(Option(oldUserData.user.username)),
+      password = Option(oldUserData.hashedPassword),
+      bio = updateData.bio.orElse(oldUserData.user.bio),
+      image = updateData.image.orElse(oldUserData.user.image)
+    )
