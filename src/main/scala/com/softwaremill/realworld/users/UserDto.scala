@@ -1,7 +1,7 @@
 package com.softwaremill.realworld.users
 
+import com.softwaremill.realworld.common.NoneAsNullOptionEncoder._
 import zio.json.{DeriveJsonDecoder, DeriveJsonEncoder}
-
 import java.time.Instant
 
 case class User(
