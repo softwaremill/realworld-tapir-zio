@@ -23,13 +23,14 @@ class UsersRepository(quill: SqliteZioJdbcContext[SnakeCase], dataSource: DataSo
     .map(_.map(toUserData))
     .provide(dsLayer)
 
-  def findUserRowByEmail(email: String): IO[Exception, Option[UserRow]] = run( // TODO hm should I add additional DTO or returning row from repo in this case is OK?
-    for {
-      ur <- querySchema[UserRow](entity = "users") if ur.email == lift(email)
-    } yield ur
-  )
-    .map(_.headOption)
-    .provide(dsLayer)
+  def findUserRowByEmail(email: String): IO[Exception, Option[UserRow]] =
+    run( // TODO hm should I add additional DTO or returning row from repo in this case is OK?
+      for {
+        ur <- querySchema[UserRow](entity = "users") if ur.email == lift(email)
+      } yield ur
+    )
+      .map(_.headOption)
+      .provide(dsLayer)
 
   def findUserWithPasswordByEmail(email: String): IO[Exception, Option[UserWithPassword]] = run(
     for {
