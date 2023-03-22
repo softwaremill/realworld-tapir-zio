@@ -14,9 +14,11 @@ class UsersRepository(quill: SqliteZioJdbcContext[SnakeCase], dataSource: DataSo
 
   import quill.*
 
+  private val users = quote(querySchema[UserRow](entity = "users"))
+
   def findByEmail(email: String): IO[Exception, Option[UserData]] = run(
     for {
-      ur <- querySchema[UserRow](entity = "users") if ur.email == lift(email)
+      ur <- users if ur.email == lift(email)
     } yield ur
   )
     .map(_.headOption)
@@ -26,7 +28,7 @@ class UsersRepository(quill: SqliteZioJdbcContext[SnakeCase], dataSource: DataSo
   def findUserRowByEmail(email: String): IO[Exception, Option[UserRow]] =
     run( // TODO hm should I add additional DTO or returning row from repo in this case is OK?
       for {
-        ur <- querySchema[UserRow](entity = "users") if ur.email == lift(email)
+        ur <- users if ur.email == lift(email)
       } yield ur
     )
       .map(_.headOption)
@@ -34,7 +36,7 @@ class UsersRepository(quill: SqliteZioJdbcContext[SnakeCase], dataSource: DataSo
 
   def findUserWithPasswordByEmail(email: String): IO[Exception, Option[UserWithPassword]] = run(
     for {
-      ur <- querySchema[UserRow](entity = "users") if ur.email == lift(email)
+      ur <- users if ur.email == lift(email)
     } yield ur
   )
     .map(_.headOption)
@@ -42,29 +44,25 @@ class UsersRepository(quill: SqliteZioJdbcContext[SnakeCase], dataSource: DataSo
     .provide(dsLayer)
 
   def add(user: UserRegisterData): IO[Exception, Unit] = run(
-    quote(
-      querySchema[UserRow](entity = "users")
-        .insert(
-          _.email -> lift(user.email),
-          _.username -> lift(user.username),
-          _.password -> lift(user.password)
-        )
-    )
+    users
+      .insert(
+        _.email -> lift(user.email),
+        _.username -> lift(user.username),
+        _.password -> lift(user.password)
+      )
   ).unit
     .provide(dsLayer)
 
   def updateByEmail(updateData: UserUpdateData, email: String): IO[Exception, UserUpdateData] = run(
-    quote(
-      querySchema[UserRow](entity = "users")
-        .filter(_.email == lift(email))
-        .update(
-          record => record.email -> lift(updateData.email.orNull),
-          record => record.username -> lift(updateData.username.orNull),
-          record => record.password -> lift(updateData.password.orNull),
-          record => record.bio -> lift(updateData.bio.orNull),
-          record => record.image -> lift(updateData.image.orNull)
-        )
-    )
+    users
+      .filter(_.email == lift(email))
+      .update(
+        record => record.email -> lift(updateData.email.orNull),
+        record => record.username -> lift(updateData.username.orNull),
+        record => record.password -> lift(updateData.password.orNull),
+        record => record.bio -> lift(updateData.bio.orNull),
+        record => record.image -> lift(updateData.image.orNull)
+      )
   ).map(_ => updateData)
     .mapError(_ => Exceptions.AlreadyInUse("E-mail already in use!"))
     .provide(dsLayer)

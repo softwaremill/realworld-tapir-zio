@@ -42,7 +42,9 @@ object JsonEncodingSpec extends ZIOSpecDefault {
           )
         )
         assert(article.toJson)(
-          equalTo("""{"article":{"slug":"how-to-train-your-dragon-2","title":"How to train your dragon 2","description":"So toothless","body":"Its a dragon","tagList":["dragons","goats","training"],"createdAt":"2016-02-18T03:22:56.637Z","updatedAt":"2016-02-18T03:48:35.824Z","favorited":false,"favoritesCount":1,"author":{"username":"jake","bio":null,"image":"https://i.stack.imgur.com/xHWG8.jpg","following":false}}}""")
+          equalTo(
+            """{"article":{"slug":"how-to-train-your-dragon-2","title":"How to train your dragon 2","description":"So toothless","body":"Its a dragon","tagList":["dragons","goats","training"],"createdAt":"2016-02-18T03:22:56.637Z","updatedAt":"2016-02-18T03:48:35.824Z","favorited":false,"favoritesCount":1,"author":{"username":"jake","bio":null,"image":"https://i.stack.imgur.com/xHWG8.jpg","following":false}}}"""
+          )
         )
       }
     )
