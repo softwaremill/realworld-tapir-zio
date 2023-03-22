@@ -52,7 +52,7 @@ class ArticlesRepository(quill: SqliteZioJdbcContext[SnakeCase], dataSource: Dat
   }
 
   def findBySlug(slug: String): IO[SQLException, Option[ArticleData]] =
-    run(for { // TODO findBySlug methods will be merged into one (byEmail) and it doesn't work yet
+    run(for {
       ar <- querySchema[ArticleRow](entity = "articles") if ar.slug == lift(slug)
       tr <- querySchema[ArticleTagRow](entity = "tags_articles")
         .groupByMap(_.articleSlug)(atr => (atr.articleSlug, tagsConcat(atr.tag)))
@@ -67,7 +67,7 @@ class ArticlesRepository(quill: SqliteZioJdbcContext[SnakeCase], dataSource: Dat
       .provide(dsLayer)
 
   def findBySlugAndEmail(slug: String, userEmail: String): IO[SQLException, Option[ArticleData]] =
-    run(for { // TODO fix an issue with "ProfileRow" and make it work
+    run(for { // TODO refactor findBySlug... methods when follows are implemented
       user <- querySchema[UserRow](entity = "users") if user.email == lift(userEmail)
       ar <- querySchema[ArticleRow](entity = "articles") if ar.slug == lift(slug) && ar.authorId == user.userId
       tr <- querySchema[ArticleTagRow](entity = "tags_articles")
@@ -93,6 +93,15 @@ class ArticlesRepository(quill: SqliteZioJdbcContext[SnakeCase], dataSource: Dat
   ).unit
     .provide(dsLayer)
 
+  def updateTagSlugs(updatedSlug: String, slug: String): IO[Exception, Unit] = run(
+    quote(
+      querySchema[ArticleTagRow](entity = "tags_articles")
+        .filter(_.articleSlug == lift(slug))
+        .update(_.articleSlug -> lift(updatedSlug))
+    )
+  ).unit
+    .provide(dsLayer)
+
   def add(article: ArticleData, userId: Int): IO[Exception, Unit] = run(
     quote(
       querySchema[ArticleRow](entity = "articles")
@@ -109,18 +118,18 @@ class ArticlesRepository(quill: SqliteZioJdbcContext[SnakeCase], dataSource: Dat
   ).unit
     .provide(dsLayer)
 
-  def updateBySlug(updateData: ArticleUpdateData, slug: String): IO[Exception, ArticleUpdateData] = run(
+  def updateBySlug(updateData: ArticleData, slug: String): IO[Exception, Unit] = run(
     quote(
       querySchema[ArticleRow](entity = "articles")
-        .filter(_.slug == lift(slug))
+        .filter(_.slug == lift(slug.toLowerCase()))
         .update(
-          record => record.slug -> lift(updateData.slug.orNull),
-          record => record.title -> lift(updateData.title.orNull),
-          record => record.description -> lift(updateData.description.orNull),
-          record => record.body -> lift(updateData.body.orNull)
+          record => record.slug -> lift(updateData.slug),
+          record => record.title -> lift(updateData.title),
+          record => record.description -> lift(updateData.description),
+          record => record.body -> lift(updateData.body)
         )
     )
-  ).map(_ => updateData)
+  ).unit
     .mapError(_ => Exceptions.AlreadyInUse("Article name already exists"))
     .provide(dsLayer)
 

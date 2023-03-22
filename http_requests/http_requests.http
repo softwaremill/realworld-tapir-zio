@@ -10,7 +10,7 @@ Authorization: Bearer {{JWT}}
 
 ###
 
-GET http://localhost:8080/api/articles/how-to-train-your-dragon-2
+GET http://localhost:8080/api/articles/how-to-train-your-dragon-v
 Accept: application/json
 Authorization: Bearer {{JWT}}
 
@@ -47,7 +47,7 @@ Authorization: Bearer {{JWT}}
 
 ###
 
-PUT http://localhost:8080/api/articles/how-to-train-your-dragon-2
+PUT http://localhost:8080/api/articles/how-to-train-your-dragon-v
 Accept: application/json
 Content-Type: application/json
 Authorization: Bearer {{JWT}}
