@@ -1,5 +1,6 @@
 package com.softwaremill.realworld.articles
 
+import com.softwaremill.realworld.common.NoneAsNullOptionEncoder.*
 import zio.json.{DeriveJsonDecoder, DeriveJsonEncoder}
 
 import java.time.Instant
