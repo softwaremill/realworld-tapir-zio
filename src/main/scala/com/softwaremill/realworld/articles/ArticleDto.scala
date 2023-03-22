@@ -45,7 +45,7 @@ case class ArticleCreateData(
     title: String,
     description: String,
     body: String,
-    var tagList: List[String]// TODO tagList is currently mandatory...
+    tagList: List[String] // TODO tagList is currently mandatory...
 )
 
 object ArticleCreateData:
