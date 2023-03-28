@@ -104,14 +104,13 @@ class ArticlesRepository(quill: SqliteZioJdbcContext[SnakeCase], dataSource: Dat
     .provide(dsLayer)
 
   def add(article: ArticleRow): Task[Unit] =
-    run(queryArticle.insertValue(lift(article)))
-      .unit
+    run(queryArticle.insertValue(lift(article))).unit
       .mapError {
-      case e: SQLiteException if e.getResultCode == SQLiteErrorCode.SQLITE_CONSTRAINT_PRIMARYKEY =>
-        Exceptions.AlreadyInUse("Article name already exists")
-      case e => e
-    }
-    .provide(dsLayer)
+        case e: SQLiteException if e.getResultCode == SQLiteErrorCode.SQLITE_CONSTRAINT_PRIMARYKEY =>
+          Exceptions.AlreadyInUse("Article name already exists")
+        case e => e
+      }
+      .provide(dsLayer)
 
   def updateBySlug(updateData: ArticleData, slug: String): IO[Exception, Unit] = run(
     queryArticle
