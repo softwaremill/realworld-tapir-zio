@@ -1,6 +1,7 @@
 package com.softwaremill.realworld.articles
 
 import com.softwaremill.realworld.articles.ArticlesEndpoints.{*, given}
+import com.softwaremill.realworld.common.Exceptions.AlreadyInUse
 import com.softwaremill.realworld.common.Pagination
 import com.softwaremill.realworld.common.TestUtils.*
 import com.softwaremill.realworld.db.{Db, DbConfig, DbMigrator}
@@ -433,6 +434,63 @@ object ArticlesRepositorySpec extends ZIOSpecDefault:
                   following = false
                 )
               )
+            )
+          )
+        },
+        test("update article - check article already exist") {
+          assertZIO((for {
+            repo <- ZIO.service[ArticlesRepository]
+            oldSlug = "new-article-under-test"
+            updatedSlug = "updated-article-under-test"
+            _ <- repo.add(
+              ArticleData(
+                oldSlug,
+                "New-article-under-test",
+                "What a nice day!",
+                "Writing scala code is quite challenging pleasure",
+                Nil,
+                Instant.ofEpochMilli(1455765123456L),
+                Instant.ofEpochMilli(1455767123456L),
+                false,
+                0,
+                null // TODO I think more specialized class should be used for article creation
+              ),
+              10
+            )
+            _ <- repo.add(
+              ArticleData(
+                updatedSlug,
+                "Updated-slug-which-causes-conflict",
+                "It occupies article slug",
+                "Which will be used for updating another article during next step",
+                Nil,
+                Instant.ofEpochMilli(1455765123567L),
+                Instant.ofEpochMilli(1455767123567L),
+                false,
+                0,
+                null // TODO I think more specialized class should be used for article creation
+              ),
+              10
+            )
+            _ <- repo.updateBySlug(
+              ArticleData(
+                updatedSlug,
+                "Updated-article-under-test",
+                "What a nice updated day!",
+                "Updating scala code is quite challenging pleasure",
+                Nil,
+                null, // TODO I think more specialized class should be used for article creation
+                null,
+                false,
+                0,
+                null
+              ),
+              oldSlug
+            )
+            v <- repo.findBySlug(updatedSlug).map(_.get)
+          } yield v).exit)(
+            failsCause(
+              containsCause(Cause.fail(AlreadyInUse(message = "Article name already exists")))
             )
           )
         }
