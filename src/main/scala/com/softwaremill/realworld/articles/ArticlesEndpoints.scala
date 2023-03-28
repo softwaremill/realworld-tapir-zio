@@ -3,6 +3,7 @@ package com.softwaremill.realworld.articles
 import com.softwaremill.realworld.articles.*
 import com.softwaremill.realworld.common.*
 import com.softwaremill.realworld.db.{Db, DbConfig}
+import com.softwaremill.realworld.http.ErrorMapper.defaultErrorsMappings
 import io.getquill.SnakeCase
 import sttp.model.StatusCode
 import sttp.tapir.generic.auto.*
@@ -11,9 +12,10 @@ import sttp.tapir.server.ServerEndpoint.Full
 import sttp.tapir.ztapir.*
 import sttp.tapir.{EndpointInput, PublicEndpoint, Validator}
 import zio.json.{DeriveJsonDecoder, DeriveJsonEncoder}
-import zio.{Cause, Console, Exit, ZIO, ZLayer}
+import zio.{Cause, Console, Exit, IO, ZIO, ZLayer}
 
 import javax.sql.DataSource
+import scala.util.chaining.*
 
 class ArticlesEndpoints(articlesService: ArticlesService, base: BaseEndpoints):
 
@@ -42,7 +44,7 @@ class ArticlesEndpoints(articlesService: ArticlesService, base: BaseEndpoints):
         articlesService
           .list(filters.flatten.toMap, pagination)
           .logError
-          .mapError(_ => InternalServerError())
+          .pipe(defaultErrorsMappings)
     )
 
   val get: ZServerEndpoint[Any, Any] = base.secureEndpoint.get
@@ -51,12 +53,9 @@ class ArticlesEndpoints(articlesService: ArticlesService, base: BaseEndpoints):
     .serverLogic(session =>
       slug =>
         articlesService
-          .find(slug)
+          .findBySlugAsSeenBy(slug, session.email)
           .logError
-          .mapError {
-            case e: Exceptions.NotFound => NotFound(e.message)
-            case _                      => InternalServerError()
-          }
+          .pipe(defaultErrorsMappings)
           .map(Article.apply)
     )
 
@@ -69,11 +68,7 @@ class ArticlesEndpoints(articlesService: ArticlesService, base: BaseEndpoints):
         articlesService
           .create(data.article, session.email)
           .logError
-          .mapError {
-            case e: Exceptions.AlreadyInUse => Conflict(e.message)
-            case e: Exceptions.NotFound     => NotFound(e.message)
-            case _                          => InternalServerError()
-          }
+          .pipe(defaultErrorsMappings)
           .map(Article.apply)
     )
 
@@ -86,15 +81,33 @@ class ArticlesEndpoints(articlesService: ArticlesService, base: BaseEndpoints):
         articlesService
           .update(articleUpdateData = data._2.article, slug = data._1, email = session.email)
           .logError
-          .mapError {
-            case e: Exceptions.AlreadyInUse => Conflict(e.message)
-            case e: Exceptions.NotFound     => NotFound(e.message)
-            case _                          => InternalServerError()
-          }
+          .pipe(defaultErrorsMappings)
           .map(Article.apply)
     )
 
-  val endpoints: List[ZServerEndpoint[Any, Any]] = List(listArticles, get, update, create)
+  val makeFavorite: ZServerEndpoint[Any, Any] = base.secureEndpoint.post
+    .in("api" / "articles" / path[String]("slug") / "favorite")
+    .out(jsonBody[Article])
+    .serverLogic(session =>
+      slug =>
+        articlesService
+          .makeFavorite(slug, session.email)
+          .pipe(defaultErrorsMappings)
+          .map(Article.apply)
+    )
+
+  val removeFavorite: ZServerEndpoint[Any, Any] = base.secureEndpoint.delete
+    .in("api" / "articles" / path[String]("slug") / "favorite")
+    .out(jsonBody[Article])
+    .serverLogic(session =>
+      slug =>
+        articlesService
+          .removeFavorite(slug, session.email)
+          .pipe(defaultErrorsMappings)
+          .map(Article.apply)
+    )
+
+  val endpoints: List[ZServerEndpoint[Any, Any]] = List(listArticles, get, update, create, makeFavorite, removeFavorite)
 
   private def filterParam(name: String, key: ArticlesFilters): EndpointInput.Query[Option[(ArticlesFilters, String)]] = {
     query[Option[String]](name)

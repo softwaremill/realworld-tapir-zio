@@ -2,10 +2,17 @@ CREATE TABLE users
 (
     user_id  INTEGER PRIMARY KEY,
     email    TEXT NOT NULL UNIQUE,
-    username TEXT NOT NULL,
+    username TEXT NOT NULL UNIQUE,
     password TEXT NOT NULL,
     bio      TEXT,
     image    TEXT
+);
+
+CREATE TABLE followers
+(
+    user_id INTEGER NOT NULL REFERENCES users(user_id),
+    follower_id INTEGER NOT NULL REFERENCES users(user_id),
+    PRIMARY KEY (user_id, follower_id)
 );
 
 CREATE TABLE articles
