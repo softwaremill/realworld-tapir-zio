@@ -98,13 +98,6 @@ class ArticlesRepository(quill: SqliteZioJdbcContext[SnakeCase], dataSource: Dat
   ).unit
     .provide(dsLayer)
 
-  def updateTagSlugs(updatedSlug: String, slug: String): IO[Exception, Unit] = run(
-    queryTagArticle
-      .filter(_.articleSlug == lift(slug))
-      .update(_.articleSlug -> lift(updatedSlug))
-  ).unit
-    .provide(dsLayer)
-
   def add(article: ArticleData, userId: Int): IO[Exception, Unit] = run(
     queryArticle
       .insert(
@@ -119,17 +112,23 @@ class ArticlesRepository(quill: SqliteZioJdbcContext[SnakeCase], dataSource: Dat
   ).unit
     .provide(dsLayer)
 
-  def updateBySlug(updateData: ArticleData, slug: String): IO[Exception, Unit] = run(
-    queryArticle
-      .filter(_.slug == lift(slug.toLowerCase()))
-      .update(
-        record => record.slug -> lift(updateData.slug),
-        record => record.title -> lift(updateData.title),
-        record => record.description -> lift(updateData.description),
-        record => record.body -> lift(updateData.body)
-      )
-  ).unit
-    .mapError(_ => Exceptions.AlreadyInUse("Article name already exists"))
+  def updateBySlug(updateData: ArticleData, slug: String): IO[Exception, Unit] = (for {
+    _ <- run(
+      queryArticle
+        .filter(_.slug == lift(slug.toLowerCase()))
+        .update(
+          record => record.slug -> lift(updateData.slug),
+          record => record.title -> lift(updateData.title),
+          record => record.description -> lift(updateData.description),
+          record => record.body -> lift(updateData.body)
+        )
+    ).mapError(_ => Exceptions.AlreadyInUse("Article name already exists"))
+    _ <- run(
+      queryTagArticle
+        .filter(_.articleSlug == lift(slug))
+        .update(_.articleSlug -> lift(updateData.slug))
+    )
+  } yield ())
     .provide(dsLayer)
 
   private def article(tuple: (ArticleRow, ProfileRow, Option[String], Option[Int])): ArticleData = {

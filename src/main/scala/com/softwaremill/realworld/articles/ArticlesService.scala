@@ -44,7 +44,6 @@ class ArticlesService(articlesRepository: ArticlesRepository, usersRepository: U
       oldArticle <- ZIO.fromOption(maybeOldArticle).mapError(_ => NotFound(s"Article with slug $slug doesn't exist."))
       updatedArticle = updateArticleData(oldArticle, articleUpdateData)
       _ <- articlesRepository.updateBySlug(updatedArticle, oldArticle.slug)
-      _ <- articlesRepository.updateTagSlugs(updatedArticle.slug, oldArticle.slug)
     } yield updatedArticle
 
   private def updateArticleData(articleData: ArticleData, updatedData: ArticleUpdateData): ArticleData = {

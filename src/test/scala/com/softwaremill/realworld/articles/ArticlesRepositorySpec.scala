@@ -10,10 +10,11 @@ import sttp.client3.{HttpError, Response, ResponseException, UriContext, basicRe
 import sttp.tapir.EndpointOutput.StatusCode
 import sttp.tapir.server.stub.TapirStubInterpreter
 import sttp.tapir.ztapir.{RIOMonadError, ZServerEndpoint}
+import zio.test.*
 import zio.test.Assertion.*
-import zio.test.{Assertion, TestAspect, TestRandom, ZIOSpecDefault, assertZIO}
-import zio.{RIO, Random, ZIO, ZLayer}
+import zio.{Cause, RIO, Random, ZIO, ZLayer}
 
+import java.sql.SQLException
 import java.time.{Instant, ZonedDateTime}
 import javax.sql.DataSource
 
@@ -237,39 +238,10 @@ object ArticlesRepositorySpec extends ZIOSpecDefault:
             )
           )
         },
-        test("find article by slug and email") {
-          for {
-            repo <- ZIO.service[ArticlesRepository]
-            v <- repo.findBySlugAndEmail("how-to-train-your-dragon", "jake@example.com")
-          } yield zio.test.assert(v)(
-            Assertion.equalTo(
-              Option(
-                ArticleData(
-                  "how-to-train-your-dragon",
-                  "How to train your dragon",
-                  "Ever wonder how?",
-                  "It takes a Jacobian",
-                  List("dragons", "training"),
-                  Instant.ofEpochMilli(1455765776637L),
-                  Instant.ofEpochMilli(1455767315824L),
-                  false,
-                  2,
-                  ArticleAuthor("jake", Some("I work at statefarm"), Some("https://i.stack.imgur.com/xHWG8.jpg"), following = false)
-                )
-              )
-            )
-          )
-        },
         test("find article - check article not found") {
           for {
             repo <- ZIO.service[ArticlesRepository]
             v <- repo.findBySlug("non-existing-article-slug")
-          } yield zio.test.assert(v)(Assertion.isNone)
-        },
-        test("find article by slug and email - check article not found") {
-          for {
-            repo <- ZIO.service[ArticlesRepository]
-            v <- repo.findBySlugAndEmail("how-to-train-your-dragon", "someone_else@example.com")
           } yield zio.test.assert(v)(Assertion.isNone)
         }
       ) @@ TestAspect.before(withFixture("fixtures/articles/basic-data.sql"))
@@ -291,6 +263,130 @@ object ArticlesRepositorySpec extends ZIOSpecDefault:
             _ <- repo.addTag(newTag, "how-to-train-your-dragon")
             v <- repo.findBySlug("how-to-train-your-dragon-2").map(_.get.tagList)
           } yield zio.test.assert(v)(Assertion.hasNoneOf(newTag))
+        }
+      ) @@ TestAspect.before(withFixture("fixtures/articles/basic-data.sql"))
+        @@ TestAspect.after(clearDb),
+      suite("create and update article")(
+        test("create article") {
+          for {
+            repo <- ZIO.service[ArticlesRepository]
+            slug = "new-article-under-test"
+            _ <- repo.add(
+              ArticleData(
+                slug,
+                "New-article-under-test",
+                "What a nice day!",
+                "Writing scala code is quite challenging pleasure",
+                Nil,
+                Instant.ofEpochMilli(1455765123456L),
+                Instant.ofEpochMilli(1455767123456L),
+                false,
+                0,
+                null // TODO I think more specialized class should be used for article creation
+              ),
+              10
+            )
+            v <- repo.findBySlug(slug).map(_.get)
+          } yield zio.test.assert(v)(
+            Assertion.equalTo(
+              ArticleData(
+                slug,
+                "New-article-under-test",
+                "What a nice day!",
+                "Writing scala code is quite challenging pleasure",
+                Nil,
+                Instant.ofEpochMilli(1455765123456L),
+                Instant.ofEpochMilli(1455767123456L),
+                false,
+                0,
+                ArticleAuthor(
+                  username = "jake",
+                  bio = Some("I work at statefarm"),
+                  image = Some("https://i.stack.imgur.com/xHWG8.jpg"),
+                  following = false
+                )
+              )
+            )
+          )
+        },
+        test("create non unique article - check article already exists") {
+          assertZIO((for {
+            repo <- ZIO.service[ArticlesRepository]
+            slug = "how-to-train-your-dragon"
+            v <- repo.add(
+              ArticleData(
+                slug,
+                "How-to-train-your-dragon",
+                "What a nice day!",
+                "Writing scala code is quite challenging pleasure",
+                Nil,
+                Instant.ofEpochMilli(1455765123456L),
+                Instant.ofEpochMilli(1455767123456L),
+                false,
+                0,
+                null // TODO I think more specialized class should be used for article creation
+              ),
+              10
+            )
+          } yield v).exit)(failsWithA[java.sql.SQLException])
+        },
+        test("update article") {
+          for {
+            repo <- ZIO.service[ArticlesRepository]
+            oldSlug = "new-article-under-test"
+            updatedSlug = "updated-article-under-test"
+            _ <- repo.add(
+              ArticleData(
+                oldSlug,
+                "New-article-under-test",
+                "What a nice day!",
+                "Writing scala code is quite challenging pleasure",
+                Nil,
+                Instant.ofEpochMilli(1455765123456L),
+                Instant.ofEpochMilli(1455767123456L),
+                false,
+                0,
+                null // TODO I think more specialized class should be used for article creation
+              ),
+              10
+            )
+            _ <- repo.updateBySlug(
+              ArticleData(
+                updatedSlug,
+                "Updated-article-under-test",
+                "What a nice updated day!",
+                "Updating scala code is quite challenging pleasure",
+                Nil,
+                null, // TODO I think more specialized class should be used for article creation
+                null,
+                false,
+                0,
+                null
+              ),
+              oldSlug
+            )
+            v <- repo.findBySlug(updatedSlug).map(_.get)
+          } yield zio.test.assert(v)(
+            Assertion.equalTo(
+              ArticleData(
+                updatedSlug,
+                "Updated-article-under-test",
+                "What a nice updated day!",
+                "Updating scala code is quite challenging pleasure",
+                Nil,
+                Instant.ofEpochMilli(1455765123456L),
+                Instant.ofEpochMilli(1455767123456L),
+                false,
+                0,
+                ArticleAuthor(
+                  username = "jake",
+                  bio = Some("I work at statefarm"),
+                  image = Some("https://i.stack.imgur.com/xHWG8.jpg"),
+                  following = false
+                )
+              )
+            )
+          )
         }
       ) @@ TestAspect.before(withFixture("fixtures/articles/basic-data.sql"))
         @@ TestAspect.after(clearDb)
