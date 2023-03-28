@@ -6,6 +6,7 @@ import com.softwaremill.realworld.common.{Exceptions, Pagination}
 import com.softwaremill.realworld.profiles.ProfileRow
 import com.softwaremill.realworld.users.UserRow
 import io.getquill.*
+import org.sqlite.{SQLiteErrorCode, SQLiteException}
 import zio.{Console, IO, Task, UIO, ZIO, ZLayer}
 
 import java.sql.SQLException
@@ -114,25 +115,26 @@ class ArticlesRepository(quill: SqliteZioJdbcContext[SnakeCase], dataSource: Dat
         _.authorId -> lift(userId)
       )
   ).unit
+    .mapError {
+      case e: SQLiteException if e.getResultCode == SQLiteErrorCode.SQLITE_CONSTRAINT_PRIMARYKEY =>
+        Exceptions.AlreadyInUse("Article name already exists")
+    }
     .provide(dsLayer)
 
-  def updateBySlug(updateData: ArticleData, slug: String): IO[Exception, Unit] = (for {
-    _ <- run(
-      queryArticle
-        .filter(_.slug == lift(slug.toLowerCase()))
-        .update(
-          record => record.slug -> lift(updateData.slug),
-          record => record.title -> lift(updateData.title),
-          record => record.description -> lift(updateData.description),
-          record => record.body -> lift(updateData.body)
-        )
-    ).mapError(_ => Exceptions.AlreadyInUse("Article name already exists"))
-    _ <- run(
-      queryTagArticle
-        .filter(_.articleSlug == lift(slug))
-        .update(_.articleSlug -> lift(updateData.slug))
-    )
-  } yield ())
+  def updateBySlug(updateData: ArticleData, slug: String): IO[Exception, Unit] = run(
+    queryArticle
+      .filter(_.slug == lift(slug.toLowerCase()))
+      .update(
+        record => record.slug -> lift(updateData.slug),
+        record => record.title -> lift(updateData.title),
+        record => record.description -> lift(updateData.description),
+        record => record.body -> lift(updateData.body)
+      )
+  ).unit
+    .mapError {
+      case e: SQLiteException if e.getResultCode == SQLiteErrorCode.SQLITE_CONSTRAINT_PRIMARYKEY =>
+        Exceptions.AlreadyInUse("Article name already exists")
+    }
     .provide(dsLayer)
 
   def makeFavorite(slug: String, userId: Int) = run(

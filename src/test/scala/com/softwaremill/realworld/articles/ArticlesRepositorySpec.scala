@@ -5,6 +5,7 @@ import com.softwaremill.realworld.common.Exceptions.AlreadyInUse
 import com.softwaremill.realworld.common.Pagination
 import com.softwaremill.realworld.common.TestUtils.*
 import com.softwaremill.realworld.db.{Db, DbConfig, DbMigrator}
+import org.sqlite.{SQLiteErrorCode, SQLiteException}
 import sttp.client3.testing.SttpBackendStub
 import sttp.client3.ziojson.*
 import sttp.client3.{HttpError, Response, ResponseException, UriContext, basicRequest}
@@ -377,7 +378,11 @@ object ArticlesRepositorySpec extends ZIOSpecDefault:
               ),
               10
             )
-          } yield v).exit)(failsWithA[java.sql.SQLException])
+          } yield v).exit)(
+            failsCause(
+              containsCause(Cause.fail(AlreadyInUse(message = "Article name already exists")))
+            )
+          )
         },
         test("update article") {
           for {
