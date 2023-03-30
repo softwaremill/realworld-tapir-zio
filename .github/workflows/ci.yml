@@ -18,6 +18,14 @@ jobs:
       - name: Check formatting
         id: check-formatting
         run: sbt scalafmtCheckAll
-      - name: Test
-        id: test
-        run: sbt -v test
+      - name: Checkout Postman collections
+        uses: actions/checkout@v3
+        with:
+          repository: gothinkster/realworld
+          path: realworld-repo
+      - name: Override with postman collections from original repo
+        run: cp ./realworld-repo/api/Conduit.postman_collection.json ./postman_collections/Conduit.postman_collection.json
+      - name: Postman tests
+        id: postman-tests
+        run: ./run-postman-tests.sh
+        shell: bash
