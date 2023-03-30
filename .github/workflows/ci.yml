@@ -21,10 +21,6 @@ jobs:
       - name: Test
         id: test
         run: sbt -v test
-      - name: Override with postman collections from original repo
-        uses: wei/wget@v1
-        with:
-          args: -q -O ./postman_collections/Conduit.postman_collection.json https://raw.githubusercontent.com/gothinkster/realworld/main/api/Conduit.postman_collection.json
       - name: Postman tests
         id: postman-tests
         run: ./run-postman-tests.sh

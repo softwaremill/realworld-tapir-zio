@@ -1,11 +1,20 @@
 #!/usr/bin/env bash
 set -x
 
+if [ ! -f ./postman_collections/Conduit.postman_collection.json ]
+then
+  echo "Downloading Postman collection tests from upstream realworld project repository"
+  mkdir -p ./postman_collections
+  wget -q -O ./postman_collections/Conduit.postman_collection.json https://raw.githubusercontent.com/gothinkster/realworld/main/api/Conduit.postman_collection.json
+else
+  echo "Postman collection with tests found. Will use it."
+fi
+
 echo "Starting application and running postman collection tests"
 
 sbt run &> sbt_run.log & sbt_pid=$!
 
-timeout --signal=SIGINT 120 tail -f -n0 sbt_run.log | grep -iqe "Application realworld-tapir-zio started"
+timeout --signal=SIGINT 120 tail -f sbt_run.log | grep -iqe "Application realworld-tapir-zio started"
 app_started=$?
 
 if [[ $app_started -ne 0 ]]
@@ -15,7 +24,7 @@ then
   exit 1
 fi
 
-docker run --add-host=host.docker.internal:host-gateway -t -v `pwd`/postman_collections:/postman_collections \
+docker run --rm --add-host=host.docker.internal:host-gateway -t -v `pwd`/postman_collections:/postman_collections \
  postman/newman run /postman_collections/Conduit.postman_collection.json \
  --delay-request 500 \
  --global-var "APIURL=http://host.docker.internal:8080/api" \
