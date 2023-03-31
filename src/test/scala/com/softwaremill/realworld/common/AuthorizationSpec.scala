@@ -3,7 +3,7 @@ package com.softwaremill.realworld.common
 import com.softwaremill.realworld.articles.model.{Article, ArticleAuthor, ArticleData}
 import com.softwaremill.realworld.articles.{ArticlesEndpoints, ArticlesRepository, ArticlesService}
 import com.softwaremill.realworld.auth.AuthService
-import com.softwaremill.realworld.common.model.auth.{ArticleAuthEndpointParameters, ArticleAuthTestParameters, UserAuthEndpointParameters, UserAuthTestParameters}
+import com.softwaremill.realworld.common.model.auth.*
 import com.softwaremill.realworld.common.{BaseEndpoints, Configuration}
 import com.softwaremill.realworld.db.{Db, DbConfig, DbMigrator}
 import com.softwaremill.realworld.users.UsersEndpointsSpec.test
