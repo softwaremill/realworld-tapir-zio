@@ -2,7 +2,7 @@ package com.softwaremill.realworld.articles
 
 import com.softwaremill.realworld.articles.ArticlesFilters.{Author, Favorited, Tag}
 import com.softwaremill.realworld.articles.ArticlesTags.{explodeTags, tagsConcat}
-import com.softwaremill.realworld.articles.model.{ArticleAuthor, ArticleData, ArticleFavoriteRow, ArticleRow, ArticleTagRow}
+import com.softwaremill.realworld.articles.model.*
 import com.softwaremill.realworld.common.{Exceptions, Pagination}
 import com.softwaremill.realworld.profiles.ProfileRow
 import com.softwaremill.realworld.users.UserRow
