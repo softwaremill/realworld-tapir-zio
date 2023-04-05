@@ -75,10 +75,8 @@ object TestUtils:
     queries.foreach(statement.execute)
   }
 
-  private def clearDb: RIO[DbConfig, Unit] = for {
-    cfg <- ZIO.service[DbConfig]
-    _ <- ZIO.attemptBlocking(Files.deleteIfExists(Paths.get(cfg.dbPath)))
-  } yield ()
+  private def clearDb(cfg: DbConfig): RIO[Any, Unit] =
+    ZIO.attemptBlocking(Files.deleteIfExists(Paths.get(cfg.dbPath)))
 
   private val initializeDb: RIO[DbMigrator, Unit] = for {
     migrator <- ZIO.service[DbMigrator]
@@ -95,39 +93,28 @@ object TestUtils:
     _ <- loadFixture(fixturePath)
   } yield ()
 
-  /*
-  Clean up logic is packaged into a ZLayer.
-  This ensures that *.sqlite file will always get deleted after the test.
-  Clean up layer must be placed before the layer that provides a DataSource.
-  Placing clearDbLayer before Db.dataSourceLive guarantees that clean up will happen after DataSource is closed.
-   */
-  private val clearDbLayer = {
-    val release = (_: Unit) =>
-      (for {
-        _ <- ZIO.scope
-        _ <- clearDb
-      } yield ()).orDie
-
-    ZLayer
-      .service[DbConfig]
-      .flatMap { _ =>
-        ZLayer.scoped {
-          ZIO.acquireRelease(ZIO.unit)(release)
-        }
-      }
-  }
-
   private def createTestDbConfig(): ZIO[Random, Nothing, DbConfig] = for {
     _ <- TestRandom.setSeed(System.nanoTime())
     r <- ZIO.random
     uuid <- r.nextUUID
   } yield DbConfig(s"/tmp/realworld-test-$uuid.sqlite")
 
-  private val testDbConfigLive: ZLayer[Any, Nothing, DbConfig] =
-    ZLayer.fromZIO(createTestDbConfig().provide(ZLayer.fromZIO(ZIO.random)))
+  private val testDbConfigLive: ZLayer[Any, Nothing, DbConfig] = {
+    val acquire = createTestDbConfig().provide(ZLayer.fromZIO(ZIO.random))
+
+    val release = (config: DbConfig) =>
+      (for {
+        _ <- ZIO.scope
+        _ <- clearDb(config)
+      } yield ()).orDie
+
+    ZLayer.scoped {
+      ZIO.acquireRelease(acquire)(release)
+    }
+  }
 
   val testDbLayer: ZLayer[Any, Nothing, TestDbLayer] =
-    (testDbConfigLive >+> clearDbLayer >+> Db.dataSourceLive >+> DbMigrator.live) ++ Db.quillLive
+    (testDbConfigLive >+> Db.dataSourceLive >+> DbMigrator.live) ++ Db.quillLive
 
   val testDbLayerWithEmptyDb: ZLayer[Any, Nothing, TestDbLayer] =
     testDbLayer >+> ZLayer.fromZIO(ZIO.scoped(withEmptyDb.orDie))
