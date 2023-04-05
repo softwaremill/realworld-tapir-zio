@@ -99,9 +99,9 @@ object TestUtils:
   Clean up logic is packaged into a ZLayer.
   This ensures that *.sqlite file will always get deleted after the test.
   Clean up layer must be placed before the layer that provides a DataSource.
-  Placing deleteDbLayer before Db.dataSourceLive guarantees that clean up will happen after DataSource is closed.
+  Placing clearDbLayer before Db.dataSourceLive guarantees that clean up will happen after DataSource is closed.
    */
-  private val deleteDbLayer = {
+  private val clearDbLayer = {
     val release = (_: Unit) =>
       (for {
         _ <- ZIO.scope
@@ -127,10 +127,10 @@ object TestUtils:
     ZLayer.fromZIO(createTestDbConfig().provide(ZLayer.fromZIO(ZIO.random)))
 
   val testDbLayer: ZLayer[Any, Nothing, TestDbLayer] =
-    (testDbConfigLive >+> deleteDbLayer >+> Db.dataSourceLive >+> DbMigrator.live) ++ Db.quillLive
+    (testDbConfigLive >+> clearDbLayer >+> Db.dataSourceLive >+> DbMigrator.live) ++ Db.quillLive
 
   val testDbLayerWithEmptyDb: ZLayer[Any, Nothing, TestDbLayer] =
-    testDbLayer >+> ZLayer.scoped(withEmptyDb.orDie)
+    testDbLayer >+> ZLayer.fromZIO(ZIO.scoped(withEmptyDb.orDie))
 
   def testDbLayerWithFixture(fixturePath: String): ZLayer[Any, Nothing, TestDbLayer] =
-    testDbLayer >+> ZLayer.scoped(withFixture(fixturePath).orDie)
+    testDbLayer >+> ZLayer.fromZIO(ZIO.scoped(withFixture(fixturePath).orDie))
