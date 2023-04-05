@@ -13,7 +13,7 @@ import sttp.tapir.server.stub.TapirStubInterpreter
 import sttp.tapir.server.ziohttp.ZioHttpServerOptions
 import sttp.tapir.ztapir.{RIOMonadError, ZServerEndpoint}
 import zio.test.TestRandom
-import zio.{RIO, Random, Task, UIO, ZIO, ZLayer}
+import zio.{RIO, Random, Scope, ZIO, ZLayer}
 
 import java.nio.file.{Files, Path, Paths}
 import java.sql.{Connection, Statement}
@@ -25,7 +25,7 @@ import scala.util.{Try, Using}
 
 object TestUtils:
 
-  def zioTapirStubInterpreter =
+  def zioTapirStubInterpreter: TapirStubInterpreter[[_$1] =>> RIO[Any, _$1], Nothing, ZioHttpServerOptions[Any]] =
     TapirStubInterpreter(
       ZioHttpServerOptions.customiseInterceptors
         .exceptionHandler(new DefectHandler())
@@ -33,7 +33,7 @@ object TestUtils:
       SttpBackendStub(new RIOMonadError[Any])
     )
 
-  def backendStub(endpoint: ZServerEndpoint[Any, Any]) =
+  def backendStub(endpoint: ZServerEndpoint[Any, Any]): SttpBackend[[_$1] =>> RIO[Any, _$1], Nothing] =
     zioTapirStubInterpreter
       .whenServerEndpoint(endpoint)
       .thenRunLogic()
@@ -60,39 +60,61 @@ object TestUtils:
     Map("Authorization" -> ("Token " + jwt))
   }
 
-  def withEmptyDb(): RIO[TestDbLayer, Any] = for {
-    migrator <- ZIO.service[DbMigrator]
-    _ <- migrator.migrate()
-    _ <- loadFixture("fixtures/articles/admin.sql")
-  } yield ()
-
-  def withFixture(fixturePath: String): RIO[TestDbLayer, Any] = for {
-    migrator <- ZIO.service[DbMigrator]
-    _ <- migrator.migrate()
-    _ <- loadFixture("fixtures/articles/admin.sql")
-    _ <- loadFixture(fixturePath)
-  } yield ()
-
-  def clearDb: RIO[TestDbLayer, Any] = for {
-    cfg <- ZIO.service[DbConfig]
+  private def loadFixture(fixturePath: String): RIO[DataSource & Scope, Unit] = for {
+    _ <- ZIO.scope
+    dataSource <- ZIO.service[DataSource]
+    fixture <- ZIO.fromAutoCloseable(ZIO.attemptBlocking(Source.fromResource(fixturePath)))
+    connection <- ZIO.fromAutoCloseable(ZIO.attempt(dataSource.getConnection))
+    statement <- ZIO.fromAutoCloseable(ZIO.attempt(connection.createStatement()))
   } yield {
-    Files.deleteIfExists(Paths.get(cfg.dbPath))
-  }
-
-  private def loadFixture(fixturePath: String): RIO[DataSource, Unit] = for {
-    ds <- ZIO.service[DataSource]
-  } yield {
-    val queries = Source
-      .fromResource(fixturePath)
-      .mkString
+    val queries = fixture.mkString
       .split(";")
       .map(_.strip())
       .filter(_.nonEmpty)
-    Using.Manager { use =>
-      val conn: Connection = use(ds.getConnection)
-      val st: Statement = use(conn.createStatement())
-      queries.foreach(st.execute)
-    }
+
+    queries.foreach(statement.execute)
+  }
+
+  private def clearDb: RIO[DbConfig, Unit] = for {
+    cfg <- ZIO.service[DbConfig]
+    _ <- ZIO.attemptBlocking(Files.deleteIfExists(Paths.get(cfg.dbPath)))
+  } yield ()
+
+  private val initializeDb: RIO[DbMigrator, Unit] = for {
+    migrator <- ZIO.service[DbMigrator]
+    _ <- migrator.migrate()
+  } yield ()
+
+  private val withEmptyDb: RIO[DataSource with Scope with DbMigrator, Unit] = for {
+    _ <- initializeDb
+    _ <- loadFixture("fixtures/articles/admin.sql")
+  } yield ()
+
+  private def withFixture(fixturePath: String): RIO[DataSource with Scope with DbMigrator, Unit] = for {
+    _ <- withEmptyDb
+    _ <- loadFixture(fixturePath)
+  } yield ()
+
+  /*
+  Clean up logic is packaged into a ZLayer.
+  This ensures that *.sqlite file will always get deleted after the test.
+  Clean up layer must be placed before the layer that provides a DataSource.
+  Placing deleteDbLayer before Db.dataSourceLive guarantees that clean up will happen after DataSource is closed.
+   */
+  private val deleteDbLayer = {
+    val release = (_: Unit) =>
+      (for {
+        _ <- ZIO.scope
+        _ <- clearDb
+      } yield ()).orDie
+
+    ZLayer
+      .service[DbConfig]
+      .flatMap { _ =>
+        ZLayer.scoped {
+          ZIO.acquireRelease(ZIO.unit)(release)
+        }
+      }
   }
 
   private def createTestDbConfig(): ZIO[Random, Nothing, DbConfig] = for {
@@ -101,8 +123,14 @@ object TestUtils:
     uuid <- r.nextUUID
   } yield DbConfig(s"/tmp/realworld-test-$uuid.sqlite")
 
-  private val testDbConfigLive: ZLayer[Any, Nothing, DbConfig] = ZLayer.fromZIO(createTestDbConfig().provide(ZLayer.fromZIO(ZIO.random)))
+  private val testDbConfigLive: ZLayer[Any, Nothing, DbConfig] =
+    ZLayer.fromZIO(createTestDbConfig().provide(ZLayer.fromZIO(ZIO.random)))
 
-  val testDbConfigLayer: ZLayer[Any, Nothing, TestDbLayer] =
-    (testDbConfigLive >+> Db.dataSourceLive >+> DbMigrator.live)
-      ++ Db.quillLive
+  val testDbLayer: ZLayer[Any, Nothing, TestDbLayer] =
+    (testDbConfigLive >+> deleteDbLayer >+> Db.dataSourceLive >+> DbMigrator.live) ++ Db.quillLive
+
+  val testDbLayerWithEmptyDb: ZLayer[Any, Nothing, TestDbLayer] =
+    testDbLayer >+> ZLayer.scoped(withEmptyDb.orDie)
+
+  def testDbLayerWithFixture(fixturePath: String): ZLayer[Any, Nothing, TestDbLayer] =
+    testDbLayer >+> ZLayer.scoped(withFixture(fixturePath).orDie)
