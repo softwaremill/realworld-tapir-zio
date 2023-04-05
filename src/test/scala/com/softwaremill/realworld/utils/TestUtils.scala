@@ -102,11 +102,7 @@ object TestUtils:
   private val testDbConfigLive: ZLayer[Any, Nothing, DbConfig] = {
     val acquire = createTestDbConfig().provide(ZLayer.fromZIO(ZIO.random))
 
-    val release = (config: DbConfig) =>
-      (for {
-        _ <- ZIO.scope
-        _ <- clearDb(config)
-      } yield ()).orDie
+    val release = (config: DbConfig) => clearDb(config).orDie
 
     ZLayer.scoped {
       ZIO.acquireRelease(acquire)(release)
