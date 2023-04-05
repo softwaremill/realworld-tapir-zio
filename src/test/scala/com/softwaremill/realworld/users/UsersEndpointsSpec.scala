@@ -66,7 +66,6 @@ object UsersEndpointsSpec extends ZIOSpecDefault:
         )
       }
     ),
-
     suite("User register")(
       test("return already in use error") {
         assertZIO(
@@ -106,7 +105,6 @@ object UsersEndpointsSpec extends ZIOSpecDefault:
         }
       }
     ),
-
     suite("User login")(
       test("return invalid credentials error") {
         assertZIO(

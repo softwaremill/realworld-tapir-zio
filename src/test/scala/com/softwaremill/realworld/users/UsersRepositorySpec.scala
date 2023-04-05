@@ -46,7 +46,6 @@ object UsersRepositorySpec extends ZIOSpecDefault:
         )
       }
     ),
-
     suite("find user with password by email")(
       test("check user with password found") {
         for {
@@ -81,7 +80,6 @@ object UsersRepositorySpec extends ZIOSpecDefault:
         )
       }
     ),
-
     suite("add user")(
       test("check user added") {
         for {
