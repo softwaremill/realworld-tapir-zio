@@ -9,6 +9,7 @@ lazy val rootProject = (project in file(".")).settings(
     version := "0.1.0-SNAPSHOT",
     organization := "com.softwaremill",
     scalaVersion := "3.2.1",
+    Test / fork := true,
     scalacOptions ++= Seq(
       "-deprecation",
       "-feature",
