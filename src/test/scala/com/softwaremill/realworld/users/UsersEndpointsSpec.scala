@@ -23,32 +23,32 @@ object UsersEndpointsSpec extends ZIOSpecDefault:
     suite("Get current user")(
       test("return not found error") {
         assertZIO(
-          ZIO
-            .service[UsersEndpoints]
-            .map(_.getCurrentUser)
-            .flatMap { endpoint =>
-              basicRequest
-                .get(uri"http://test.com/api/user")
-                .headers(validAuthorizationHeader("invalid_email@invalid.com"))
-                .response(asJson[User])
-                .send(backendStub(endpoint))
-                .map(_.body)
-            }
+          for {
+            userEndpoints <- ZIO.service[UsersEndpoints]
+            endpoint = userEndpoints.getCurrentUser
+            authHeader <- newValidAuthorizationHeader("invalid_email@invalid.com")
+            response <- basicRequest
+              .get(uri"http://test.com/api/user")
+              .headers(authHeader)
+              .response(asJson[User])
+              .send(backendStub(endpoint))
+            body = response.body
+          } yield body
         )(isLeft(equalTo(HttpError("{\"error\":\"User doesn't exist.\"}", sttp.model.StatusCode(404)))))
       },
       test("return valid user") {
         assertZIO(
-          ZIO
-            .service[UsersEndpoints]
-            .map(_.getCurrentUser)
-            .flatMap { endpoint =>
-              basicRequest
-                .get(uri"http://test.com/api/user")
-                .headers(validAuthorizationHeader())
-                .response(asJson[User])
-                .send(backendStub(endpoint))
-                .map(_.body)
-            }
+          for {
+            userEndpoints <- ZIO.service[UsersEndpoints]
+            endpoint = userEndpoints.getCurrentUser
+            authHeader <- newValidAuthorizationHeader()
+            response <- basicRequest
+              .get(uri"http://test.com/api/user")
+              .headers(authHeader)
+              .response(asJson[User])
+              .send(backendStub(endpoint))
+            body = response.body
+          } yield body
         )(
           isRight(
             equalTo(
