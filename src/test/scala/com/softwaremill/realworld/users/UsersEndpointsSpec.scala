@@ -24,8 +24,8 @@ object UsersEndpointsSpec extends ZIOSpecDefault:
       test("return not found error") {
         assertZIO(
           for {
-            userEndpoints <- ZIO.service[UsersEndpoints]
-            endpoint = userEndpoints.getCurrentUser
+            usersEndpoints <- ZIO.service[UsersEndpoints]
+            endpoint = usersEndpoints.getCurrentUser
             authHeader <- newValidAuthorizationHeader("invalid_email@invalid.com")
             response <- basicRequest
               .get(uri"http://test.com/api/user")
@@ -39,8 +39,8 @@ object UsersEndpointsSpec extends ZIOSpecDefault:
       test("return valid user") {
         assertZIO(
           for {
-            userEndpoints <- ZIO.service[UsersEndpoints]
-            endpoint = userEndpoints.getCurrentUser
+            usersEndpoints <- ZIO.service[UsersEndpoints]
+            endpoint = usersEndpoints.getCurrentUser
             authHeader <- newValidAuthorizationHeader()
             response <- basicRequest
               .get(uri"http://test.com/api/user")
