@@ -26,7 +26,7 @@ object UsersEndpointsSpec extends ZIOSpecDefault:
           for {
             usersEndpoints <- ZIO.service[UsersEndpoints]
             endpoint = usersEndpoints.getCurrentUser
-            authHeader <- newValidAuthorizationHeader("invalid_email@invalid.com")
+            authHeader <- getValidAuthorizationHeader("invalid_email@invalid.com")
             response <- basicRequest
               .get(uri"http://test.com/api/user")
               .headers(authHeader)
@@ -41,7 +41,7 @@ object UsersEndpointsSpec extends ZIOSpecDefault:
           for {
             usersEndpoints <- ZIO.service[UsersEndpoints]
             endpoint = usersEndpoints.getCurrentUser
-            authHeader <- newValidAuthorizationHeader()
+            authHeader <- getValidAuthorizationHeader()
             response <- basicRequest
               .get(uri"http://test.com/api/user")
               .headers(authHeader)

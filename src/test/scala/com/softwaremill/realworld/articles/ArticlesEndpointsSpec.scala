@@ -33,7 +33,7 @@ object ArticlesEndpointsSpec extends ZIOSpecDefault:
         suite("with auth data only")(
           test("return empty list") {
             for {
-              authHeader <- newValidAuthorizationHeader()
+              authHeader <- getValidAuthorizationHeader()
               result <- checkIfArticleListIsEmpty(authorizationHeaderOpt = Some(authHeader), uri = uri"http://test.com/api/articles")
             } yield result
           }
@@ -52,7 +52,7 @@ object ArticlesEndpointsSpec extends ZIOSpecDefault:
         suite("with populated db")(
           test("validation failed on filter") {
             for {
-              authHeader <- newValidAuthorizationHeader()
+              authHeader <- getValidAuthorizationHeader()
               result <- checkIfFilterErrorOccur(
                 authorizationHeaderOpt = Some(authHeader),
                 uri = uri"http://test.com/api/articles?tag=invalid-tag"
@@ -61,7 +61,7 @@ object ArticlesEndpointsSpec extends ZIOSpecDefault:
           },
           test("validation failed on pagination") {
             for {
-              authHeader <- newValidAuthorizationHeader()
+              authHeader <- getValidAuthorizationHeader()
               result <- checkIfPaginationErrorOccur(
                 authorizationHeaderOpt = Some(authHeader),
                 uri = uri"http://test.com/api/articles?limit=invalid-limit&offset=invalid-offset"
@@ -70,7 +70,7 @@ object ArticlesEndpointsSpec extends ZIOSpecDefault:
           },
           test("check pagination") {
             for {
-              authHeader <- newValidAuthorizationHeader()
+              authHeader <- getValidAuthorizationHeader()
               result <- checkPagination(
                 authorizationHeaderOpt = Some(authHeader),
                 uri = uri"http://test.com/api/articles?limit=1&offset=1"
@@ -79,7 +79,7 @@ object ArticlesEndpointsSpec extends ZIOSpecDefault:
           },
           test("check filters") {
             for {
-              authHeader <- newValidAuthorizationHeader()
+              authHeader <- getValidAuthorizationHeader()
               result <- checkFilters(
                 authorizationHeaderOpt = Some(authHeader),
                 uri = uri"http://test.com/api/articles?author=jake&favorited=john&tag=goats"
@@ -88,7 +88,7 @@ object ArticlesEndpointsSpec extends ZIOSpecDefault:
           },
           test("list available articles") {
             for {
-              authHeader <- newValidAuthorizationHeader()
+              authHeader <- getValidAuthorizationHeader()
               result <- listAvailableArticles(
                 authorizationHeaderOpt = Some(authHeader),
                 uri = uri"http://test.com/api/articles"
@@ -175,7 +175,7 @@ object ArticlesEndpointsSpec extends ZIOSpecDefault:
             for {
               articlesEndpoints <- ZIO.service[ArticlesEndpoints]
               endpoint = articlesEndpoints.get
-              authHeader <- newValidAuthorizationHeader()
+              authHeader <- getValidAuthorizationHeader()
               response <- basicRequest
                 .get(uri"http://test.com/api/articles/unknown-article")
                 .headers(authHeader)
@@ -203,7 +203,7 @@ object ArticlesEndpointsSpec extends ZIOSpecDefault:
             for {
               articlesEndpoints <- ZIO.service[ArticlesEndpoints]
               endpoint = articlesEndpoints.get
-              authHeader <- newValidAuthorizationHeader()
+              authHeader <- getValidAuthorizationHeader()
               response <- basicRequest
                 .get(uri"http://test.com/api/articles/how-to-train-your-dragon-2")
                 .headers(authHeader)
@@ -250,7 +250,7 @@ object ArticlesEndpointsSpec extends ZIOSpecDefault:
         for {
           articlesEndpoints <- ZIO.service[ArticlesEndpoints]
           endpoint = articlesEndpoints.create
-          authHeader <- newValidAuthorizationHeader()
+          authHeader <- getValidAuthorizationHeader()
           response <- basicRequest
             .post(uri"http://test.com/api/articles")
             .body(
@@ -305,7 +305,7 @@ object ArticlesEndpointsSpec extends ZIOSpecDefault:
           )
           articlesEndpoints <- ZIO.service[ArticlesEndpoints]
           endpoint = articlesEndpoints.create
-          authHeader <- newValidAuthorizationHeader()
+          authHeader <- getValidAuthorizationHeader()
           response <- basicRequest
             .post(uri"http://test.com/api/articles")
             .body(
@@ -362,7 +362,7 @@ object ArticlesEndpointsSpec extends ZIOSpecDefault:
           )
           articlesEndpoints <- ZIO.service[ArticlesEndpoints]
           endpoint = articlesEndpoints.update
-          authHeader <- newValidAuthorizationHeader()
+          authHeader <- getValidAuthorizationHeader()
           response <- basicRequest
             .put(uri"http://test.com/api/articles/test-slug")
             .body(
@@ -429,7 +429,7 @@ object ArticlesEndpointsSpec extends ZIOSpecDefault:
             )
             articlesEndpoints <- ZIO.service[ArticlesEndpoints]
             endpoint = articlesEndpoints.update
-            authHeader <- newValidAuthorizationHeader()
+            authHeader <- getValidAuthorizationHeader()
             response <- basicRequest
               .put(uri"http://test.com/api/articles/test-slug")
               .body(

@@ -37,27 +37,7 @@ object TestUtils:
       .backend()
 
   type TestDbLayer = DbConfig with DataSource with DbMigrator with SqliteZioJdbcContext[SnakeCase]
-
-  def validAuthorizationHeader(email: String = "admin@example.com"): Map[String, String] = {
-    // start TODO [This is workaround. Need to replace below with service's function call]
-    val now: Instant = Instant.now()
-    val Issuer = "SoftwareMill"
-    val ClaimName = "userEmail"
-    val YouShouldNotKeepSecretsHardcoded = "#>!IEd!G-L70@OTr$t8E[4.#[A;zo2@{"
-    val algorithm: Algorithm = Algorithm.HMAC256(YouShouldNotKeepSecretsHardcoded)
-    val jwt: String = JWT
-      .create()
-      .withIssuer(Issuer)
-      .withClaim(ClaimName, email)
-      .withIssuedAt(now)
-      .withExpiresAt(now.plus(Duration.ofHours(1)))
-      .withJWTId(UUID.randomUUID().toString)
-      .sign(algorithm)
-    // end TODO
-    Map("Authorization" -> ("Token " + jwt))
-  }
-
-  def newValidAuthorizationHeader(email: String = "admin@example.com"): RIO[AuthService, Map[String, String]] =
+  def getValidAuthorizationHeader(email: String = "admin@example.com"): RIO[AuthService, Map[String, String]] =
     for {
       authService <- ZIO.service[AuthService]
       jwt <- authService.generateJwt(email)

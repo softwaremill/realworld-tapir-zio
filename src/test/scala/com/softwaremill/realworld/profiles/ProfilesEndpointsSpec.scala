@@ -64,7 +64,7 @@ object ProfilesEndpointsSpec extends ZIOSpecDefault:
           for {
             profilesEndpoints <- ZIO.service[ProfilesEndpoints]
             endpoint = profilesEndpoints.getProfile
-            authHeader <- newValidAuthorizationHeader("john@example.com")
+            authHeader <- getValidAuthorizationHeader("john@example.com")
             response <- basicRequest
               .get(uri"http://test.com/api/profiles/jake")
               .response(asJson[Profile])
@@ -90,7 +90,7 @@ object ProfilesEndpointsSpec extends ZIOSpecDefault:
           for {
             profilesEndpoints <- ZIO.service[ProfilesEndpoints]
             endpoint = profilesEndpoints.followUser
-            authHeader <- newValidAuthorizationHeader()
+            authHeader <- getValidAuthorizationHeader()
             response <- basicRequest
               .post(uri"http://test.com/api/profiles/john/follow")
               .response(asJson[Profile])
@@ -116,7 +116,7 @@ object ProfilesEndpointsSpec extends ZIOSpecDefault:
           for {
             profilesEndpoints <- ZIO.service[ProfilesEndpoints]
             endpoint = profilesEndpoints.unfollowUser
-            authHeader <- newValidAuthorizationHeader("john@example.com")
+            authHeader <- getValidAuthorizationHeader("john@example.com")
             response <- basicRequest
               .delete(uri"http://test.com/api/profiles/john/follow")
               .response(asJson[Profile])
