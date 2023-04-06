@@ -57,6 +57,12 @@ object TestUtils:
     Map("Authorization" -> ("Token " + jwt))
   }
 
+  def newValidAuthorizationHeader(email: String = "admin@example.com"): RIO[AuthService, Map[String, String]] =
+    for {
+      authService <- ZIO.service[AuthService]
+      jwt <- authService.generateJwt(email)
+    } yield Map("Authorization" -> s"Token $jwt")
+
   private def loadFixture(fixturePath: String): RIO[DataSource, Unit] = ZIO.scoped {
     for {
       dataSource <- ZIO.service[DataSource]
