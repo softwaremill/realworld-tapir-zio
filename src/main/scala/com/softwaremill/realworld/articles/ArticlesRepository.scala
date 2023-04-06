@@ -8,6 +8,7 @@ import com.softwaremill.realworld.common.{Exceptions, Pagination}
 import com.softwaremill.realworld.profiles.ProfileRow
 import com.softwaremill.realworld.users.UserRow
 import io.getquill.*
+import io.getquill.jdbczio.*
 import org.sqlite.{SQLiteErrorCode, SQLiteException}
 import zio.{Console, IO, Task, UIO, ZIO, ZLayer}
 
@@ -16,10 +17,7 @@ import java.time.Instant
 import javax.sql.DataSource
 import scala.collection.immutable
 
-class ArticlesRepository(quill: SqliteZioJdbcContext[SnakeCase], dataSource: DataSource):
-
-  private val dsLayer: ZLayer[Any, Nothing, DataSource] = ZLayer.succeed(dataSource)
-
+class ArticlesRepository(quill: Quill.Sqlite[SnakeCase]):
   import quill.*
 
   private inline def queryArticle = quote(querySchema[ArticleRow](entity = "articles"))
@@ -59,7 +57,6 @@ class ArticlesRepository(quill: SqliteZioJdbcContext[SnakeCase], dataSource: Dat
       pr <- queryProfile if ar.authorId == pr.userId
     } yield (ar, pr, tr.map(_._2), fr.map(_._2)))
       .map(_.map(article))
-      .provide(dsLayer)
   }
 
   def findBySlug(slug: String): IO[SQLException, Option[ArticleData]] =
@@ -75,7 +72,6 @@ class ArticlesRepository(quill: SqliteZioJdbcContext[SnakeCase], dataSource: Dat
     } yield (ar, pr, tr.map(_._2), fr.map(_._2), false))
       .map(_.headOption)
       .map(_.map(mapToArticleData))
-      .provide(dsLayer)
 
   def findBySlugAsSeenBy(slug: String, viewerEmail: String): IO[SQLException, Option[ArticleData]] =
     run(for {
@@ -95,7 +91,6 @@ class ArticlesRepository(quill: SqliteZioJdbcContext[SnakeCase], dataSource: Dat
     } yield (ar, pr, tr.map(_._2), fr.map(_._2), isFavorite))
       .map(_.headOption)
       .map(_.map(mapToArticleData))
-      .provide(dsLayer)
 
   def addTag(tag: String, slug: String): IO[Exception, Unit] = run(
     queryTagArticle
@@ -104,7 +99,6 @@ class ArticlesRepository(quill: SqliteZioJdbcContext[SnakeCase], dataSource: Dat
         _.articleSlug -> lift(slug)
       )
   ).unit
-    .provide(dsLayer)
 
   def add(article: ArticleRow): Task[Unit] =
     run(queryArticle.insertValue(lift(article))).unit
@@ -113,7 +107,6 @@ class ArticlesRepository(quill: SqliteZioJdbcContext[SnakeCase], dataSource: Dat
           Exceptions.AlreadyInUse("Article name already exists")
         case e => e
       }
-      .provide(dsLayer)
 
   def updateBySlug(updateData: ArticleData, slug: String): IO[Exception, Unit] = run(
     queryArticle
@@ -130,15 +123,14 @@ class ArticlesRepository(quill: SqliteZioJdbcContext[SnakeCase], dataSource: Dat
         Exceptions.AlreadyInUse("Article name already exists")
       case e => e
     }
-    .provide(dsLayer)
 
   def makeFavorite(slug: String, userId: Int) = run(
     queryFavoriteArticle.insertValue(lift(ArticleFavoriteRow(userId, slug))).onConflictIgnore
-  ).unit.provide(dsLayer)
+  ).unit
 
   def removeFavorite(slug: String, userId: Int) = run(
     queryFavoriteArticle.filter(a => (a.profileId == lift(userId)) && (a.articleSlug == lift(slug))).delete
-  ).provide(dsLayer)
+  )
 
   def addComment(slug: String, authorId: Int, comment: String) = {
     val now = Instant.now()
@@ -152,15 +144,14 @@ class ArticlesRepository(quill: SqliteZioJdbcContext[SnakeCase], dataSource: Dat
           _.body -> lift(comment)
         )
         .returningGenerated(_.commentId)
-    }.provide(dsLayer)
+    }
   }
 
   def findComment(commentId: Int) = run(queryCommentArticle.filter(_.commentId == lift(commentId)))
     .map(_.headOption)
-    .provide(dsLayer)
     .someOrFail(Exceptions.NotFound(s"Comment with ID=$commentId doesn't exist"))
 
-  def deleteComment(commentId: Int) = run(queryCommentArticle.filter(_.commentId == lift(commentId)).delete).provide(dsLayer)
+  def deleteComment(commentId: Int) = run(queryCommentArticle.filter(_.commentId == lift(commentId)).delete)
 
   private def article(tuple: (ArticleRow, ProfileRow, Option[String], Option[Int])): ArticleData = {
     val (ar, pr, tags, favorites) = tuple
@@ -199,5 +190,5 @@ class ArticlesRepository(quill: SqliteZioJdbcContext[SnakeCase], dataSource: Dat
 
 object ArticlesRepository:
 
-  val live: ZLayer[SqliteZioJdbcContext[SnakeCase] with DataSource, Nothing, ArticlesRepository] =
-    ZLayer.fromFunction(new ArticlesRepository(_, _))
+  val live: ZLayer[Quill.Sqlite[SnakeCase], Nothing, ArticlesRepository] =
+    ZLayer.fromFunction(new ArticlesRepository(_))
