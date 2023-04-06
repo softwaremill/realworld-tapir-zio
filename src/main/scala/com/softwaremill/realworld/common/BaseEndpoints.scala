@@ -24,7 +24,7 @@ class BaseEndpoints(authService: AuthService):
     .securityIn(auth.http[String]("Token", WWWAuthenticateChallenge("Token")))
     .zServerSecurityLogic[Any, UserSession](handleAuth)
 
-  val secureOptionEndpoint: ZPartialServerEndpoint[Any, Option[String], Option[UserSession], Unit, ErrorInfo, Unit, Any] = endpoint
+  val optionallySecureEndpoint: ZPartialServerEndpoint[Any, Option[String], Option[UserSession], Unit, ErrorInfo, Unit, Any] = endpoint
     .errorOut(defaultErrorOutputs)
     .securityIn(auth.http[Option[String]]("Token", WWWAuthenticateChallenge("Token")))
     .zServerSecurityLogic[Any, Option[UserSession]](handleAuthOpt)

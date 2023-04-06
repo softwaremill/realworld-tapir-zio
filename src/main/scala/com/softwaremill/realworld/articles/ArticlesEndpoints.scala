@@ -21,7 +21,7 @@ import scala.util.chaining.*
 
 class ArticlesEndpoints(articlesService: ArticlesService, base: BaseEndpoints):
 
-  val listArticles: ZServerEndpoint[Any, Any] = base.secureOptionEndpoint.get
+  val listArticles: ZServerEndpoint[Any, Any] = base.optionallySecureEndpoint.get
     .in("api" / "articles")
     .in(
       filterParam("tag", ArticlesFilters.Tag)
