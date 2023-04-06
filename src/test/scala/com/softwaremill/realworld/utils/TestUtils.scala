@@ -4,7 +4,6 @@ import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm
 import com.softwaremill.realworld.auth.AuthService
 import com.softwaremill.realworld.db.{Db, DbConfig, DbMigrator}
-import com.softwaremill.realworld.utils.TestUtils.TestDbLayer
 import com.softwaremill.realworld.{CustomDecodeFailureHandler, DefectHandler}
 import io.getquill.{SnakeCase, SqliteZioJdbcContext}
 import sttp.client3.SttpBackend
@@ -12,7 +11,6 @@ import sttp.client3.testing.SttpBackendStub
 import sttp.tapir.server.stub.TapirStubInterpreter
 import sttp.tapir.server.ziohttp.ZioHttpServerOptions
 import sttp.tapir.ztapir.{RIOMonadError, ZServerEndpoint}
-import zio.test.TestRandom
 import zio.{RIO, Random, Scope, ZIO, ZLayer}
 
 import java.nio.file.{Files, Path, Paths}
@@ -21,7 +19,6 @@ import java.time.{Duration, Instant}
 import java.util.UUID
 import javax.sql.DataSource
 import scala.io.Source
-import scala.util.{Try, Using}
 
 object TestUtils:
 
@@ -62,7 +59,6 @@ object TestUtils:
 
   private def loadFixture(fixturePath: String): RIO[DataSource, Unit] = ZIO.scoped {
     for {
-      _ <- ZIO.scope
       dataSource <- ZIO.service[DataSource]
       fixture <- ZIO.fromAutoCloseable(ZIO.attemptBlocking(Source.fromResource(fixturePath)))
       connection <- ZIO.fromAutoCloseable(ZIO.attempt(dataSource.getConnection))
@@ -95,21 +91,14 @@ object TestUtils:
     _ <- loadFixture(fixturePath)
   } yield ()
 
-  private def createTestDbConfig(): ZIO[Random, Nothing, DbConfig] = for {
-    _ <- TestRandom.setSeed(System.nanoTime())
-    r <- ZIO.random
-    uuid <- r.nextUUID
+  private val createTestDbConfig: ZIO[Any, Nothing, DbConfig] = for {
+    uuid <- Random.RandomLive.nextUUID
   } yield DbConfig(s"/tmp/realworld-test-$uuid.sqlite")
 
-  private val testDbConfigLive: ZLayer[Any, Nothing, DbConfig] = {
-    val acquire = createTestDbConfig().provide(ZLayer.fromZIO(ZIO.random))
-
-    val release = (config: DbConfig) => clearDb(config).orDie
-
+  private val testDbConfigLive: ZLayer[Any, Nothing, DbConfig] =
     ZLayer.scoped {
-      ZIO.acquireRelease(acquire)(release)
+      ZIO.acquireRelease(acquire = createTestDbConfig)(release = config => clearDb(config).orDie)
     }
-  }
 
   val testDbLayer: ZLayer[Any, Nothing, TestDbLayer] =
     (testDbConfigLive >+> Db.dataSourceLive >+> DbMigrator.live) ++ Db.quillLive
