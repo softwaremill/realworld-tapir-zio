@@ -61,17 +61,17 @@ object ProfilesEndpointsSpec extends ZIOSpecDefault:
     suite("as authenticated user")(
       test("get profile") {
         assertZIO(
-          ZIO
-            .service[ProfilesEndpoints]
-            .map(_.getProfile)
-            .flatMap { endpoint =>
-              basicRequest
-                .get(uri"http://test.com/api/profiles/jake")
-                .headers(validAuthorizationHeader("john@example.com"))
-                .response(asJson[Profile])
-                .send(backendStub(endpoint))
-                .map(_.body)
-            }
+          for {
+            profilesEndpoints <- ZIO.service[ProfilesEndpoints]
+            endpoint = profilesEndpoints.getProfile
+            authHeader <- getValidAuthorizationHeader("john@example.com")
+            response <- basicRequest
+              .get(uri"http://test.com/api/profiles/jake")
+              .response(asJson[Profile])
+              .headers(authHeader)
+              .send(backendStub(endpoint))
+            body = response.body
+          } yield body
         )(
           isRight(
             hasField(
@@ -87,17 +87,17 @@ object ProfilesEndpointsSpec extends ZIOSpecDefault:
       },
       test("follow profile") {
         assertZIO(
-          ZIO
-            .service[ProfilesEndpoints]
-            .map(_.followUser)
-            .flatMap { endpoint =>
-              basicRequest
-                .post(uri"http://test.com/api/profiles/john/follow")
-                .response(asJson[Profile])
-                .headers(validAuthorizationHeader())
-                .send(backendStub(endpoint))
-                .map(_.body)
-            }
+          for {
+            profilesEndpoints <- ZIO.service[ProfilesEndpoints]
+            endpoint = profilesEndpoints.followUser
+            authHeader <- getValidAuthorizationHeader()
+            response <- basicRequest
+              .post(uri"http://test.com/api/profiles/john/follow")
+              .response(asJson[Profile])
+              .headers(authHeader)
+              .send(backendStub(endpoint))
+            body = response.body
+          } yield body
         )(
           isRight(
             hasField(
@@ -113,17 +113,17 @@ object ProfilesEndpointsSpec extends ZIOSpecDefault:
       },
       test("unfollow profile") {
         assertZIO(
-          ZIO
-            .service[ProfilesEndpoints]
-            .map(_.unfollowUser)
-            .flatMap { endpoint =>
-              basicRequest
-                .delete(uri"http://test.com/api/profiles/john/follow")
-                .response(asJson[Profile])
-                .headers(validAuthorizationHeader("john@example.com"))
-                .send(backendStub(endpoint))
-                .map(_.body)
-            }
+          for {
+            profilesEndpoints <- ZIO.service[ProfilesEndpoints]
+            endpoint = profilesEndpoints.unfollowUser
+            authHeader <- getValidAuthorizationHeader("john@example.com")
+            response <- basicRequest
+              .delete(uri"http://test.com/api/profiles/john/follow")
+              .response(asJson[Profile])
+              .headers(authHeader)
+              .send(backendStub(endpoint))
+            body = response.body
+          } yield body
         )(
           isRight(
             hasField(

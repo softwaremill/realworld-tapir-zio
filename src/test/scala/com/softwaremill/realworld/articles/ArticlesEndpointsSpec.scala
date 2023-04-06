@@ -1,7 +1,7 @@
 package com.softwaremill.realworld.articles
 
 import com.softwaremill.diffx.{Diff, compare}
-import com.softwaremill.realworld.articles.ArticlesSpecData._
+import com.softwaremill.realworld.articles.ArticlesSpecData.*
 import com.softwaremill.realworld.articles.model.*
 import com.softwaremill.realworld.auth.AuthService
 import com.softwaremill.realworld.common.Exceptions.AlreadyInUse
@@ -32,7 +32,10 @@ object ArticlesEndpointsSpec extends ZIOSpecDefault:
       suite("with auth header")(
         suite("with auth data only")(
           test("return empty list") {
-            checkIfArticleListIsEmpty(authorizationHeaderOpt = Some(validAuthorizationHeader()), uri = uri"http://test.com/api/articles")
+            for {
+              authHeader <- getValidAuthorizationHeader()
+              result <- checkIfArticleListIsEmpty(authorizationHeaderOpt = Some(authHeader), uri = uri"http://test.com/api/articles")
+            } yield result
           }
         ).provide(
           Configuration.live,
@@ -48,34 +51,49 @@ object ArticlesEndpointsSpec extends ZIOSpecDefault:
         ),
         suite("with populated db")(
           test("validation failed on filter") {
-            checkIfFilterErrorOccur(
-              authorizationHeaderOpt = Some(validAuthorizationHeader()),
-              uri = uri"http://test.com/api/articles?tag=invalid-tag"
-            )
+            for {
+              authHeader <- getValidAuthorizationHeader()
+              result <- checkIfFilterErrorOccur(
+                authorizationHeaderOpt = Some(authHeader),
+                uri = uri"http://test.com/api/articles?tag=invalid-tag"
+              )
+            } yield result
           },
           test("validation failed on pagination") {
-            checkIfPaginationErrorOccur(
-              authorizationHeaderOpt = Some(validAuthorizationHeader()),
-              uri = uri"http://test.com/api/articles?limit=invalid-limit&offset=invalid-offset"
-            )
+            for {
+              authHeader <- getValidAuthorizationHeader()
+              result <- checkIfPaginationErrorOccur(
+                authorizationHeaderOpt = Some(authHeader),
+                uri = uri"http://test.com/api/articles?limit=invalid-limit&offset=invalid-offset"
+              )
+            } yield result
           },
           test("check pagination") {
-            checkPagination(
-              authorizationHeaderOpt = Some(validAuthorizationHeader()),
-              uri = uri"http://test.com/api/articles?limit=1&offset=1"
-            )
+            for {
+              authHeader <- getValidAuthorizationHeader()
+              result <- checkPagination(
+                authorizationHeaderOpt = Some(authHeader),
+                uri = uri"http://test.com/api/articles?limit=1&offset=1"
+              )
+            } yield result
           },
           test("check filters") {
-            checkFilters(
-              authorizationHeaderOpt = Some(validAuthorizationHeader()),
-              uri = uri"http://test.com/api/articles?author=jake&favorited=john&tag=goats"
-            )
+            for {
+              authHeader <- getValidAuthorizationHeader()
+              result <- checkFilters(
+                authorizationHeaderOpt = Some(authHeader),
+                uri = uri"http://test.com/api/articles?author=jake&favorited=john&tag=goats"
+              )
+            } yield result
           },
           test("list available articles") {
-            listAvailableArticles(
-              authorizationHeaderOpt = Some(validAuthorizationHeader()),
-              uri = uri"http://test.com/api/articles"
-            )
+            for {
+              authHeader <- getValidAuthorizationHeader()
+              result <- listAvailableArticles(
+                authorizationHeaderOpt = Some(authHeader),
+                uri = uri"http://test.com/api/articles"
+              )
+            } yield result
           }
         ).provide(
           Configuration.live,
@@ -154,17 +172,17 @@ object ArticlesEndpointsSpec extends ZIOSpecDefault:
       suite("with auth data only")(
         test("return error on get") {
           assertZIO(
-            ZIO
-              .service[ArticlesEndpoints]
-              .map(_.get)
-              .flatMap { endpoint =>
-                basicRequest
-                  .get(uri"http://test.com/api/articles/unknown-article")
-                  .headers(validAuthorizationHeader())
-                  .response(asJson[ArticlesList])
-                  .send(backendStub(endpoint))
-                  .map(_.body)
-              }
+            for {
+              articlesEndpoints <- ZIO.service[ArticlesEndpoints]
+              endpoint = articlesEndpoints.get
+              authHeader <- getValidAuthorizationHeader()
+              response <- basicRequest
+                .get(uri"http://test.com/api/articles/unknown-article")
+                .headers(authHeader)
+                .response(asJson[Article])
+                .send(backendStub(endpoint))
+              body = response.body
+            } yield body
           )(isLeft(equalTo(HttpError("{\"error\":\"Article with slug unknown-article doesn't exist.\"}", sttp.model.StatusCode(404)))))
         }
       ).provide(
@@ -182,17 +200,17 @@ object ArticlesEndpointsSpec extends ZIOSpecDefault:
       suite("with populated db")(
         test("get existing article") {
           assertZIO(
-            ZIO
-              .service[ArticlesEndpoints]
-              .map(_.get)
-              .flatMap { endpoint =>
-                basicRequest
-                  .get(uri"http://test.com/api/articles/how-to-train-your-dragon-2")
-                  .headers(validAuthorizationHeader())
-                  .response(asJson[Article])
-                  .send(backendStub(endpoint))
-                  .map(_.body)
-              }
+            for {
+              articlesEndpoints <- ZIO.service[ArticlesEndpoints]
+              endpoint = articlesEndpoints.get
+              authHeader <- getValidAuthorizationHeader()
+              response <- basicRequest
+                .get(uri"http://test.com/api/articles/how-to-train-your-dragon-2")
+                .headers(authHeader)
+                .response(asJson[Article])
+                .send(backendStub(endpoint))
+              body = response.body
+            } yield body
           )(
             isRight(
               equalTo(
@@ -230,32 +248,30 @@ object ArticlesEndpointsSpec extends ZIOSpecDefault:
     suite("create article")(
       test("positive article creation") {
         for {
-          result <- ZIO
-            .service[ArticlesEndpoints]
-            .map(_.create)
-            .flatMap { endpoint =>
-              basicRequest
-                .post(uri"http://test.com/api/articles")
-                .body(
-                  ArticleCreate(
-                    ArticleCreateData(
-                      title = "How to train your dragon 2",
-                      description = "So toothless",
-                      body = "Its a dragon",
-                      tagList = List("drogon", "fly")
-                    )
-                  )
+          articlesEndpoints <- ZIO.service[ArticlesEndpoints]
+          endpoint = articlesEndpoints.create
+          authHeader <- getValidAuthorizationHeader()
+          response <- basicRequest
+            .post(uri"http://test.com/api/articles")
+            .body(
+              ArticleCreate(
+                ArticleCreateData(
+                  title = "How to train your dragon 2",
+                  description = "So toothless",
+                  body = "Its a dragon",
+                  tagList = List("drogon", "fly")
                 )
-                .headers(validAuthorizationHeader())
-                .response(asJson[Article])
-                .send(backendStub(endpoint))
-                .map(_.body)
-            }
+              )
+            )
+            .headers(authHeader)
+            .response(asJson[Article])
+            .send(backendStub(endpoint))
+          body = response.body
         } yield assertTrue {
           // TODO there must be better way to implement this...
           import com.softwaremill.realworld.common.model.ArticleDiff.{*, given}
           compare(
-            result.toOption.get,
+            body.toOption.get,
             Article(
               ArticleData(
                 "how-to-train-your-dragon-2",
@@ -287,28 +303,26 @@ object ArticlesEndpointsSpec extends ZIOSpecDefault:
               authorId = 1
             )
           )
-          result <- ZIO
-            .service[ArticlesEndpoints]
-            .map(_.create)
-            .flatMap { endpoint =>
-              basicRequest
-                .post(uri"http://test.com/api/articles")
-                .body(
-                  ArticleCreate(
-                    ArticleCreateData(
-                      title = "Test slug",
-                      description = "So toothless",
-                      body = "Its a dragon",
-                      tagList = List("drogon", "fly")
-                    )
-                  )
+          articlesEndpoints <- ZIO.service[ArticlesEndpoints]
+          endpoint = articlesEndpoints.create
+          authHeader <- getValidAuthorizationHeader()
+          response <- basicRequest
+            .post(uri"http://test.com/api/articles")
+            .body(
+              ArticleCreate(
+                ArticleCreateData(
+                  title = "Test slug",
+                  description = "So toothless",
+                  body = "Its a dragon",
+                  tagList = List("drogon", "fly")
                 )
-                .headers(validAuthorizationHeader())
-                .response(asJson[Article])
-                .send(backendStub(endpoint))
-                .map(_.body)
-            }
-        } yield result)(
+              )
+            )
+            .headers(authHeader)
+            .response(asJson[Article])
+            .send(backendStub(endpoint))
+          body = response.body
+        } yield body)(
           isLeft(
             equalTo(
               HttpError(
@@ -346,32 +360,30 @@ object ArticlesEndpointsSpec extends ZIOSpecDefault:
               authorId = 1
             )
           )
-          result <- ZIO
-            .service[ArticlesEndpoints]
-            .map(_.update)
-            .flatMap { endpoint =>
-              basicRequest
-                .put(uri"http://test.com/api/articles/test-slug")
-                .body(
-                  ArticleUpdate(
-                    ArticleUpdateData(
-                      slug = Option("test-slug-2"),
-                      title = Option("Test slug 2"),
-                      description = Option("updated description"),
-                      body = Option("updated body")
-                    )
-                  )
+          articlesEndpoints <- ZIO.service[ArticlesEndpoints]
+          endpoint = articlesEndpoints.update
+          authHeader <- getValidAuthorizationHeader()
+          response <- basicRequest
+            .put(uri"http://test.com/api/articles/test-slug")
+            .body(
+              ArticleUpdate(
+                ArticleUpdateData(
+                  slug = Option("test-slug-2"),
+                  title = Option("Test slug 2"),
+                  description = Option("updated description"),
+                  body = Option("updated body")
                 )
-                .headers(validAuthorizationHeader())
-                .response(asJson[Article])
-                .send(backendStub(endpoint))
-                .map(_.body)
-            }
+              )
+            )
+            .headers(authHeader)
+            .response(asJson[Article])
+            .send(backendStub(endpoint))
+          body = response.body
         } yield assertTrue {
           // TODO there must be better way to implement this...
           import com.softwaremill.realworld.common.model.ArticleDiff.{*, given}
           compare(
-            result.toOption.get,
+            body.toOption.get,
             Article(
               ArticleData(
                 "test-slug-2",
@@ -390,52 +402,52 @@ object ArticlesEndpointsSpec extends ZIOSpecDefault:
         }
       },
       test("article update - check conflict") {
-        assertZIO(for {
-          repo <- ZIO.service[ArticlesRepository]
-          _ <- repo.add(
-            ArticleRow(
-              slug = "test-slug",
-              title = "Test slug",
-              description = "description",
-              body = "body",
-              createdAt = Instant.now,
-              updatedAt = Instant.now,
-              authorId = 1
+        assertZIO(
+          for {
+            repo <- ZIO.service[ArticlesRepository]
+            _ <- repo.add(
+              ArticleRow(
+                slug = "test-slug",
+                title = "Test slug",
+                description = "description",
+                body = "body",
+                createdAt = Instant.now,
+                updatedAt = Instant.now,
+                authorId = 1
+              )
             )
-          )
-          _ <- repo.add(
-            ArticleRow(
-              slug = "test-slug-2",
-              title = "Test slug 2",
-              description = "description",
-              body = "body",
-              createdAt = Instant.now,
-              updatedAt = Instant.now,
-              authorId = 1
+            _ <- repo.add(
+              ArticleRow(
+                slug = "test-slug-2",
+                title = "Test slug 2",
+                description = "description",
+                body = "body",
+                createdAt = Instant.now,
+                updatedAt = Instant.now,
+                authorId = 1
+              )
             )
-          )
-          result <- ZIO
-            .service[ArticlesEndpoints]
-            .map(_.update)
-            .flatMap { endpoint =>
-              basicRequest
-                .put(uri"http://test.com/api/articles/test-slug")
-                .body(
-                  ArticleUpdate(
-                    ArticleUpdateData(
-                      slug = Option("test-slug-2"),
-                      title = Option("Test slug 2"),
-                      description = Option("updated description"),
-                      body = Option("updated body")
-                    )
+            articlesEndpoints <- ZIO.service[ArticlesEndpoints]
+            endpoint = articlesEndpoints.update
+            authHeader <- getValidAuthorizationHeader()
+            response <- basicRequest
+              .put(uri"http://test.com/api/articles/test-slug")
+              .body(
+                ArticleUpdate(
+                  ArticleUpdateData(
+                    slug = Option("test-slug-2"),
+                    title = Option("Test slug 2"),
+                    description = Option("updated description"),
+                    body = Option("updated body")
                   )
                 )
-                .headers(validAuthorizationHeader())
-                .response(asJson[Article])
-                .send(backendStub(endpoint))
-                .map(_.body)
-            }
-        } yield result)(
+              )
+              .headers(authHeader)
+              .response(asJson[Article])
+              .send(backendStub(endpoint))
+            body = response.body
+          } yield body
+        )(
           isLeft(
             equalTo(
               HttpError(
