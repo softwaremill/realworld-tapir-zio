@@ -63,7 +63,7 @@ class ArticlesRepository(quill: Quill.Sqlite[SnakeCase]):
 
   def listArticlesByFollowedUsers(
       pagination: Pagination,
-      followerId: Int,
+      followerId: Int
   ): IO[SQLException, List[ArticleData]] = {
 
     run(for {
@@ -77,15 +77,14 @@ class ArticlesRepository(quill: Quill.Sqlite[SnakeCase]):
         .take(lift(pagination.limit))
         .sortBy(ar => ar.slug)
       tr <- queryTagArticle
-        .groupByMap(_.articleSlug)(atr => (atr.articleSlug, tagsConcat(atr.tag)))
-        .leftJoin(a => a._1 == ar.slug)
+        .groupByMap(_.articleId)(atr => (atr.articleId, tagsConcat(atr.tag)))
+        .leftJoin(a => a._1 == ar.articleId)
       fr <- queryFavoriteArticle
-        .groupByMap(_.articleSlug)(fr => (fr.articleSlug, count(fr.profileId)))
-        .leftJoin(f => f._1 == ar.slug)
+        .groupByMap(_.articleId)(fr => (fr.articleId, count(fr.profileId)))
+        .leftJoin(f => f._1 == ar.articleId)
       pr <- queryProfile if ar.authorId == pr.userId
     } yield (ar, pr, tr.map(_._2), fr.map(_._2)))
       .map(_.map(article))
-      .provide(dsLayer)
   }
 
   def findBySlug(slug: String): IO[SQLException, Option[ArticleData]] =
