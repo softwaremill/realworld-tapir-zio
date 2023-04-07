@@ -5,7 +5,8 @@ import com.auth0.jwt.algorithms.Algorithm
 import com.softwaremill.realworld.auth.AuthService
 import com.softwaremill.realworld.db.{Db, DbConfig, DbMigrator}
 import com.softwaremill.realworld.{CustomDecodeFailureHandler, DefectHandler}
-import io.getquill.{SnakeCase, SqliteZioJdbcContext}
+import io.getquill.*
+import io.getquill.jdbczio.*
 import sttp.client3.SttpBackend
 import sttp.client3.testing.SttpBackendStub
 import sttp.tapir.server.stub.TapirStubInterpreter
@@ -36,26 +37,13 @@ object TestUtils:
       .thenRunLogic()
       .backend()
 
-  type TestDbLayer = DbConfig with DataSource with DbMigrator with SqliteZioJdbcContext[SnakeCase]
+  type TestDbLayer = DbConfig with DataSource with DbMigrator with Quill.Sqlite[SnakeCase]
 
-  def validAuthorizationHeader(email: String = "admin@example.com"): Map[String, String] = {
-    // start TODO [This is workaround. Need to replace below with service's function call]
-    val now: Instant = Instant.now()
-    val Issuer = "SoftwareMill"
-    val ClaimName = "userEmail"
-    val YouShouldNotKeepSecretsHardcoded = "#>!IEd!G-L70@OTr$t8E[4.#[A;zo2@{"
-    val algorithm: Algorithm = Algorithm.HMAC256(YouShouldNotKeepSecretsHardcoded)
-    val jwt: String = JWT
-      .create()
-      .withIssuer(Issuer)
-      .withClaim(ClaimName, email)
-      .withIssuedAt(now)
-      .withExpiresAt(now.plus(Duration.ofHours(1)))
-      .withJWTId(UUID.randomUUID().toString)
-      .sign(algorithm)
-    // end TODO
-    Map("Authorization" -> ("Token " + jwt))
-  }
+  def getValidAuthorizationHeader(email: String = "admin@example.com"): RIO[AuthService, Map[String, String]] =
+    for {
+      authService <- ZIO.service[AuthService]
+      jwt <- authService.generateJwt(email)
+    } yield Map("Authorization" -> s"Token $jwt")
 
   private def loadFixture(fixturePath: String): RIO[DataSource, Unit] = ZIO.scoped {
     for {
@@ -73,8 +61,14 @@ object TestUtils:
     }
   }
 
-  private def clearDb(cfg: DbConfig): RIO[Any, Unit] =
-    ZIO.attemptBlocking(Files.deleteIfExists(Paths.get(cfg.dbPath)))
+  private def clearDb(cfg: DbConfig): RIO[Any, Unit] = for {
+    dbPath <- ZIO.succeed(
+      Paths.get(cfg.jdbcUrl.dropWhile(_ != '/'))
+    )
+    _ <- ZIO.attemptBlocking(
+      Files.deleteIfExists(dbPath)
+    )
+  } yield ()
 
   private val initializeDb: RIO[DbMigrator, Unit] = for {
     migrator <- ZIO.service[DbMigrator]
@@ -93,7 +87,7 @@ object TestUtils:
 
   private val createTestDbConfig: ZIO[Any, Nothing, DbConfig] = for {
     uuid <- Random.RandomLive.nextUUID
-  } yield DbConfig(s"/tmp/realworld-test-$uuid.sqlite")
+  } yield DbConfig(s"jdbc:sqlite:/tmp/realworld-test-$uuid.sqlite")
 
   private val testDbConfigLive: ZLayer[Any, Nothing, DbConfig] =
     ZLayer.scoped {
@@ -101,7 +95,7 @@ object TestUtils:
     }
 
   val testDbLayer: ZLayer[Any, Nothing, TestDbLayer] =
-    (testDbConfigLive >+> Db.dataSourceLive >+> DbMigrator.live) ++ Db.quillLive
+    testDbConfigLive >+> Db.dataSourceLive >+> Db.quillLive >+> DbMigrator.live
 
   val testDbLayerWithEmptyDb: ZLayer[Any, Nothing, TestDbLayer] =
     testDbLayer >+> ZLayer.fromZIO(withEmptyDb.orDie)

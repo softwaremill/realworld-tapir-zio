@@ -1,10 +1,10 @@
 package com.softwaremill.realworld.db
 
 import com.zaxxer.hikari.{HikariConfig, HikariDataSource}
-import io.getquill.{SnakeCase, SqliteZioJdbcContext}
+import io.getquill.*
+import io.getquill.jdbczio.*
 import zio.{ZIO, ZLayer}
 
-import java.io.Closeable
 import javax.sql.DataSource
 
 object Db:
@@ -28,9 +28,5 @@ object Db:
     }
 
   // Quill framework object used for specifying sql queries.
-  val quillLive: ZLayer[Any, Nothing, SqliteZioJdbcContext[SnakeCase]] =
-    ZLayer.scoped {
-      ZIO.fromAutoCloseable {
-        ZIO.succeed(new SqliteZioJdbcContext(SnakeCase))
-      }
-    }
+  val quillLive: ZLayer[DataSource, Nothing, Quill.Sqlite[SnakeCase]] =
+    Quill.Sqlite.fromNamingStrategy(SnakeCase)

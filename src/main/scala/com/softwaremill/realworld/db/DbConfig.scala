@@ -1,14 +1,17 @@
 package com.softwaremill.realworld.db
 
 import com.softwaremill.realworld.articles.ArticlesRepository
-import zio.ZLayer
+import com.softwaremill.realworld.common.AppConfig
+import zio.{ZIO, ZLayer}
 
-class DbConfig(val dbPath: String):
-
-  val jdbcUrl = s"jdbc:sqlite:$dbPath"
+case class DbConfig(jdbcUrl: String):
   val connectionInitSql = "PRAGMA foreign_keys = ON"
 
 object DbConfig:
 
-  val live: ZLayer[Any, Nothing, DbConfig] =
-    ZLayer.succeed(DbConfig(sys.env.getOrElse("DB_LOCATION", "realworld-prod.sqlite")))
+  val live: ZLayer[AppConfig, Nothing, DbConfig] =
+    ZLayer.fromZIO {
+      for {
+        appConfig <- ZIO.service[AppConfig]
+      } yield DbConfig(appConfig.db.url)
+    }

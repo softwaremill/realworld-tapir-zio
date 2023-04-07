@@ -35,27 +35,20 @@ class ArticlesService(articlesRepository: ArticlesRepository, usersRepository: U
       case None    => ZIO.fail(Exceptions.NotFound(s"Article with slug $slug doesn't exist."))
     }
 
+  def findBySlugAsSeenBy(articleId: Int, email: String): IO[Exception, ArticleData] = articlesRepository
+    .findBySlugAsSeenBy(articleId, email)
+    .flatMap {
+      case Some(a) => ZIO.succeed(a)
+      case None    => ZIO.fail(Exceptions.NotFound(s"Article doesn't exist."))
+    }
+
   def create(createData: ArticleCreateData, userEmail: String): Task[ArticleData] =
     for {
       user <- userByEmail(userEmail)
-      newArticle = createArticleRow(createData, user)
-      _ <- articlesRepository.add(newArticle)
-      _ <- ZIO.foreach(createData.tagList)(tag => articlesRepository.addTag(tag, newArticle.slug))
-      articleData <- findBySlugAsSeenBy(newArticle.slug, userEmail)
+      articleId <- articlesRepository.add(createData, user.userId)
+      _ <- ZIO.foreach(createData.tagList)(tag => articlesRepository.addTag(tag, articleId))
+      articleData <- findBySlugAsSeenBy(articleId, userEmail)
     } yield articleData
-
-  private def createArticleRow(createData: ArticleCreateData, userRow: UserRow): ArticleRow = {
-    val now = Instant.now()
-    ArticleRow(
-      slug = createData.title.trim.toLowerCase.replace(" ", "-"),
-      title = createData.title.trim,
-      description = createData.description,
-      body = createData.body,
-      createdAt = now,
-      updatedAt = now,
-      authorId = userRow.userId
-    )
-  }
 
   def update(articleUpdateData: ArticleUpdateData, slug: String, email: String): Task[ArticleData] =
     for {
@@ -66,7 +59,8 @@ class ArticlesService(articlesRepository: ArticlesRepository, usersRepository: U
         .fail(Unauthorized(s"You're not an author of article that you're trying to update"))
         .when(user.username != oldArticle.author.username)
       updatedArticle = updateArticleData(oldArticle, articleUpdateData)
-      _ <- articlesRepository.updateBySlug(updatedArticle, oldArticle.slug)
+      articleId <- articlesRepository.findArticleIdBySlug(slug)
+      _ <- articlesRepository.updateById(updatedArticle, articleId)
     } yield updatedArticle
 
   private def updateArticleData(articleData: ArticleData, updatedData: ArticleUpdateData): ArticleData = {
@@ -78,19 +72,22 @@ class ArticlesService(articlesRepository: ArticlesRepository, usersRepository: U
         .getOrElse(articleData.slug),
       title = updatedData.title.map(_.trim).getOrElse(articleData.title),
       description = updatedData.description.getOrElse(articleData.description),
-      body = updatedData.body.getOrElse(articleData.body)
+      body = updatedData.body.getOrElse(articleData.body),
+      updatedAt = Instant.now()
     )
   }
 
   def makeFavorite(slug: String, email: String): Task[ArticleData] = for {
     user <- userByEmail(email)
-    _ <- articlesRepository.makeFavorite(slug, user.userId)
+    articleId <- articlesRepository.findArticleIdBySlug(slug)
+    _ <- articlesRepository.makeFavorite(articleId, user.userId)
     articleData <- findBySlugAsSeenBy(slug, email)
   } yield articleData
 
   def removeFavorite(slug: String, email: String): Task[ArticleData] = for {
     user <- userByEmail(email)
-    _ <- articlesRepository.removeFavorite(slug, user.userId)
+    articleId <- articlesRepository.findArticleIdBySlug(slug)
+    _ <- articlesRepository.removeFavorite(articleId, user.userId)
     articleData <- findBySlugAsSeenBy(slug, email)
   } yield articleData
 
@@ -99,15 +96,17 @@ class ArticlesService(articlesRepository: ArticlesRepository, usersRepository: U
 
   def addComment(slug: String, email: String, comment: String): Task[CommentData] = for {
     user <- userByEmail(email)
-    id <- articlesRepository.addComment(slug, user.userId, comment)
+    articleId <- articlesRepository.findArticleIdBySlug(slug)
+    id <- articlesRepository.addComment(articleId, user.userId, comment)
     row <- articlesRepository.findComment(id)
     profile <- profilesService.getProfileData(row.authorId, user.userId)
   } yield CommentData(row.commentId, row.createdAt, row.updatedAt, row.body, profile)
 
   def deleteComment(slug: String, email: String, commentId: Int): Task[Unit] = for {
     user <- userByEmail(email)
+    articleId <- articlesRepository.findArticleIdBySlug(slug)
     comment <- articlesRepository.findComment(commentId)
-    _ <- ZIO.fail(BadRequest(s"Comment with ID=$commentId is not linked to slug $slug")).when(comment.articleSlug != slug)
+    _ <- ZIO.fail(BadRequest(s"Comment with ID=$commentId is not linked to slug $slug")).when(comment.articleId != articleId)
     _ <- ZIO.fail(Unauthorized("Can't remove the comment you're not an author of")).when(user.userId != comment.authorId)
     _ <- articlesRepository.deleteComment(commentId)
   } yield ()
