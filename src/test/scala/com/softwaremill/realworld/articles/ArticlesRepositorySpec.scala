@@ -1,11 +1,12 @@
 package com.softwaremill.realworld.articles
 
+import com.softwaremill.diffx.{Diff, compare}
 import com.softwaremill.realworld.articles.ArticlesEndpoints.{*, given}
-import com.softwaremill.realworld.articles.model.{ArticleAuthor, ArticleData, ArticleRow}
+import com.softwaremill.realworld.articles.model.{ArticleAuthor, ArticleCreateData, ArticleData, ArticleRow}
 import com.softwaremill.realworld.common.Exceptions.AlreadyInUse
 import com.softwaremill.realworld.common.Pagination
-import com.softwaremill.realworld.utils.TestUtils.*
 import com.softwaremill.realworld.db.{Db, DbConfig, DbMigrator}
+import com.softwaremill.realworld.utils.TestUtils.*
 import org.sqlite.{SQLiteErrorCode, SQLiteException}
 import sttp.client3.testing.SttpBackendStub
 import sttp.client3.ziojson.*
@@ -29,7 +30,7 @@ object ArticlesRepositorySpec extends ZIOSpecDefault:
           for {
             repo <- ZIO.service[ArticlesRepository]
             v <- repo.list(Map(), Pagination(20, 0))
-          } yield zio.test.assert(v)(Assertion.isEmpty)
+          } yield zio.test.assert(v)(isEmpty)
         },
         test("with filters") {
           for {
@@ -38,7 +39,7 @@ object ArticlesRepositorySpec extends ZIOSpecDefault:
               Map(ArticlesFilters.Author -> "John", ArticlesFilters.Tag -> "dragon", ArticlesFilters.Favorited -> "Ron"),
               Pagination(20, 0)
             )
-          } yield zio.test.assert(v)(Assertion.isEmpty)
+          } yield zio.test.assert(v)(isEmpty)
         }
       ).provide(
         ArticlesRepository.live,
@@ -226,7 +227,7 @@ object ArticlesRepositorySpec extends ZIOSpecDefault:
             repo <- ZIO.service[ArticlesRepository]
             v <- repo.findBySlug("how-to-train-your-dragon")
           } yield zio.test.assert(v)(
-            Assertion.equalTo(
+            equalTo(
               Option(
                 ArticleData(
                   "how-to-train-your-dragon",
@@ -248,14 +249,14 @@ object ArticlesRepositorySpec extends ZIOSpecDefault:
           for {
             repo <- ZIO.service[ArticlesRepository]
             v <- repo.findBySlug("non-existing-article-slug")
-          } yield zio.test.assert(v)(Assertion.isNone)
+          } yield zio.test.assert(v)(isNone)
         },
         test("find article by slug as seen by user that marked it as favorite") {
           for {
             repo <- ZIO.service[ArticlesRepository]
             v <- repo.findBySlugAsSeenBy("how-to-train-your-dragon-2", viewerEmail = "jake@example.com")
           } yield zio.test.assert(v)(
-            Assertion.equalTo(
+            equalTo(
               Option(
                 ArticleData(
                   slug = "how-to-train-your-dragon-2",
@@ -279,7 +280,7 @@ object ArticlesRepositorySpec extends ZIOSpecDefault:
             repo <- ZIO.service[ArticlesRepository]
             v <- repo.findBySlugAsSeenBy("how-to-train-your-dragon-2", viewerEmail = "john@example.com")
           } yield zio.test.assert(v)(
-            Assertion.equalTo(
+            equalTo(
               Option(
                 ArticleData(
                   slug = "how-to-train-your-dragon-2",
@@ -306,19 +307,18 @@ object ArticlesRepositorySpec extends ZIOSpecDefault:
         test("add tag") {
           for {
             repo <- ZIO.service[ArticlesRepository]
-            slug = "how-to-train-your-dragon"
             newTag = "new_tag"
-            _ <- repo.addTag(newTag, slug)
-            v <- repo.findBySlug(slug).map(_.get.tagList)
-          } yield zio.test.assert(v)(Assertion.contains(newTag))
+            _ <- repo.addTag(newTag, 1)
+            v <- repo.findBySlug("how-to-train-your-dragon").map(_.get.tagList)
+          } yield zio.test.assert(v)(contains(newTag))
         },
         test("add tag - check other article is untouched") {
           for {
             repo <- ZIO.service[ArticlesRepository]
             newTag = "new_tag"
-            _ <- repo.addTag(newTag, "how-to-train-your-dragon")
+            _ <- repo.addTag(newTag, 1)
             v <- repo.findBySlug("how-to-train-your-dragon-2").map(_.get.tagList)
-          } yield zio.test.assert(v)(Assertion.hasNoneOf(newTag))
+          } yield zio.test.assert(v)(hasNoneOf(newTag))
         }
       ).provide(
         ArticlesRepository.live,
@@ -330,27 +330,28 @@ object ArticlesRepositorySpec extends ZIOSpecDefault:
             repo <- ZIO.service[ArticlesRepository]
             slug = "new-article-under-test"
             _ <- repo.add(
-              ArticleRow(
-                slug = slug,
+              ArticleCreateData(
                 title = "New-article-under-test",
                 description = "What a nice day!",
                 body = "Writing scala code is quite challenging pleasure",
-                createdAt = Instant.ofEpochMilli(1455765123456L),
-                updatedAt = Instant.ofEpochMilli(1455767123456L),
-                authorId = 10
-              )
+                tagList = List()
+              ),
+              10
             )
-            v <- repo.findBySlug(slug).map(_.get)
-          } yield zio.test.assert(v)(
-            Assertion.equalTo(
+            result <- repo.findBySlug(slug).map(_.get)
+          } yield assertTrue {
+            // TODO there must be better way to implement this...
+            import com.softwaremill.realworld.common.model.ArticleDiff.{*, given}
+            compare(
+              result,
               ArticleData(
                 slug,
                 "New-article-under-test",
                 "What a nice day!",
                 "Writing scala code is quite challenging pleasure",
                 Nil,
-                Instant.ofEpochMilli(1455765123456L),
-                Instant.ofEpochMilli(1455767123456L),
+                null,
+                null,
                 false,
                 0,
                 ArticleAuthor(
@@ -360,23 +361,20 @@ object ArticlesRepositorySpec extends ZIOSpecDefault:
                   following = false
                 )
               )
-            )
-          )
+            ).isIdentical
+          }
         },
         test("create non unique article - check article already exists") {
           assertZIO((for {
             repo <- ZIO.service[ArticlesRepository]
-            slug = "how-to-train-your-dragon"
             v <- repo.add(
-              ArticleRow(
-                slug = slug,
+              ArticleCreateData(
                 title = "How-to-train-your-dragon",
                 description = "What a nice day!",
                 body = "Writing scala code is quite challenging pleasure",
-                createdAt = Instant.ofEpochMilli(1455765123456L),
-                updatedAt = Instant.ofEpochMilli(1455767123456L),
-                authorId = 10
-              )
+                tagList = List()
+              ),
+              10
             )
           } yield v).exit)(
             failsCause(
@@ -387,45 +385,46 @@ object ArticlesRepositorySpec extends ZIOSpecDefault:
         test("update article") {
           for {
             repo <- ZIO.service[ArticlesRepository]
-            oldSlug = "new-article-under-test"
             updatedSlug = "updated-article-under-test"
             _ <- repo.add(
-              ArticleRow(
-                slug = oldSlug,
-                title = "New-article-under-test",
+              ArticleCreateData(
+                title = "New article under test",
                 description = "What a nice day!",
                 body = "Writing scala code is quite challenging pleasure",
-                createdAt = Instant.ofEpochMilli(1455765123456L),
-                updatedAt = Instant.ofEpochMilli(1455767123456L),
-                authorId = 10
-              )
+                tagList = List()
+              ),
+              10
             )
-            _ <- repo.updateBySlug(
+            articleId <- repo.findArticleIdBySlug("new-article-under-test")
+            _ <- repo.updateById(
               ArticleData(
                 updatedSlug,
-                "Updated-article-under-test",
+                "Updated article under test",
                 "What a nice updated day!",
                 "Updating scala code is quite challenging pleasure",
                 Nil,
                 null, // TODO I think more specialized class should be used for article creation
-                null,
+                Instant.now(),
                 false,
                 0,
                 null
               ),
-              oldSlug
+              articleId
             )
-            v <- repo.findBySlug(updatedSlug).map(_.get)
-          } yield zio.test.assert(v)(
-            Assertion.equalTo(
+            result <- repo.findBySlug(updatedSlug).map(_.get)
+          } yield assertTrue {
+            // TODO there must be better way to implement this...
+            import com.softwaremill.realworld.common.model.ArticleDiffWithSameCreateAt.{*, given}
+            compare(
+              result,
               ArticleData(
                 updatedSlug,
-                "Updated-article-under-test",
+                "Updated article under test",
                 "What a nice updated day!",
                 "Updating scala code is quite challenging pleasure",
                 Nil,
-                Instant.ofEpochMilli(1455765123456L),
-                Instant.ofEpochMilli(1455767123456L),
+                null,
+                null,
                 false,
                 0,
                 ArticleAuthor(
@@ -435,52 +434,47 @@ object ArticlesRepositorySpec extends ZIOSpecDefault:
                   following = false
                 )
               )
-            )
-          )
+            ).isIdentical
+          } && zio.test.assert(result.updatedAt)(isGreaterThan(result.createdAt))
         },
         test("update article - check article already exist") {
           assertZIO((for {
             repo <- ZIO.service[ArticlesRepository]
-            oldSlug = "new-article-under-test"
-            updatedSlug = "updated-article-under-test"
             _ <- repo.add(
-              ArticleRow(
-                slug = oldSlug,
-                title = "New-article-under-test",
+              ArticleCreateData(
+                title = "Slug to update",
                 description = "What a nice day!",
                 body = "Writing scala code is quite challenging pleasure",
-                createdAt = Instant.ofEpochMilli(1455765123456L),
-                updatedAt = Instant.ofEpochMilli(1455767123456L),
-                authorId = 10
-              )
+                tagList = List()
+              ),
+              10
             )
             _ <- repo.add(
-              ArticleRow(
-                slug = updatedSlug,
-                title = "Updated-slug-which-causes-conflict",
+              ArticleCreateData(
+                title = "Existing slug",
                 description = "It occupies article slug",
                 body = "Which will be used for updating another article during next step",
-                createdAt = Instant.ofEpochMilli(1455765123567L),
-                updatedAt = Instant.ofEpochMilli(1455767123567L),
-                authorId = 10
-              )
+                tagList = List()
+              ),
+              10
             )
-            _ <- repo.updateBySlug(
+            articleId <- repo.findArticleIdBySlug("slug-to-update")
+            _ <- repo.updateById(
               ArticleData(
-                updatedSlug,
-                "Updated-article-under-test",
-                "What a nice updated day!",
+                "existing-slug",
+                "Existing slug",
+                "Updated article under test",
                 "Updating scala code is quite challenging pleasure",
                 Nil,
                 null, // TODO I think more specialized class should be used for article creation
-                null,
+                Instant.now(),
                 false,
                 0,
                 null
               ),
-              oldSlug
+              articleId
             )
-            v <- repo.findBySlug(updatedSlug).map(_.get)
+            v <- repo.findBySlug("existing-slug").map(_.get)
           } yield v).exit)(
             failsCause(
               containsCause(Cause.fail(AlreadyInUse(message = "Article name already exists")))
