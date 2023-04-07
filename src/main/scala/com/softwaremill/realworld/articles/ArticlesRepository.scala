@@ -8,6 +8,7 @@ import com.softwaremill.realworld.common.{Exceptions, Pagination}
 import com.softwaremill.realworld.profiles.ProfileRow
 import com.softwaremill.realworld.users.UserRow
 import io.getquill.*
+import io.getquill.jdbczio.*
 import org.sqlite.SQLiteErrorCode.SQLITE_CONSTRAINT_UNIQUE
 import org.sqlite.{SQLiteErrorCode, SQLiteException}
 import zio.{Console, IO, RIO, Task, UIO, ZIO, ZLayer}
@@ -18,10 +19,7 @@ import javax.sql.DataSource
 import scala.collection.immutable
 import scala.util.chaining.*
 
-class ArticlesRepository(quill: SqliteZioJdbcContext[SnakeCase], dataSource: DataSource):
-
-  private val dsLayer: ZLayer[Any, Nothing, DataSource] = ZLayer.succeed(dataSource)
-
+class ArticlesRepository(quill: Quill.Sqlite[SnakeCase]):
   import quill.*
 
   private inline def queryArticle = quote(querySchema[ArticleRow](entity = "articles"))
@@ -61,7 +59,6 @@ class ArticlesRepository(quill: SqliteZioJdbcContext[SnakeCase], dataSource: Dat
       pr <- queryProfile if ar.authorId == pr.userId
     } yield (ar, pr, tr.map(_._2), fr.map(_._2)))
       .map(_.map(article))
-      .provide(dsLayer)
   }
 
   def findBySlug(slug: String): IO[SQLException, Option[ArticleData]] =
@@ -77,7 +74,6 @@ class ArticlesRepository(quill: SqliteZioJdbcContext[SnakeCase], dataSource: Dat
     } yield (ar, pr, tr.map(_._2), fr.map(_._2), false))
       .map(_.headOption)
       .map(_.map(mapToArticleData))
-      .provide(dsLayer)
 
   def findArticleIdBySlug(slug: String): Task[Int] =
     run(
@@ -90,7 +86,6 @@ class ArticlesRepository(quill: SqliteZioJdbcContext[SnakeCase], dataSource: Dat
         case Some(a) => ZIO.succeed(a)
         case None    => ZIO.fail(Exceptions.NotFound(s"Article with slug $slug doesn't exist."))
       }
-      .provide(dsLayer)
 
   def findBySlugAsSeenBy(slug: String, viewerEmail: String): IO[SQLException, Option[ArticleData]] =
     run(for {
@@ -110,7 +105,6 @@ class ArticlesRepository(quill: SqliteZioJdbcContext[SnakeCase], dataSource: Dat
     } yield (ar, pr, tr.map(_._2), fr.map(_._2), isFavorite))
       .map(_.headOption)
       .map(_.map(mapToArticleData))
-      .provide(dsLayer)
 
   def findBySlugAsSeenBy(articleId: Int, viewerEmail: String): IO[SQLException, Option[ArticleData]] =
     run(for {
@@ -130,7 +124,6 @@ class ArticlesRepository(quill: SqliteZioJdbcContext[SnakeCase], dataSource: Dat
     } yield (ar, pr, tr.map(_._2), fr.map(_._2), isFavorite))
       .map(_.headOption)
       .map(_.map(mapToArticleData))
-      .provide(dsLayer)
 
   def addTag(tag: String, articleId: Int): IO[Exception, Unit] = run(
     queryTagArticle
@@ -139,7 +132,6 @@ class ArticlesRepository(quill: SqliteZioJdbcContext[SnakeCase], dataSource: Dat
         _.articleId -> lift(articleId)
       )
   ).unit
-    .provide(dsLayer)
 
   def add(createData: ArticleCreateData, userId: Int): Task[Int] = {
     val now = Instant.now()
@@ -157,7 +149,6 @@ class ArticlesRepository(quill: SqliteZioJdbcContext[SnakeCase], dataSource: Dat
         .returning(_.articleId)
     )
       .pipe(mapUniqueConstraintViolationError)
-      .provide(dsLayer)
   }
 
   def updateById(updateData: ArticleData, articleId: Int): Task[Unit] = run(
@@ -172,16 +163,14 @@ class ArticlesRepository(quill: SqliteZioJdbcContext[SnakeCase], dataSource: Dat
       )
   ).unit
     .pipe(mapUniqueConstraintViolationError)
-    .provide(dsLayer)
 
   def makeFavorite(articleId: Int, userId: Int): Task[Unit] = run(
     queryFavoriteArticle.insertValue(lift(ArticleFavoriteRow(userId, articleId))).onConflictIgnore
   ).unit
-    .provide(dsLayer)
 
   def removeFavorite(articleId: Int, userId: Int): Task[Long] = run(
     queryFavoriteArticle.filter(a => (a.profileId == lift(userId)) && (a.articleId == lift(articleId))).delete
-  ).provide(dsLayer)
+  )
 
   def addComment(articleId: Int, authorId: Int, comment: String): Task[Index] = {
     val now = Instant.now()
@@ -195,17 +184,16 @@ class ArticlesRepository(quill: SqliteZioJdbcContext[SnakeCase], dataSource: Dat
           _.body -> lift(comment)
         )
         .returningGenerated(_.commentId)
-    }.provide(dsLayer)
+    }
   }
 
   def findComment(commentId: Int): Task[CommentRow] =
     run(queryCommentArticle.filter(_.commentId == lift(commentId)))
       .map(_.headOption)
-      .provide(dsLayer)
       .someOrFail(Exceptions.NotFound(s"Comment with ID=$commentId doesn't exist"))
 
   def deleteComment(commentId: Int): Task[Long] =
-    run(queryCommentArticle.filter(_.commentId == lift(commentId)).delete).provide(dsLayer)
+    run(queryCommentArticle.filter(_.commentId == lift(commentId)).delete)
 
   private def article(tuple: (ArticleRow, ProfileRow, Option[String], Option[Int])): ArticleData = {
     val (ar, pr, tags, favorites) = tuple
@@ -250,5 +238,5 @@ class ArticlesRepository(quill: SqliteZioJdbcContext[SnakeCase], dataSource: Dat
 
 object ArticlesRepository:
 
-  val live: ZLayer[SqliteZioJdbcContext[SnakeCase] with DataSource, Nothing, ArticlesRepository] =
-    ZLayer.fromFunction(new ArticlesRepository(_, _))
+  val live: ZLayer[Quill.Sqlite[SnakeCase], Nothing, ArticlesRepository] =
+    ZLayer.fromFunction(new ArticlesRepository(_))

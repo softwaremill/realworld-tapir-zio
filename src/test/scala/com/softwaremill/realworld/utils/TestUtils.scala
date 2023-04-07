@@ -5,7 +5,8 @@ import com.auth0.jwt.algorithms.Algorithm
 import com.softwaremill.realworld.auth.AuthService
 import com.softwaremill.realworld.db.{Db, DbConfig, DbMigrator}
 import com.softwaremill.realworld.{CustomDecodeFailureHandler, DefectHandler}
-import io.getquill.{SnakeCase, SqliteZioJdbcContext}
+import io.getquill.*
+import io.getquill.jdbczio.*
 import sttp.client3.SttpBackend
 import sttp.client3.testing.SttpBackendStub
 import sttp.tapir.server.stub.TapirStubInterpreter
@@ -36,7 +37,7 @@ object TestUtils:
       .thenRunLogic()
       .backend()
 
-  type TestDbLayer = DbConfig with DataSource with DbMigrator with SqliteZioJdbcContext[SnakeCase]
+  type TestDbLayer = DbConfig with DataSource with DbMigrator with Quill.Sqlite[SnakeCase]
   def getValidAuthorizationHeader(email: String = "admin@example.com"): RIO[AuthService, Map[String, String]] =
     for {
       authService <- ZIO.service[AuthService]
@@ -87,7 +88,7 @@ object TestUtils:
     }
 
   val testDbLayer: ZLayer[Any, Nothing, TestDbLayer] =
-    (testDbConfigLive >+> Db.dataSourceLive >+> DbMigrator.live) ++ Db.quillLive
+    testDbConfigLive >+> Db.dataSourceLive >+> Db.quillLive >+> DbMigrator.live
 
   val testDbLayerWithEmptyDb: ZLayer[Any, Nothing, TestDbLayer] =
     testDbLayer >+> ZLayer.fromZIO(withEmptyDb.orDie)
