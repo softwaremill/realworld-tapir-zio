@@ -38,6 +38,7 @@ object TestUtils:
       .backend()
 
   type TestDbLayer = DbConfig with DataSource with DbMigrator with Quill.Sqlite[SnakeCase]
+
   def getValidAuthorizationHeader(email: String = "admin@example.com"): RIO[AuthService, Map[String, String]] =
     for {
       authService <- ZIO.service[AuthService]
@@ -60,8 +61,14 @@ object TestUtils:
     }
   }
 
-  private def clearDb(cfg: DbConfig): RIO[Any, Unit] =
-    ZIO.attemptBlocking(Files.deleteIfExists(Paths.get(cfg.dbPath)))
+  private def clearDb(cfg: DbConfig): RIO[Any, Unit] = for {
+    dbPath <- ZIO.succeed(
+      Paths.get(cfg.jdbcUrl.dropWhile(_ != '/'))
+    )
+    _ <- ZIO.attemptBlocking(
+      Files.deleteIfExists(dbPath)
+    )
+  } yield ()
 
   private val initializeDb: RIO[DbMigrator, Unit] = for {
     migrator <- ZIO.service[DbMigrator]
@@ -80,7 +87,7 @@ object TestUtils:
 
   private val createTestDbConfig: ZIO[Any, Nothing, DbConfig] = for {
     uuid <- Random.RandomLive.nextUUID
-  } yield DbConfig(s"/tmp/realworld-test-$uuid.sqlite")
+  } yield DbConfig(s"jdbc:sqlite:/tmp/realworld-test-$uuid.sqlite")
 
   private val testDbConfigLive: ZLayer[Any, Nothing, DbConfig] =
     ZLayer.scoped {
