@@ -45,3 +45,11 @@ object ArticleAuthEndpointParameters:
     endpoint = ZIO.service[ArticlesEndpoints].map(endpoints => endpoints.removeFavorite),
     request = basicRequest.delete(uri"http://test.com/api/articles/$slug/favorite")
   )
+  def addComment(slug: String): ArticleAuthEndpointParameters = ArticleAuthEndpointParameters(
+    endpoint = ZIO.service[ArticlesEndpoints].map(endpoints => endpoints.addComment),
+    request = basicRequest.post(uri"http://test.com/api/articles/$slug/comments")
+  )
+  def deleteComment(slug: String, commentId: Int): ArticleAuthEndpointParameters = ArticleAuthEndpointParameters(
+    endpoint = ZIO.service[ArticlesEndpoints].map(endpoints => endpoints.deleteComment),
+    request = basicRequest.delete(uri"http://test.com/api/articles/$slug/comments/$commentId")
+  )

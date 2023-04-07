@@ -292,31 +292,20 @@ object ArticlesEndpointsSpec extends ZIOSpecDefault:
       test("article creation - check conflict") {
         assertZIO(for {
           repo <- ZIO.service[ArticlesRepository]
-          _ <- repo.add(
-            ArticleRow(
-              slug = "test-slug",
-              title = "title",
-              description = "description",
-              body = "body",
-              createdAt = Instant.now,
-              updatedAt = Instant.now,
-              authorId = 1
-            )
+          createData = ArticleCreateData(
+            title = "Test slug",
+            description = "So toothless",
+            body = "Its a dragon",
+            tagList = List("drogon", "fly")
           )
+          _ <- repo.add(createData = createData, userId = 1)
           articlesEndpoints <- ZIO.service[ArticlesEndpoints]
           endpoint = articlesEndpoints.create
           authHeader <- getValidAuthorizationHeader()
           response <- basicRequest
             .post(uri"http://test.com/api/articles")
             .body(
-              ArticleCreate(
-                ArticleCreateData(
-                  title = "Test slug",
-                  description = "So toothless",
-                  body = "Its a dragon",
-                  tagList = List("drogon", "fly")
-                )
-              )
+              ArticleCreate(createData)
             )
             .headers(authHeader)
             .response(asJson[Article])
@@ -350,15 +339,13 @@ object ArticlesEndpointsSpec extends ZIOSpecDefault:
         for {
           repo <- ZIO.service[ArticlesRepository]
           _ <- repo.add(
-            ArticleRow(
-              slug = "test-slug",
+            ArticleCreateData(
               title = "Test slug",
               description = "description",
               body = "body",
-              createdAt = Instant.now,
-              updatedAt = Instant.now,
-              authorId = 1
-            )
+              tagList = List()
+            ),
+            1
           )
           articlesEndpoints <- ZIO.service[ArticlesEndpoints]
           endpoint = articlesEndpoints.update
@@ -368,7 +355,6 @@ object ArticlesEndpointsSpec extends ZIOSpecDefault:
             .body(
               ArticleUpdate(
                 ArticleUpdateData(
-                  slug = Option("test-slug-2"),
                   title = Option("Test slug 2"),
                   description = Option("updated description"),
                   body = Option("updated body")
@@ -406,26 +392,22 @@ object ArticlesEndpointsSpec extends ZIOSpecDefault:
           for {
             repo <- ZIO.service[ArticlesRepository]
             _ <- repo.add(
-              ArticleRow(
-                slug = "test-slug",
+              ArticleCreateData(
                 title = "Test slug",
                 description = "description",
                 body = "body",
-                createdAt = Instant.now,
-                updatedAt = Instant.now,
-                authorId = 1
-              )
+                tagList = List()
+              ),
+              1
             )
             _ <- repo.add(
-              ArticleRow(
-                slug = "test-slug-2",
+              ArticleCreateData(
                 title = "Test slug 2",
                 description = "description",
                 body = "body",
-                createdAt = Instant.now,
-                updatedAt = Instant.now,
-                authorId = 1
-              )
+                tagList = List()
+              ),
+              1
             )
             articlesEndpoints <- ZIO.service[ArticlesEndpoints]
             endpoint = articlesEndpoints.update
@@ -435,7 +417,6 @@ object ArticlesEndpointsSpec extends ZIOSpecDefault:
               .body(
                 ArticleUpdate(
                   ArticleUpdateData(
-                    slug = Option("test-slug-2"),
                     title = Option("Test slug 2"),
                     description = Option("updated description"),
                     body = Option("updated body")

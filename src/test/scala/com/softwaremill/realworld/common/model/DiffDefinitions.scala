@@ -13,7 +13,11 @@ object UserWithPasswordDiff:
   given UserWithPasswordDiff: Diff[UserWithPassword] = Diff.derived[UserWithPassword].ignore(_.hashedPassword)
 
 object ArticleDiff:
+  given articleDiff: Diff[Article] = Diff.derived[Article]
+  given articleDataDiff: Diff[ArticleData] = Diff.derived[ArticleData].ignore(_.createdAt).ignore(_.updatedAt)
+  given articleAuthorDiff: Diff[ArticleAuthor] = Diff.derived[ArticleAuthor]
 
+object ArticleDiffWithSameCreateAt:
   given articleDiff: Diff[Article] = Diff.derived[Article]
   given articleDataDiff: Diff[ArticleData] = Diff.derived[ArticleData].ignore(_.createdAt).ignore(_.updatedAt)
   given articleAuthorDiff: Diff[ArticleAuthor] = Diff.derived[ArticleAuthor]

@@ -103,6 +103,26 @@ object AuthorizationSpec extends ZIOSpecDefault:
       endpointParam = ArticleAuthEndpointParameters.removeFavorite("slug"),
       headers = Map(),
       expectedError = "Invalid value for: header Authorization (missing)"
+    ),
+    ArticleAuthTestParameters(
+      endpointParam = ArticleAuthEndpointParameters.addComment("slug"),
+      headers = Map("Authorization" -> "Token Invalid JWT"),
+      expectedError = "{\"error\":\"Invalid token!\"}"
+    ),
+    ArticleAuthTestParameters(
+      endpointParam = ArticleAuthEndpointParameters.addComment("slug"),
+      headers = Map(),
+      expectedError = "Invalid value for: header Authorization (missing)"
+    ),
+    ArticleAuthTestParameters(
+      endpointParam = ArticleAuthEndpointParameters.deleteComment("slug", 1),
+      headers = Map("Authorization" -> "Token Invalid JWT"),
+      expectedError = "{\"error\":\"Invalid token!\"}"
+    ),
+    ArticleAuthTestParameters(
+      endpointParam = ArticleAuthEndpointParameters.deleteComment("slug", 1),
+      headers = Map(),
+      expectedError = "Invalid value for: header Authorization (missing)"
     )
   )
 
