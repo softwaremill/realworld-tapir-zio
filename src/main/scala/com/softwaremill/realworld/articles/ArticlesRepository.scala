@@ -62,6 +62,33 @@ class ArticlesRepository(quill: SqliteZioJdbcContext[SnakeCase], dataSource: Dat
       .provide(dsLayer)
   }
 
+  def listArticlesByFollowedUsers(
+      pagination: Pagination,
+      followerId: Int,
+  ): IO[SQLException, List[ArticleData]] = {
+
+    run(for {
+      ar <- sql"""
+                     SELECT DISTINCT * FROM articles a
+                     WHERE a.author_id IN (SELECT f.user_id FROM followers f
+                                           WHERE f.follower_id = ${lift(followerId)})
+                   """
+        .as[Query[ArticleRow]]
+        .drop(lift(pagination.offset))
+        .take(lift(pagination.limit))
+        .sortBy(ar => ar.slug)
+      tr <- queryTagArticle
+        .groupByMap(_.articleSlug)(atr => (atr.articleSlug, tagsConcat(atr.tag)))
+        .leftJoin(a => a._1 == ar.slug)
+      fr <- queryFavoriteArticle
+        .groupByMap(_.articleSlug)(fr => (fr.articleSlug, count(fr.profileId)))
+        .leftJoin(f => f._1 == ar.slug)
+      pr <- queryProfile if ar.authorId == pr.userId
+    } yield (ar, pr, tr.map(_._2), fr.map(_._2)))
+      .map(_.map(article))
+      .provide(dsLayer)
+  }
+
   def findBySlug(slug: String): IO[SQLException, Option[ArticleData]] =
     run(for {
       ar <- queryArticle if ar.slug == lift(slug)

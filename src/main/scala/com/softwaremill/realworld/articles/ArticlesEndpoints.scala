@@ -50,6 +50,29 @@ class ArticlesEndpoints(articlesService: ArticlesService, base: BaseEndpoints):
           .pipe(defaultErrorsMappings)
     )
 
+  val feedArticles: ZServerEndpoint[Any, Any] = base.secureEndpoint.get
+    .in("api" / "articles" / "feed")
+    .in(
+      query[Int]("limit")
+        .default(20)
+        .validate(Validator.positive)
+        .and(
+          query[Int]("offset")
+            .default(0)
+            .validate(Validator.positiveOrZero)
+        )
+        .mapTo[Pagination]
+    )
+    .out(jsonBody[ArticlesList])
+    .serverLogic(session =>
+      pagination =>
+        articlesService
+          .listArticlesByFollowedUsers(pagination, session)
+          .map(articles => ArticlesList(articles = articles, articlesCount = articles.size))
+          .logError
+          .pipe(defaultErrorsMappings)
+    )
+
   val get: ZServerEndpoint[Any, Any] = base.secureEndpoint.get
     .in("api" / "articles" / path[String]("slug")) // TODO Input Validation
     .out(jsonBody[Article])
@@ -129,7 +152,7 @@ class ArticlesEndpoints(articlesService: ArticlesService, base: BaseEndpoints):
     )
 
   val endpoints: List[ZServerEndpoint[Any, Any]] =
-    List(listArticles, get, update, create, makeFavorite, removeFavorite, addComment, deleteComment)
+    List(listArticles, feedArticles, get, update, create, makeFavorite, removeFavorite, addComment, deleteComment)
 
   private def filterParam(name: String, key: ArticlesFilters): EndpointInput.Query[Option[(ArticlesFilters, String)]] = {
     query[Option[String]](name)

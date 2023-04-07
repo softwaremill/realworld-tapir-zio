@@ -4,9 +4,9 @@ import com.softwaremill.realworld.articles.comments.CommentData
 import com.softwaremill.realworld.articles.model.*
 import com.softwaremill.realworld.common.Exceptions.{BadRequest, NotFound, Unauthorized}
 import com.softwaremill.realworld.common.{Exceptions, Pagination}
-import com.softwaremill.realworld.profiles.{ProfileRow, ProfilesService}
+import com.softwaremill.realworld.profiles.{Followers, ProfileRow, ProfilesService}
 import com.softwaremill.realworld.users.UserMapper.toUserData
-import com.softwaremill.realworld.users.{UserData, UserMapper, UserRow, UsersRepository}
+import com.softwaremill.realworld.users.{UserData, UserMapper, UserRow, UserSession, UsersRepository}
 import zio.{Console, IO, Task, ZIO, ZLayer}
 
 import java.sql.SQLException
@@ -17,6 +17,16 @@ class ArticlesService(articlesRepository: ArticlesRepository, usersRepository: U
 
   def list(filters: Map[ArticlesFilters, String], pagination: Pagination): IO[SQLException, List[ArticleData]] = articlesRepository
     .list(filters, pagination)
+
+  def listArticlesByFollowedUsers(
+      pagination: Pagination,
+      session: UserSession
+  ): Task[List[ArticleData]] =
+    for {
+      userId <- profilesService.getProfileByEmail(session.email).map(_.userId)
+      foundArticles <- articlesRepository
+        .listArticlesByFollowedUsers(pagination, userId)
+    } yield foundArticles
 
   def findBySlugAsSeenBy(slug: String, email: String): IO[Exception, ArticleData] = articlesRepository
     .findBySlugAsSeenBy(slug, email)
