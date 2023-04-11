@@ -21,6 +21,16 @@ import scala.util.chaining.*
 
 class ArticlesEndpoints(articlesService: ArticlesService, base: BaseEndpoints):
 
+  private val limitParameter = query[Int]("limit")
+    .default(20)
+    .validate(Validator.positive)
+    .and(
+      query[Int]("offset")
+        .default(0)
+        .validate(Validator.positiveOrZero)
+    )
+    .mapTo[Pagination]
+
   val listArticles: ZServerEndpoint[Any, Any] = base.optionallySecureEndpoint.get
     .in("api" / "articles")
     .in(
@@ -30,15 +40,7 @@ class ArticlesEndpoints(articlesService: ArticlesService, base: BaseEndpoints):
         .map((tf, af, ff) => List(tf, af, ff))(m => (m(0), m(1), m(2)))
     )
     .in(
-      query[Int]("limit")
-        .default(20)
-        .validate(Validator.positive)
-        .and(
-          query[Int]("offset")
-            .default(0)
-            .validate(Validator.positiveOrZero)
-        )
-        .mapTo[Pagination]
+      limitParameter
     )
     .out(jsonBody[ArticlesList])
     .serverLogic(session =>
@@ -53,15 +55,7 @@ class ArticlesEndpoints(articlesService: ArticlesService, base: BaseEndpoints):
   val feedArticles: ZServerEndpoint[Any, Any] = base.secureEndpoint.get
     .in("api" / "articles" / "feed")
     .in(
-      query[Int]("limit")
-        .default(20)
-        .validate(Validator.positive)
-        .and(
-          query[Int]("offset")
-            .default(0)
-            .validate(Validator.positiveOrZero)
-        )
-        .mapTo[Pagination]
+      limitParameter
     )
     .out(jsonBody[ArticlesList])
     .serverLogic(session =>
@@ -161,6 +155,5 @@ class ArticlesEndpoints(articlesService: ArticlesService, base: BaseEndpoints):
       .validateOption(Validator.maxLength(100))
       .map(_.map(v => (key, v)))(_.map((_, v) => v))
   }
-
 object ArticlesEndpoints:
   val live: ZLayer[ArticlesService with BaseEndpoints, Nothing, ArticlesEndpoints] = ZLayer.fromFunction(new ArticlesEndpoints(_, _))
