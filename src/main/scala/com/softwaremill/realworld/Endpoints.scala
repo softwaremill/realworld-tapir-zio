@@ -9,7 +9,12 @@ import sttp.tapir.swagger.bundle.SwaggerInterpreter
 import sttp.tapir.ztapir.ZServerEndpoint
 import zio.{Task, ZIO, ZLayer}
 
-class Endpoints(articlesEndpoints: ArticlesEndpoints, usersEndpoints: UsersEndpoints, profilesEndpoints: ProfilesEndpoints, tagsEndpoints: TagsEndpoints):
+class Endpoints(
+    articlesEndpoints: ArticlesEndpoints,
+    usersEndpoints: UsersEndpoints,
+    profilesEndpoints: ProfilesEndpoints,
+    tagsEndpoints: TagsEndpoints
+):
 
   val endpoints: List[ZServerEndpoint[Any, Any]] = {
     val api = articlesEndpoints.endpoints ++ usersEndpoints.endpoints ++ profilesEndpoints.endpoints ++ tagsEndpoints.endpoints
