@@ -259,7 +259,7 @@ object ArticlesEndpointsSpec extends ZIOSpecDefault:
                   title = "How to train your dragon 2",
                   description = "So toothless",
                   body = "Its a dragon",
-                  tagList = List("drogon", "fly")
+                  tagList = Some(List("drogon", "fly"))
                 )
               )
             )
@@ -296,7 +296,7 @@ object ArticlesEndpointsSpec extends ZIOSpecDefault:
             title = "Test slug",
             description = "So toothless",
             body = "Its a dragon",
-            tagList = List("drogon", "fly")
+            tagList = Some(List("drogon", "fly"))
           )
           _ <- repo.add(createData = createData, userId = 1)
           articlesEndpoints <- ZIO.service[ArticlesEndpoints]
@@ -343,7 +343,7 @@ object ArticlesEndpointsSpec extends ZIOSpecDefault:
               title = "Test slug",
               description = "description",
               body = "body",
-              tagList = List()
+              tagList = None
             ),
             1
           )
@@ -396,7 +396,7 @@ object ArticlesEndpointsSpec extends ZIOSpecDefault:
                 title = "Test slug",
                 description = "description",
                 body = "body",
-                tagList = List()
+                tagList = None
               ),
               1
             )
@@ -405,7 +405,7 @@ object ArticlesEndpointsSpec extends ZIOSpecDefault:
                 title = "Test slug 2",
                 description = "description",
                 body = "body",
-                tagList = List()
+                tagList = None
               ),
               1
             )

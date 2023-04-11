@@ -36,7 +36,9 @@ class ArticlesService(articlesRepository: ArticlesRepository, usersRepository: U
     for {
       user <- userByEmail(userEmail)
       articleId <- articlesRepository.add(createData, user.userId)
-      _ <- ZIO.foreach(createData.tagList)(tag => articlesRepository.addTag(tag, articleId))
+      _ <- ZIO.foreach(createData.tagList) { tagList =>
+        ZIO.foreach(tagList)(tag => articlesRepository.addTag(tag, articleId))
+      }
       articleData <- findBySlugAsSeenBy(articleId, userEmail)
     } yield articleData
 

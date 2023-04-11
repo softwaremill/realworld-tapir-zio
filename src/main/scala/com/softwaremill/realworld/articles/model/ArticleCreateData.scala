@@ -7,7 +7,7 @@ case class ArticleCreateData(
     title: String,
     description: String,
     body: String,
-    tagList: List[String] // TODO tagList is currently mandatory...
+    tagList: Option[List[String]]
 )
 
 object ArticleCreateData:
