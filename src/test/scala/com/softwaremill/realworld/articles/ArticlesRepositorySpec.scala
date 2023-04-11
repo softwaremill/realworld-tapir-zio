@@ -334,7 +334,7 @@ object ArticlesRepositorySpec extends ZIOSpecDefault:
                 title = "New-article-under-test",
                 description = "What a nice day!",
                 body = "Writing scala code is quite challenging pleasure",
-                tagList = List()
+                tagList = None
               ),
               10
             )
@@ -372,7 +372,7 @@ object ArticlesRepositorySpec extends ZIOSpecDefault:
                 title = "How-to-train-your-dragon",
                 description = "What a nice day!",
                 body = "Writing scala code is quite challenging pleasure",
-                tagList = List()
+                tagList = None
               ),
               10
             )
@@ -391,7 +391,7 @@ object ArticlesRepositorySpec extends ZIOSpecDefault:
                 title = "New article under test",
                 description = "What a nice day!",
                 body = "Writing scala code is quite challenging pleasure",
-                tagList = List()
+                tagList = None
               ),
               10
             )
@@ -445,7 +445,7 @@ object ArticlesRepositorySpec extends ZIOSpecDefault:
                 title = "Slug to update",
                 description = "What a nice day!",
                 body = "Writing scala code is quite challenging pleasure",
-                tagList = List()
+                tagList = None
               ),
               10
             )
@@ -454,7 +454,7 @@ object ArticlesRepositorySpec extends ZIOSpecDefault:
                 title = "Existing slug",
                 description = "It occupies article slug",
                 body = "Which will be used for updating another article during next step",
-                tagList = List()
+                tagList = None
               ),
               10
             )
