@@ -1,6 +1,5 @@
 package com.softwaremill.realworld.articles
 
-import com.softwaremill.realworld.articles.ArticlesFilters.{Author, Favorited, Tag}
 import com.softwaremill.realworld.articles.ArticlesTags.{explodeTags, tagsConcat}
 import com.softwaremill.realworld.articles.comments.CommentRow
 import com.softwaremill.realworld.articles.model.*
@@ -29,10 +28,11 @@ class ArticlesRepository(quill: Quill.Sqlite[SnakeCase]):
   private inline def queryUser = quote(querySchema[UserRow](entity = "users"))
   private inline def queryCommentArticle = quote(querySchema[CommentRow](entity = "comments_articles"))
 
-  def list(filters: Map[ArticlesFilters, String], pagination: Pagination): IO[SQLException, List[ArticleData]] = {
-    val tagFilter = filters.getOrElse(Tag, "")
-    val favoritedFilter = filters.getOrElse(Favorited, "")
-    val authorFilter = filters.getOrElse(Author, "")
+  def list(filters: ArticlesFilters, pagination: Pagination): IO[SQLException, List[ArticleData]] = {
+    val tagFilter = filters.tag.getOrElse("")
+    val authorFilter = filters.author.getOrElse("")
+    val favoritedFilter = filters.favorited.getOrElse("")
+
     run(for {
       ar <- sql"""
                      SELECT a.article_id, a.slug, a.title, a.description, a.body, a.created_at, a.updated_at, a.author_id
@@ -58,7 +58,7 @@ class ArticlesRepository(quill: Quill.Sqlite[SnakeCase]):
         .leftJoin(f => f._1 == ar.articleId)
       pr <- queryProfile if ar.authorId == pr.userId
     } yield (ar, pr, tr.map(_._2), fr.map(_._2)))
-      .map(_.map(article))
+      .map(x => x.map(article))
   }
 
   def findBySlug(slug: String): IO[SQLException, Option[ArticleData]] =

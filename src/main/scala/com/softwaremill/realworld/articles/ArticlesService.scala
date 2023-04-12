@@ -19,7 +19,7 @@ class ArticlesService(
     profilesService: ProfilesService
 ):
 
-  def list(filters: Map[ArticlesFilters, String], pagination: Pagination): IO[SQLException, List[ArticleData]] = articlesRepository
+  def list(filters: ArticlesFilters, pagination: Pagination): IO[SQLException, List[ArticleData]] = articlesRepository
     .list(filters, pagination)
 
   def findBySlugAsSeenBy(slug: String, email: String): IO[Exception, ArticleData] = articlesRepository
@@ -40,7 +40,9 @@ class ArticlesService(
     for {
       user <- userByEmail(userEmail)
       articleId <- articlesRepository.add(createData, user.userId)
-      _ <- ZIO.foreach(createData.tagList)(tag => articlesRepository.addTag(tag, articleId))
+      _ <- ZIO.foreach(createData.tagList) { tagList =>
+        ZIO.foreach(tagList)(tag => articlesRepository.addTag(tag, articleId))
+      }
       articleData <- findBySlugAsSeenBy(articleId, userEmail)
     } yield articleData
 
