@@ -60,9 +60,7 @@ class ArticlesEndpoints(articlesService: ArticlesService, base: BaseEndpoints):
 
   val feedArticles: ZServerEndpoint[Any, Any] = base.secureEndpoint.get
     .in("api" / "articles" / "feed")
-    .in(
-      limitParameter
-    )
+    .in(articlesPagination)
     .out(jsonBody[ArticlesList])
     .serverLogic(session =>
       pagination =>
