@@ -2,7 +2,7 @@ package com.softwaremill.realworld.articles
 
 import com.softwaremill.realworld.articles.*
 import com.softwaremill.realworld.articles.comments.*
-import com.softwaremill.realworld.articles.model.{Article, ArticleCreate, ArticleData, ArticleUpdate, ArticlesList}
+import com.softwaremill.realworld.articles.model.*
 import com.softwaremill.realworld.common.*
 import com.softwaremill.realworld.db.{Db, DbConfig}
 import com.softwaremill.realworld.http.ErrorMapper.defaultErrorsMappings
@@ -21,14 +21,21 @@ import scala.util.chaining.*
 
 class ArticlesEndpoints(articlesService: ArticlesService, base: BaseEndpoints):
 
+  private def filterQuery(name: String): EndpointInput.Query[Option[String]] =
+    query[Option[String]](name)
+      .validateOption(Validator.nonEmptyString)
+      .validateOption(Validator.maxLength(100))
+      .validateOption(Validator.pattern("\\w+"))
+
+  private val articlesFilters: EndpointInput[ArticlesFilters] =
+    filterQuery("tag")
+      .and(filterQuery("author"))
+      .and(filterQuery("favorited"))
+      .mapTo[ArticlesFilters]
+
   val listArticles: ZServerEndpoint[Any, Any] = base.optionallySecureEndpoint.get
     .in("api" / "articles")
-    .in(
-      filterParam("tag", ArticlesFilters.Tag)
-        .and(filterParam("author", ArticlesFilters.Author))
-        .and(filterParam("favorited", ArticlesFilters.Favorited))
-        .map((tf, af, ff) => List(tf, af, ff))(m => (m(0), m(1), m(2)))
-    )
+    .in(articlesFilters)
     .in(
       query[Int]("limit")
         .default(20)
@@ -44,7 +51,7 @@ class ArticlesEndpoints(articlesService: ArticlesService, base: BaseEndpoints):
     .serverLogic(session =>
       (filters, pagination) =>
         articlesService
-          .list(filters.flatten.toMap, pagination)
+          .list(filters, pagination)
           .map(articles => ArticlesList(articles = articles, articlesCount = articles.size))
           .logError
           .pipe(defaultErrorsMappings)
@@ -130,14 +137,6 @@ class ArticlesEndpoints(articlesService: ArticlesService, base: BaseEndpoints):
 
   val endpoints: List[ZServerEndpoint[Any, Any]] =
     List(listArticles, get, update, create, makeFavorite, removeFavorite, addComment, deleteComment)
-
-  private def filterParam(name: String, key: ArticlesFilters): EndpointInput.Query[Option[(ArticlesFilters, String)]] = {
-    query[Option[String]](name)
-      .validateOption(Validator.pattern("\\w+"))
-      .validateOption(Validator.nonEmptyString)
-      .validateOption(Validator.maxLength(100))
-      .map(_.map(v => (key, v)))(_.map((_, v) => v))
-  }
 
 object ArticlesEndpoints:
   val live: ZLayer[ArticlesService with BaseEndpoints, Nothing, ArticlesEndpoints] = ZLayer.fromFunction(new ArticlesEndpoints(_, _))

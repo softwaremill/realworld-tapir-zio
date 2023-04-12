@@ -15,7 +15,7 @@ import javax.sql.DataSource
 
 class ArticlesService(articlesRepository: ArticlesRepository, usersRepository: UsersRepository, profilesService: ProfilesService):
 
-  def list(filters: Map[ArticlesFilters, String], pagination: Pagination): IO[SQLException, List[ArticleData]] = articlesRepository
+  def list(filters: ArticlesFilters, pagination: Pagination): IO[SQLException, List[ArticleData]] = articlesRepository
     .list(filters, pagination)
 
   def findBySlugAsSeenBy(slug: String, email: String): IO[Exception, ArticleData] = articlesRepository

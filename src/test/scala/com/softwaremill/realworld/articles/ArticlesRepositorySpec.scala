@@ -29,14 +29,14 @@ object ArticlesRepositorySpec extends ZIOSpecDefault:
         test("no filters") {
           for {
             repo <- ZIO.service[ArticlesRepository]
-            v <- repo.list(Map(), Pagination(20, 0))
+            v <- repo.list(ArticlesFilters.empty, Pagination(20, 0))
           } yield zio.test.assert(v)(isEmpty)
         },
         test("with filters") {
           for {
             repo <- ZIO.service[ArticlesRepository]
             v <- repo.list(
-              Map(ArticlesFilters.Author -> "John", ArticlesFilters.Tag -> "dragon", ArticlesFilters.Favorited -> "Ron"),
+              ArticlesFilters(Some("dragon"), Some("John"), Some("Ron")),
               Pagination(20, 0)
             )
           } yield zio.test.assert(v)(isEmpty)
@@ -49,7 +49,7 @@ object ArticlesRepositorySpec extends ZIOSpecDefault:
         test("with small offset and small limit") {
           for {
             repo <- ZIO.service[ArticlesRepository]
-            v <- repo.list(Map(), Pagination(1, 1))
+            v <- repo.list(ArticlesFilters.empty, Pagination(1, 1))
           } yield zio.test.assert(v)(
             hasSize(equalTo(1))
               && contains(
@@ -71,7 +71,7 @@ object ArticlesRepositorySpec extends ZIOSpecDefault:
         test("no filters") {
           for {
             repo <- ZIO.service[ArticlesRepository]
-            v <- repo.list(Map(), Pagination(20, 0))
+            v <- repo.list(ArticlesFilters.empty, Pagination(20, 0))
           } yield zio.test.assert(v)(
             hasSize(equalTo(3))
               && contains(
@@ -127,7 +127,7 @@ object ArticlesRepositorySpec extends ZIOSpecDefault:
           for {
             repo <- ZIO.service[ArticlesRepository]
             v <- repo.list(
-              Map(ArticlesFilters.Tag -> "dragons"),
+              ArticlesFilters.withTag("dragons"),
               Pagination(20, 0)
             )
           } yield zio.test.assert(v)(
@@ -166,7 +166,7 @@ object ArticlesRepositorySpec extends ZIOSpecDefault:
           for {
             repo <- ZIO.service[ArticlesRepository]
             v <- repo.list(
-              Map(ArticlesFilters.Favorited -> "jake"),
+              ArticlesFilters.withFavorited("jake"),
               Pagination(20, 0)
             )
           } yield zio.test.assert(v)(
@@ -191,7 +191,7 @@ object ArticlesRepositorySpec extends ZIOSpecDefault:
           for {
             repo <- ZIO.service[ArticlesRepository]
             v <- repo.list(
-              Map(ArticlesFilters.Author -> "john"),
+              ArticlesFilters.withAuthor("john"),
               Pagination(20, 0)
             )
           } yield zio.test.assert(v)(
