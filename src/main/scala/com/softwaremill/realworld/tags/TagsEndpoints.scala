@@ -16,9 +16,7 @@ class TagsEndpoints(tagsService: TagsService, base: BaseEndpoints):
     .out(jsonBody[TagsList])
     .zServerLogic(_ =>
       tagsService.getAllTags
-        .map(foundTags => {
-          TagsList(tags = foundTags.map(_.tag))
-        })
+        .map(foundTags => TagsList(tags = foundTags.map(_.tag)))
         .logError
         .pipe(defaultErrorsMappings)
     )
