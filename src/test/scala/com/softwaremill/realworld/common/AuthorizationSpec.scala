@@ -128,7 +128,7 @@ object AuthorizationSpec extends ZIOSpecDefault:
       endpointParam = ArticleAuthEndpointParameters.getCommentsFromArticle("slug"),
       headers = Map("Authorization" -> "Token Invalid JWT"),
       expectedError = "{\"error\":\"Invalid token!\"}"
-    ),
+    )
   )
 
   def userEndpointsAuthorizationTest(testParameters: UserAuthTestParameters): Spec[UsersEndpoints, Throwable] = {

@@ -35,8 +35,8 @@ object CommentsEndpointsSpec extends ZIOSpecDefault:
             )
           } yield result
         },
-        //TODO remove comment possible to check?
-        
+        // TODO remove comment possible to check?
+
 //        test("remove comment and check if comment list has one element") {
 //          for {
 //            authHeader <- getValidAuthorizationHeader(email = "john@example.com")
