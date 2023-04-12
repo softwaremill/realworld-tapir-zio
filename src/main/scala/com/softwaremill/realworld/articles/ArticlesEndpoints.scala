@@ -33,20 +33,21 @@ class ArticlesEndpoints(articlesService: ArticlesService, base: BaseEndpoints):
       .and(filterQuery("favorited"))
       .mapTo[ArticlesFilters]
 
+  private val articlesPagination: EndpointInput[Pagination] =
+    query[Int]("limit")
+      .default(20)
+      .validate(Validator.positive)
+      .and(
+        query[Int]("offset")
+          .default(0)
+          .validate(Validator.positiveOrZero)
+      )
+      .mapTo[Pagination]
+
   val listArticles: ZServerEndpoint[Any, Any] = base.optionallySecureEndpoint.get
     .in("api" / "articles")
     .in(articlesFilters)
-    .in(
-      query[Int]("limit")
-        .default(20)
-        .validate(Validator.positive)
-        .and(
-          query[Int]("offset")
-            .default(0)
-            .validate(Validator.positiveOrZero)
-        )
-        .mapTo[Pagination]
-    )
+    .in(articlesPagination)
     .out(jsonBody[ArticlesList])
     .serverLogic(session =>
       (filters, pagination) =>
