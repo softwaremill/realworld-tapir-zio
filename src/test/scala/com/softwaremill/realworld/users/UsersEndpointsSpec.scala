@@ -4,6 +4,7 @@ import com.softwaremill.diffx.{Diff, compare}
 import com.softwaremill.realworld.auth.AuthService
 import com.softwaremill.realworld.common.{BaseEndpoints, Configuration}
 import com.softwaremill.realworld.db.{Db, DbConfig, DbMigrator}
+import com.softwaremill.realworld.users.model.{User, UserData, UserLogin, UserLoginData, UserRegister, UserRegisterData}
 import com.softwaremill.realworld.utils.TestUtils.*
 import sttp.client3.testing.SttpBackendStub
 import sttp.client3.ziojson.*
@@ -52,7 +53,7 @@ object UsersEndpointsSpec extends ZIOSpecDefault:
         )(
           isRight(
             equalTo(
-              User(
+              model.User(
                 UserData(
                   "admin@example.com",
                   None,
@@ -90,7 +91,7 @@ object UsersEndpointsSpec extends ZIOSpecDefault:
             .flatMap { endpoint =>
               basicRequest
                 .post(uri"http://test.com/api/users")
-                .body(UserRegister(UserRegisterData(email = "new_user@example.com", username = "user", password = "password")))
+                .body(model.UserRegister(UserRegisterData(email = "new_user@example.com", username = "user", password = "password")))
                 .response(asJson[User])
                 .send(backendStub(endpoint))
                 .map(_.body)
@@ -100,7 +101,7 @@ object UsersEndpointsSpec extends ZIOSpecDefault:
           import com.softwaremill.realworld.common.model.UserDiff.{*, given}
           compare(
             result.toOption.get,
-            User(UserData(email = "new_user@example.com", token = None, username = "user", bio = None, image = None))
+            model.User(UserData(email = "new_user@example.com", token = None, username = "user", bio = None, image = None))
           ).isIdentical
         }
       }
@@ -139,7 +140,7 @@ object UsersEndpointsSpec extends ZIOSpecDefault:
           import com.softwaremill.realworld.common.model.UserDiff.{*, given}
           compare(
             result.toOption.get,
-            User(UserData(email = "admin@example.com", token = None, username = "admin", bio = Some("I dont work"), image = Some("")))
+            model.User(UserData(email = "admin@example.com", token = None, username = "admin", bio = Some("I dont work"), image = Some("")))
           ).isIdentical
         }
       }

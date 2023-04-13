@@ -5,7 +5,7 @@ import com.softwaremill.realworld.articles.comments.CommentRow
 import com.softwaremill.realworld.articles.model.*
 import com.softwaremill.realworld.common.{Exceptions, Pagination}
 import com.softwaremill.realworld.profiles.ProfileRow
-import com.softwaremill.realworld.users.UserRow
+import com.softwaremill.realworld.users.model.UserRow
 import io.getquill.*
 import io.getquill.jdbczio.*
 import org.sqlite.SQLiteErrorCode.SQLITE_CONSTRAINT_UNIQUE

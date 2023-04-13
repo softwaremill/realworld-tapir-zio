@@ -3,6 +3,7 @@ package com.softwaremill.realworld.users
 import com.softwaremill.diffx.{Diff, compare}
 import com.softwaremill.realworld.common.Pagination
 import com.softwaremill.realworld.db.{Db, DbConfig, DbMigrator}
+import com.softwaremill.realworld.users.model.{UserData, UserRegisterData, UserRow}
 import com.softwaremill.realworld.utils.TestUtils.*
 import sttp.client3.testing.SttpBackendStub
 import sttp.client3.ziojson.*

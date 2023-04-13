@@ -8,7 +8,8 @@ import com.softwaremill.realworld.common.{BaseEndpoints, Configuration}
 import com.softwaremill.realworld.db.{Db, DbConfig, DbMigrator}
 import com.softwaremill.realworld.profiles.{ProfilesRepository, ProfilesService}
 import com.softwaremill.realworld.users.UsersEndpointsSpec.test
-import com.softwaremill.realworld.users.{User, UsersEndpoints, UsersRepository, UsersService}
+import com.softwaremill.realworld.users.model.User
+import com.softwaremill.realworld.users.{UsersEndpoints, UsersRepository, UsersService}
 import com.softwaremill.realworld.utils.TestUtils.*
 import sttp.client3.testing.SttpBackendStub
 import sttp.client3.ziojson.*

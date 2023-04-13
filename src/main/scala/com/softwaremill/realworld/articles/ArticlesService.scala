@@ -6,7 +6,8 @@ import com.softwaremill.realworld.common.Exceptions.{BadRequest, NotFound, Unaut
 import com.softwaremill.realworld.common.{Exceptions, Pagination}
 import com.softwaremill.realworld.profiles.{ProfileRow, ProfilesService}
 import com.softwaremill.realworld.users.UserMapper.toUserData
-import com.softwaremill.realworld.users.{UserData, UserMapper, UserRow, UsersRepository}
+import com.softwaremill.realworld.users.model.{UserData, UserRow}
+import com.softwaremill.realworld.users.{UserMapper, UsersRepository}
 import zio.{Console, IO, Task, ZIO, ZLayer}
 
 import java.sql.SQLException

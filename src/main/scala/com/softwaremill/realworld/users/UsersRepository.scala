@@ -2,6 +2,7 @@ package com.softwaremill.realworld.users
 
 import com.softwaremill.realworld.common.Exceptions
 import com.softwaremill.realworld.users.UserMapper.{toUserData, toUserDataWithPassword}
+import com.softwaremill.realworld.users.model.{UserRow, UserWithPassword, UserRegisterData, UserUpdateData}
 import io.getquill.*
 import io.getquill.jdbczio.*
 import org.sqlite.SQLiteErrorCode.SQLITE_CONSTRAINT_UNIQUE

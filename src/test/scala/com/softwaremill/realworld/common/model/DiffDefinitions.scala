@@ -2,7 +2,7 @@ package com.softwaremill.realworld.common.model
 
 import com.softwaremill.diffx.Diff
 import com.softwaremill.realworld.articles.model.{Article, ArticleAuthor, ArticleData}
-import com.softwaremill.realworld.users.{User, UserData, UserWithPassword}
+import com.softwaremill.realworld.users.model.{User, UserData, UserWithPassword}
 
 object UserDiff:
   given userDataDiff: Diff[UserData] = Diff.derived[UserData].ignore(_.token)

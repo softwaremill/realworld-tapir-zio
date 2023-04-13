@@ -1,7 +1,8 @@
 package com.softwaremill.realworld.profiles
 
 import com.softwaremill.realworld.common.Exceptions.{BadRequest, NotFound}
-import com.softwaremill.realworld.users.{UserRow, UsersRepository}
+import com.softwaremill.realworld.users.UsersRepository
+import com.softwaremill.realworld.users.model.UserRow
 import zio.{Task, ZIO, ZLayer}
 
 class ProfilesService(profilesRepository: ProfilesRepository, usersRepository: UsersRepository) {

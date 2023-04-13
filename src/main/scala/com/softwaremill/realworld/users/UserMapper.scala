@@ -1,5 +1,7 @@
 package com.softwaremill.realworld.users
 
+import com.softwaremill.realworld.users.model.{UserData, UserRow, UserWithPassword, UserUpdateData}
+
 object UserMapper: // TODO probably this mapper can be replaced with something better in Scala
 
   def toUserDataWithPassword(userRow: UserRow): UserWithPassword = UserWithPassword(

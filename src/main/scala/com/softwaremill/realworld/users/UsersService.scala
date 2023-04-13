@@ -4,6 +4,7 @@ import com.softwaremill.realworld.auth.AuthService
 import com.softwaremill.realworld.common.Exceptions.{NotFound, Unauthorized}
 import com.softwaremill.realworld.common.{Exceptions, Pagination}
 import com.softwaremill.realworld.users.UserMapper.{toUserData, toUserUpdateDataWithFallback}
+import com.softwaremill.realworld.users.model.*
 import zio.{Console, IO, ZIO, ZLayer}
 
 import java.sql.SQLException
@@ -36,7 +37,7 @@ class UsersService(authService: AuthService, usersRepository: UsersRepository):
           hashedPassword <- authService.encryptPassword(passwordClean)
           jwt <- authService.generateJwt(emailClean)
           _ <- usersRepository.add(UserRegisterData(emailClean, usernameClean, hashedPassword))
-        } yield User(userWithToken(emailClean, usernameClean, jwt))
+        } yield model.User(userWithToken(emailClean, usernameClean, jwt))
       }
     } yield user
   }
