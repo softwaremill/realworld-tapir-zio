@@ -12,8 +12,8 @@ import zio.test.{TestResult, assertTrue, assertZIO}
 import java.time.Instant
 import scala.collection.immutable.Map
 
-object ArticlesSpecData {
-  def zioEffect(
+object ArticleTestSupport {
+  def callGetListArticles(
       authorizationHeaderOpt: Option[Map[String, String]],
       uri: Uri
   ): ZIO[ArticlesEndpoints, Throwable, Either[ResponseException[String, String], ArticlesList]] = {
@@ -43,7 +43,7 @@ object ArticlesSpecData {
   ): ZIO[ArticlesEndpoints, Throwable, TestResult] = {
 
     assertZIO(
-      zioEffect(authorizationHeaderOpt, uri)
+      callGetListArticles(authorizationHeaderOpt, uri)
     )(
       isRight(
         equalTo(
@@ -62,7 +62,7 @@ object ArticlesSpecData {
   ): ZIO[ArticlesEndpoints, Throwable, TestResult] = {
 
     assertZIO(
-      zioEffect(authorizationHeaderOpt, uri)
+      callGetListArticles(authorizationHeaderOpt, uri)
     )(
       isLeft(
         equalTo(
@@ -81,7 +81,7 @@ object ArticlesSpecData {
   ): ZIO[ArticlesEndpoints, Throwable, TestResult] = {
 
     assertZIO(
-      zioEffect(authorizationHeaderOpt, uri)
+      callGetListArticles(authorizationHeaderOpt, uri)
     )(
       isLeft(
         equalTo(
@@ -100,7 +100,7 @@ object ArticlesSpecData {
   ): ZIO[ArticlesEndpoints, Throwable, TestResult] = {
 
     for {
-      result <- zioEffect(authorizationHeaderOpt, uri)
+      result <- callGetListArticles(authorizationHeaderOpt, uri)
     } yield assertTrue {
       // TODO there must be better way to implement this...
       import com.softwaremill.realworld.common.model.UserDiff.{*, given}
@@ -131,7 +131,7 @@ object ArticlesSpecData {
   ): ZIO[ArticlesEndpoints, Throwable, TestResult] = {
 
     for {
-      result <- zioEffect(authorizationHeaderOpt, uri)
+      result <- callGetListArticles(authorizationHeaderOpt, uri)
     } yield assertTrue {
       // TODO there must be better way to implement this...
       import com.softwaremill.realworld.common.model.UserDiff.{*, given}
@@ -162,7 +162,7 @@ object ArticlesSpecData {
   ): ZIO[ArticlesEndpoints, Throwable, TestResult] = {
 
     for {
-      result <- zioEffect(authorizationHeaderOpt, uri)
+      result <- callGetListArticles(authorizationHeaderOpt, uri)
     } yield assertTrue {
       // TODO there must be better way to implement this...
       import com.softwaremill.realworld.common.model.UserDiff.{*, given}

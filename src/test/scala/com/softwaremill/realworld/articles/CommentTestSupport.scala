@@ -14,9 +14,9 @@ import sttp.client3.ziojson.zioJsonBodySerializer
 
 import java.time.Instant
 
-object CommentsSpecData {
+object CommentTestSupport {
 
-  def getCommentsFromArticleRequest(
+  def callGetCommentsFromArticle(
       authorizationHeaderOpt: Option[Map[String, String]],
       uri: Uri
   ): ZIO[ArticlesEndpoints, Throwable, Either[ResponseException[String, String], CommentsList]] = {
@@ -40,7 +40,7 @@ object CommentsSpecData {
       }
   }
 
-  def addCommentRequest(
+  def callAddComment(
       authorizationHeader: Map[String, String],
       uri: Uri,
       bodyComment: String
@@ -82,7 +82,7 @@ object CommentsSpecData {
   ): ZIO[ArticlesEndpoints, Throwable, TestResult] = {
 
     assertZIO(
-      getCommentsFromArticleRequest(authorizationHeaderOpt, uri)
+      callGetCommentsFromArticle(authorizationHeaderOpt, uri)
     )(
       isRight(
         equalTo(
@@ -101,7 +101,7 @@ object CommentsSpecData {
   ): ZIO[ArticlesEndpoints, Throwable, TestResult] = {
 
     for {
-      result <- addCommentRequest(authorizationHeader, uri, body)
+      result <- callAddComment(authorizationHeader, uri, body)
     } yield assertTrue {
       // TODO there must be better way to implement this...
       val comment = result.toOption.get.comment
@@ -123,7 +123,7 @@ object CommentsSpecData {
   ): ZIO[ArticlesEndpoints, Throwable, TestResult] = {
 
     for {
-      result <- getCommentsFromArticleRequest(authorizationHeaderOpt, uri)
+      result <- callGetCommentsFromArticle(authorizationHeaderOpt, uri)
     } yield assertTrue {
       // TODO there must be better way to implement this...
       val listComments = result.toOption.get.comments
@@ -156,7 +156,7 @@ object CommentsSpecData {
   ): ZIO[ArticlesEndpoints, Throwable, TestResult] = {
 
     for {
-      result <- getCommentsFromArticleRequest(authorizationHeaderOpt, uri)
+      result <- callGetCommentsFromArticle(authorizationHeaderOpt, uri)
     } yield assertTrue {
       // TODO there must be better way to implement this...
       val listComments = result.toOption.get.comments

@@ -1,7 +1,7 @@
 package com.softwaremill.realworld.articles
 
 import com.softwaremill.realworld.articles.CommentsEndpointsSpec.suite
-import com.softwaremill.realworld.articles.CommentsSpecData.*
+import com.softwaremill.realworld.articles.CommentTestSupport.*
 import com.softwaremill.realworld.articles.comments.CommentCreateData
 import com.softwaremill.realworld.auth.AuthService
 import com.softwaremill.realworld.common.{BaseEndpoints, Configuration}
