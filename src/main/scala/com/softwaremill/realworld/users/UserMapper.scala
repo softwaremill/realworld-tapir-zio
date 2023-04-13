@@ -11,12 +11,3 @@ object UserMapper: // TODO probably this mapper can be replaced with something b
     userRow.bio,
     userRow.image
   )
-
-  def toUserUpdateDataWithFallback(updateData: UserUpdateData, oldUserData: UserWithPassword): UserUpdateData =
-    updateData.copy(
-      email = updateData.email.orElse(Option(oldUserData.user.email)),
-      username = updateData.username.orElse(Option(oldUserData.user.username)),
-      password = Some(oldUserData.hashedPassword),
-      bio = updateData.bio.orElse(oldUserData.user.bio),
-      image = updateData.image.orElse(oldUserData.user.image)
-    )

@@ -3,7 +3,7 @@ package com.softwaremill.realworld.users
 import com.softwaremill.realworld.auth.AuthService
 import com.softwaremill.realworld.common.Exceptions.{NotFound, Unauthorized}
 import com.softwaremill.realworld.common.{Exceptions, Pagination}
-import com.softwaremill.realworld.users.UserMapper.{toUserData, toUserUpdateDataWithFallback}
+import com.softwaremill.realworld.users.UserMapper.toUserData
 import com.softwaremill.realworld.users.model.*
 import zio.{Console, IO, ZIO, ZLayer}
 
@@ -62,7 +62,7 @@ class UsersService(authService: AuthService, usersRepository: UsersRepository):
         .map(newPassword => authService.encryptPassword(newPassword))
         .getOrElse(ZIO.succeed(oldUser.hashedPassword))
       updatedData <- usersRepository.updateByEmail(
-        toUserUpdateDataWithFallback(updateData, oldUser.copy(hashedPassword = password)),
+        updateData.update(oldUser.copy(hashedPassword = password)),
         email
       )
     } yield UserData.fromUpdate(updatedData)
