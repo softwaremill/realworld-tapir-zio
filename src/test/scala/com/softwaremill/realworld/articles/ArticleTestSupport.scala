@@ -5,6 +5,7 @@ import com.softwaremill.realworld.utils.TestUtils.backendStub
 import sttp.client3.ziojson.asJson
 import sttp.client3.{HttpError, ResponseException, basicRequest}
 import sttp.model.Uri
+import sttp.tapir.ztapir.ZServerEndpoint
 import zio.ZIO
 import zio.test.Assertion.{equalTo, isLeft, isRight}
 import zio.test.{TestResult, assertTrue, assertZIO}
@@ -20,6 +21,13 @@ object ArticleTestSupport {
       .map(_.listArticles)
 
     executeRequest(authorizationHeaderOpt, uri, feedArticleEndpoint)
+
+  def callGetFeedArticles(authorizationHeaderOpt: Option[Map[String, String]], uri: Uri) =
+    val listArticleEndpoint = ZIO
+      .service[ArticlesEndpoints]
+      .map(_.feedArticles)
+
+    executeRequest(authorizationHeaderOpt, uri, listArticleEndpoint)
 
   private def executeRequest(
       authorizationHeaderOpt: Option[Map[String, String]],
@@ -107,7 +115,7 @@ object ArticleTestSupport {
   ): ZIO[ArticlesEndpoints, Throwable, TestResult] = {
 
     assertZIO(
-      zioEffect(authorizationHeaderOpt, uri, feedArticleEndpointZIO)
+      callGetFeedArticles(authorizationHeaderOpt, uri)
     )(
       isLeft(
         equalTo(
@@ -127,6 +135,37 @@ object ArticleTestSupport {
 
     for {
       result <- callGetListArticles(authorizationHeaderOpt, uri)
+    } yield assertTrue {
+      // TODO there must be better way to implement this...
+      import com.softwaremill.realworld.common.model.UserDiff.{*, given}
+
+      val articlesList = result.toOption.get
+
+      articlesList.articlesCount == 1 &&
+      articlesList.articles.contains(
+        ArticleData(
+          "how-to-train-your-dragon-2",
+          "How to train your dragon 2",
+          "So toothless",
+          "Its a dragon",
+          List("dragons", "goats", "training"),
+          Instant.ofEpochMilli(1455765776637L),
+          Instant.ofEpochMilli(1455767315824L),
+          false,
+          1,
+          ArticleAuthor("jake", Some("I work at statefarm"), Some("https://i.stack.imgur.com/xHWG8.jpg"), following = false)
+        )
+      )
+    }
+  }
+
+  def checkFeedPagination(
+      authorizationHeaderOpt: Option[Map[String, String]],
+      uri: Uri
+  ): ZIO[ArticlesEndpoints, Throwable, TestResult] = {
+
+    for {
+      result <- callGetFeedArticles(authorizationHeaderOpt, uri)
     } yield assertTrue {
       // TODO there must be better way to implement this...
       import com.softwaremill.realworld.common.model.UserDiff.{*, given}
@@ -252,7 +291,7 @@ object ArticleTestSupport {
   ): ZIO[ArticlesEndpoints, Throwable, TestResult] = {
 
     for {
-      result <- zioEffect(authorizationHeaderOpt, uri, feedArticleEndpointZIO)
+      result <- callGetFeedArticles(authorizationHeaderOpt, uri)
     } yield assertTrue {
       // TODO there must be better way to implement this...
       import com.softwaremill.realworld.common.model.UserDiff.{*, given}
