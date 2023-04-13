@@ -24,19 +24,13 @@ class ArticlesService(
   def list(filters: ArticlesFilters, pagination: Pagination): IO[SQLException, List[ArticleData]] = articlesRepository
     .list(filters, pagination)
 
-  def findBySlugAsSeenBy(slug: String, email: String): IO[Exception, ArticleData] = articlesRepository
+  def findBySlugAsSeenBy(slug: String, email: String): Task[ArticleData] = articlesRepository
     .findBySlugAsSeenBy(slug, email)
-    .flatMap {
-      case Some(a) => ZIO.succeed(a)
-      case None    => ZIO.fail(Exceptions.NotFound(s"Article with slug $slug doesn't exist."))
-    }
+    .flatMap(articlesRepository.handleArticleProcessingResult(_, s"Article with slug $slug doesn't exist."))
 
-  def findBySlugAsSeenBy(articleId: Int, email: String): IO[Exception, ArticleData] = articlesRepository
+  def findBySlugAsSeenBy(articleId: Int, email: String): Task[ArticleData] = articlesRepository
     .findBySlugAsSeenBy(articleId, email)
-    .flatMap {
-      case Some(a) => ZIO.succeed(a)
-      case None    => ZIO.fail(Exceptions.NotFound(s"Article doesn't exist."))
-    }
+    .flatMap(articlesRepository.handleArticleProcessingResult(_, s"Article doesn't exist."))
 
   def create(createData: ArticleCreateData, userEmail: String): Task[ArticleData] =
     for {

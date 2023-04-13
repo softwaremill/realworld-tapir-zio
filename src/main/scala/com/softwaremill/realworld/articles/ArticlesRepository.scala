@@ -82,10 +82,7 @@ class ArticlesRepository(quill: Quill.Sqlite[SnakeCase]):
         .map(_.articleId)
     )
       .map(_.headOption)
-      .flatMap {
-        case Some(a) => ZIO.succeed(a)
-        case None    => ZIO.fail(Exceptions.NotFound(s"Article with slug $slug doesn't exist."))
-      }
+      .flatMap(handleArticleProcessingResult(_, s"Article with slug $slug doesn't exist."))
 
   def findArticleBySlug(slug: String): Task[ArticleRow] =
     run(
@@ -93,10 +90,7 @@ class ArticlesRepository(quill: Quill.Sqlite[SnakeCase]):
         .filter(a => a.slug == lift(slug))
     )
       .map(_.headOption)
-      .flatMap {
-        case Some(a) => ZIO.succeed(a)
-        case None    => ZIO.fail(Exceptions.NotFound(s"Article with slug $slug doesn't exist."))
-      }
+      .flatMap(handleArticleProcessingResult(_, s"Article with slug $slug doesn't exist."))
 
   def findBySlugAsSeenBy(slug: String, viewerEmail: String): IO[SQLException, Option[ArticleData]] =
     run(for {
@@ -249,6 +243,15 @@ class ArticlesRepository(quill: Quill.Sqlite[SnakeCase]):
         ArticleAuthor(pr.username, Option(pr.bio), Option(pr.image), following = false)
       )
   }
+
+  def handleArticleProcessingResult[T](
+      option: Option[T],
+      errorMessage: String
+  ): Task[T] =
+    option match {
+      case Some(value) => ZIO.succeed(value)
+      case None        => ZIO.fail(Exceptions.NotFound(errorMessage))
+    }
 
   private def mapUniqueConstraintViolationError[R, A](task: RIO[R, A]): RIO[R, A] = task.mapError {
     case e: SQLiteException if e.getResultCode == SQLITE_CONSTRAINT_UNIQUE =>
