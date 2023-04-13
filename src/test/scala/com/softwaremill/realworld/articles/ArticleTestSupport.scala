@@ -13,14 +13,21 @@ import java.time.Instant
 import scala.collection.immutable.Map
 
 object ArticleTestSupport {
-  def callGetListArticles(
-      authorizationHeaderOpt: Option[Map[String, String]],
-      uri: Uri
-  ): ZIO[ArticlesEndpoints, Throwable, Either[ResponseException[String, String], ArticlesList]] = {
 
-    ZIO
+  def callGetListArticles(authorizationHeaderOpt: Option[Map[String, String]], uri: Uri) =
+    val feedArticleEndpoint = ZIO
       .service[ArticlesEndpoints]
       .map(_.listArticles)
+
+    executeRequest(authorizationHeaderOpt, uri, feedArticleEndpoint)
+
+  private def executeRequest(
+      authorizationHeaderOpt: Option[Map[String, String]],
+      uri: Uri,
+      endpoint: ZIO[ArticlesEndpoints, Nothing, ZServerEndpoint[Any, Any]]
+  ): ZIO[ArticlesEndpoints, Throwable, Either[ResponseException[String, String], ArticlesList]] = {
+
+    endpoint
       .flatMap { endpoint =>
 
         val requestWithUri = basicRequest
@@ -82,6 +89,25 @@ object ArticleTestSupport {
 
     assertZIO(
       callGetListArticles(authorizationHeaderOpt, uri)
+    )(
+      isLeft(
+        equalTo(
+          HttpError(
+            "{\"errors\":{\"limit\":[\"Invalid value for: query parameter limit\"]}}",
+            sttp.model.StatusCode.UnprocessableEntity
+          )
+        )
+      )
+    )
+  }
+
+  def checkIfPaginationErrorOccurInFeed(
+      authorizationHeaderOpt: Option[Map[String, String]],
+      uri: Uri
+  ): ZIO[ArticlesEndpoints, Throwable, TestResult] = {
+
+    assertZIO(
+      zioEffect(authorizationHeaderOpt, uri, feedArticleEndpointZIO)
     )(
       isLeft(
         equalTo(
@@ -212,6 +238,70 @@ object ArticleTestSupport {
           ArticleAuthor(
             "john",
             Some("I no longer work at statefarm"),
+            Some("https://i.stack.imgur.com/xHWG8.jpg"),
+            following = false
+          )
+        )
+      )
+    }
+  }
+
+  def listFeedAvailableArticles(
+      authorizationHeaderOpt: Option[Map[String, String]],
+      uri: Uri
+  ): ZIO[ArticlesEndpoints, Throwable, TestResult] = {
+
+    for {
+      result <- zioEffect(authorizationHeaderOpt, uri, feedArticleEndpointZIO)
+    } yield assertTrue {
+      // TODO there must be better way to implement this...
+      import com.softwaremill.realworld.common.model.UserDiff.{*, given}
+
+      val articlesList = result.toOption.get
+
+      articlesList.articlesCount == 3 &&
+      articlesList.articles.contains(
+        ArticleData(
+          "how-to-train-your-dragon",
+          "How to train your dragon",
+          "Ever wonder how?",
+          "It takes a Jacobian",
+          List("dragons", "training"),
+          Instant.ofEpochMilli(1455765776637L),
+          Instant.ofEpochMilli(1455767315824L),
+          false,
+          2,
+          ArticleAuthor("jake", Some("I work at statefarm"), Some("https://i.stack.imgur.com/xHWG8.jpg"), following = false)
+        )
+      ) &&
+      articlesList.articles.contains(
+        ArticleData(
+          "how-to-train-your-dragon-2",
+          "How to train your dragon 2",
+          "So toothless",
+          "Its a dragon",
+          List("dragons", "goats", "training"),
+          Instant.ofEpochMilli(1455765776637L),
+          Instant.ofEpochMilli(1455767315824L),
+          false,
+          1,
+          ArticleAuthor("jake", Some("I work at statefarm"), Some("https://i.stack.imgur.com/xHWG8.jpg"), following = false)
+        )
+      ) &&
+      articlesList.articles.contains(
+        ArticleData(
+          "how-to-train-your-dragon-5",
+          "How to train your dragon 5",
+          "The tagfull one",
+          "Its a blue dragon",
+          List(),
+          Instant.ofEpochMilli(1455765776637L),
+          Instant.ofEpochMilli(1455767315824L),
+          false,
+          0,
+          ArticleAuthor(
+            "bill",
+            Some("I work in the bank"),
             Some("https://i.stack.imgur.com/xHWG8.jpg"),
             following = false
           )

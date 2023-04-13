@@ -55,6 +55,11 @@ object AuthorizationSpec extends ZIOSpecDefault:
       expectedError = "{\"error\":\"Invalid token!\"}"
     ),
     ArticleAuthTestParameters(
+      endpointParam = ArticleAuthEndpointParameters.feedArticles,
+      headers = Map("Authorization" -> "Token Invalid JWT"),
+      expectedError = "{\"error\":\"Invalid token!\"}"
+    ),
+    ArticleAuthTestParameters(
       endpointParam = ArticleAuthEndpointParameters.get("slug"),
       headers = Map("Authorization" -> "Token Invalid JWT"),
       expectedError = "{\"error\":\"Invalid token!\"}"
