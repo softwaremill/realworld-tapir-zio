@@ -12,5 +12,22 @@ case class UserData(
 )
 
 object UserData:
+
+  def fromRow(userRow: UserRow): UserData = UserData(
+    userRow.email,
+    None,
+    userRow.username,
+    userRow.bio,
+    userRow.image
+  )
+
+  def fromUpdate(userUpdateData: UserUpdateData): UserData = UserData(
+    email = userUpdateData.email.orNull,
+    token = Option.empty[String],
+    username = userUpdateData.username.orNull,
+    bio = userUpdateData.bio,
+    image = userUpdateData.image
+  )
+
   given userDataEncoder: zio.json.JsonEncoder[UserData] = DeriveJsonEncoder.gen[UserData]
   given userDataDecoder: zio.json.JsonDecoder[UserData] = DeriveJsonDecoder.gen[UserData]

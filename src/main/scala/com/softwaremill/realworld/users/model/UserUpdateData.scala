@@ -9,7 +9,17 @@ case class UserUpdateData(
     password: Option[String],
     bio: Option[String],
     image: Option[String]
-)
+) {
+  def update(userDataWithPassword: UserWithPassword): UserUpdateData =
+    val user = userDataWithPassword.user
+    UserUpdateData(
+      this.email.orElse(Some(user.email)),
+      this.username.orElse(Some(user.username)),
+      Some(userDataWithPassword.hashedPassword),
+      this.bio.orElse(user.bio),
+      this.image.orElse(user.image)
+    )
+}
 
 object UserUpdateData:
   def apply(
