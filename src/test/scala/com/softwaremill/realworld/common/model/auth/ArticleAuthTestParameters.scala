@@ -25,6 +25,10 @@ object ArticleAuthEndpointParameters:
     endpoint = ZIO.service[ArticlesEndpoints].map(endpoints => endpoints.listArticles),
     request = basicRequest.get(uri"http://test.com/api/articles")
   )
+  def feedArticles: ArticleAuthEndpointParameters = ArticleAuthEndpointParameters(
+    endpoint = ZIO.service[ArticlesEndpoints].map(endpoints => endpoints.feedArticles),
+    request = basicRequest.get(uri"http://test.com/api/articles/feed")
+  )
   def get(slug: String): ArticleAuthEndpointParameters = ArticleAuthEndpointParameters(
     endpoint = ZIO.service[ArticlesEndpoints].map(endpoints => endpoints.get),
     request = basicRequest.get(uri"http://test.com/api/articles/$slug")

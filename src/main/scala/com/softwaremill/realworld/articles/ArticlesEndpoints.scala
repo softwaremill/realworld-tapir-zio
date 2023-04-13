@@ -58,6 +58,19 @@ class ArticlesEndpoints(articlesService: ArticlesService, base: BaseEndpoints):
           .pipe(defaultErrorsMappings)
     )
 
+  val feedArticles: ZServerEndpoint[Any, Any] = base.secureEndpoint.get
+    .in("api" / "articles" / "feed")
+    .in(articlesPagination)
+    .out(jsonBody[ArticlesList])
+    .serverLogic(session =>
+      pagination =>
+        articlesService
+          .listArticlesByFollowedUsers(pagination, session)
+          .map(articles => ArticlesList(articles = articles, articlesCount = articles.size))
+          .logError
+          .pipe(defaultErrorsMappings)
+    )
+
   val get: ZServerEndpoint[Any, Any] = base.secureEndpoint.get
     .in("api" / "articles" / path[String]("slug")) // TODO Input Validation
     .out(jsonBody[Article])
@@ -147,7 +160,7 @@ class ArticlesEndpoints(articlesService: ArticlesService, base: BaseEndpoints):
     )
 
   val endpoints: List[ZServerEndpoint[Any, Any]] =
-    List(listArticles, get, update, create, delete, makeFavorite, removeFavorite, addComment, deleteComment)
+    List(listArticles, feedArticles, get, update, create, delete, makeFavorite, removeFavorite, addComment, deleteComment)
 
 object ArticlesEndpoints:
   val live: ZLayer[ArticlesService with BaseEndpoints, Nothing, ArticlesEndpoints] = ZLayer.fromFunction(new ArticlesEndpoints(_, _))

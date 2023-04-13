@@ -32,6 +32,11 @@ class ProfilesService(profilesRepository: ProfilesRepository, usersRepository: U
     user <- ZIO.fromOption(userOpt).mapError(_ => NotFound(s"No profile with provided username '$username' could be found"))
   } yield user
 
+  def getProfileByEmail(email: String): Task[UserRow] = for {
+    userOpt <- usersRepository.findByEmail(email)
+    user <- ZIO.fromOption(userOpt).mapError(_ => NotFound(s"No profile with provided email '$email' could be found"))
+  } yield user
+
   private def getFollowerByEmail(email: String): Task[UserRow] = for {
     userOpt <- usersRepository.findByEmail(email)
     user <- ZIO.fromOption(userOpt).mapError(_ => NotFound("Couldn't find user for logged in session"))
