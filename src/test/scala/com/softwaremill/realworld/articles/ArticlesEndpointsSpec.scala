@@ -32,11 +32,11 @@ object ArticlesEndpointsSpec extends ZIOSpecDefault:
   val base: ZLayer[Any, ReadError[String], AuthService & BaseEndpoints] =
     Configuration.live >+> AuthService.live >+> BaseEndpoints.live
 
-  val repositories: ZLayer[TestDbLayer, Nothing, UsersRepository & ArticlesRepository & ProfilesRepository] =
-    UsersRepository.live ++ ArticlesRepository.live ++ ProfilesRepository.live
+  val repositories: ZLayer[TestDbLayer, Nothing, UsersRepository & ArticlesRepository & ProfilesRepository & TagsRepository] =
+    UsersRepository.live ++ ArticlesRepository.live ++ ProfilesRepository.live >+> TagsRepository.live
 
   val testArticlesLayer: ZLayer[TestDbLayer, ReadError[String], AuthService & ArticlesRepository & ArticlesEndpoints] =
-    (base ++ repositories) >+> ProfilesService.live >+> ArticlesService.live >+> ArticlesEndpoints.live >+> TagsRepository.live
+    (base ++ repositories) >+> ProfilesService.live >+> ArticlesService.live >+> ArticlesEndpoints.live
 
   def spec = suite("check articles endpoints")(
     suite("check articles list")(
