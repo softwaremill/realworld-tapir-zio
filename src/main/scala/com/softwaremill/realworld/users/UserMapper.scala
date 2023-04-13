@@ -12,14 +12,6 @@ object UserMapper: // TODO probably this mapper can be replaced with something b
     userRow.image
   )
 
-  def toUserData(userUpdateData: UserUpdateData): UserData = UserData(
-    email = userUpdateData.email.orNull,
-    token = Option.empty[String],
-    username = userUpdateData.username.orNull,
-    bio = userUpdateData.bio,
-    image = userUpdateData.image
-  )
-
   def toUserUpdateDataWithFallback(updateData: UserUpdateData, oldUserData: UserWithPassword): UserUpdateData =
     updateData.copy(
       email = updateData.email.orElse(Option(oldUserData.user.email)),

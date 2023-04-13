@@ -65,7 +65,7 @@ class UsersService(authService: AuthService, usersRepository: UsersRepository):
         toUserUpdateDataWithFallback(updateData, oldUser.copy(hashedPassword = password)),
         email
       )
-    } yield toUserData(updatedData)
+    } yield UserData.fromUpdate(updatedData)
 
   private def userWithToken(email: String, username: String, jwt: String): UserData = {
     UserData(
