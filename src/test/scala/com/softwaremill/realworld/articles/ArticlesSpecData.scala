@@ -3,7 +3,7 @@ package com.softwaremill.realworld.articles
 import com.softwaremill.realworld.articles.model.{ArticleAuthor, ArticleData, ArticlesList}
 import com.softwaremill.realworld.utils.TestUtils.backendStub
 import sttp.client3.ziojson.asJson
-import sttp.client3.{HttpError, ResponseException, basicRequest}
+import sttp.client3.{HttpError, Response, ResponseException, basicRequest}
 import sttp.model.Uri
 import zio.ZIO
 import zio.test.Assertion.{equalTo, isLeft, isRight}
@@ -13,7 +13,7 @@ import java.time.Instant
 import scala.collection.immutable.Map
 
 object ArticlesSpecData {
-  def zioEffect(
+  def callListArticles(
       authorizationHeaderOpt: Option[Map[String, String]],
       uri: Uri
   ): ZIO[ArticlesEndpoints, Throwable, Either[ResponseException[String, String], ArticlesList]] = {
@@ -37,13 +37,29 @@ object ArticlesSpecData {
       }
   }
 
+  def callDeleteArticle(
+      authorizationHeader: Map[String, String],
+      uri: Uri
+  ): ZIO[ArticlesEndpoints, Throwable, Response[Either[String, String]]] = {
+
+    ZIO
+      .service[ArticlesEndpoints]
+      .map(_.delete)
+      .flatMap { endpoint =>
+        basicRequest
+          .delete(uri)
+          .headers(authorizationHeader)
+          .send(backendStub(endpoint))
+      }
+  }
+
   def checkIfArticleListIsEmpty(
       authorizationHeaderOpt: Option[Map[String, String]],
       uri: Uri
   ): ZIO[ArticlesEndpoints, Throwable, TestResult] = {
 
     assertZIO(
-      zioEffect(authorizationHeaderOpt, uri)
+      callListArticles(authorizationHeaderOpt, uri)
     )(
       isRight(
         equalTo(
@@ -62,7 +78,7 @@ object ArticlesSpecData {
   ): ZIO[ArticlesEndpoints, Throwable, TestResult] = {
 
     assertZIO(
-      zioEffect(authorizationHeaderOpt, uri)
+      callListArticles(authorizationHeaderOpt, uri)
     )(
       isLeft(
         equalTo(
@@ -81,7 +97,7 @@ object ArticlesSpecData {
   ): ZIO[ArticlesEndpoints, Throwable, TestResult] = {
 
     assertZIO(
-      zioEffect(authorizationHeaderOpt, uri)
+      callListArticles(authorizationHeaderOpt, uri)
     )(
       isLeft(
         equalTo(
@@ -100,7 +116,7 @@ object ArticlesSpecData {
   ): ZIO[ArticlesEndpoints, Throwable, TestResult] = {
 
     for {
-      result <- zioEffect(authorizationHeaderOpt, uri)
+      result <- callListArticles(authorizationHeaderOpt, uri)
     } yield assertTrue {
       // TODO there must be better way to implement this...
       import com.softwaremill.realworld.common.model.UserDiff.{*, given}
@@ -131,7 +147,7 @@ object ArticlesSpecData {
   ): ZIO[ArticlesEndpoints, Throwable, TestResult] = {
 
     for {
-      result <- zioEffect(authorizationHeaderOpt, uri)
+      result <- callListArticles(authorizationHeaderOpt, uri)
     } yield assertTrue {
       // TODO there must be better way to implement this...
       import com.softwaremill.realworld.common.model.UserDiff.{*, given}
@@ -162,7 +178,7 @@ object ArticlesSpecData {
   ): ZIO[ArticlesEndpoints, Throwable, TestResult] = {
 
     for {
-      result <- zioEffect(authorizationHeaderOpt, uri)
+      result <- callListArticles(authorizationHeaderOpt, uri)
     } yield assertTrue {
       // TODO there must be better way to implement this...
       import com.softwaremill.realworld.common.model.UserDiff.{*, given}
@@ -199,6 +215,41 @@ object ArticlesSpecData {
         )
       ) &&
       articlesList.articles.contains(
+        ArticleData(
+          "how-to-train-your-dragon-3",
+          "How to train your dragon 3",
+          "The tagless one",
+          "Its not a dragon",
+          List(),
+          Instant.ofEpochMilli(1455765776637L),
+          Instant.ofEpochMilli(1455767315824L),
+          false,
+          0,
+          ArticleAuthor(
+            "john",
+            Some("I no longer work at statefarm"),
+            Some("https://i.stack.imgur.com/xHWG8.jpg"),
+            following = false
+          )
+        )
+      )
+    }
+  }
+
+  def checkArticlesListAfterDeletion(
+      authorizationHeaderOpt: Option[Map[String, String]],
+      uri: Uri
+  ): ZIO[ArticlesEndpoints, Throwable, TestResult] = {
+
+    for {
+      result <- callListArticles(authorizationHeaderOpt, uri)
+    } yield assertTrue {
+      // TODO there must be better way to implement this...
+      import com.softwaremill.realworld.common.model.UserDiff.{*, given}
+
+      val articlesList = result.toOption.get
+
+      articlesList.articlesCount == 2 && !articlesList.articles.contains(
         ArticleData(
           "how-to-train-your-dragon-3",
           "How to train your dragon 3",

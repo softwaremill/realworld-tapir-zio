@@ -289,6 +289,22 @@ object ArticlesEndpointsSpec extends ZIOSpecDefault:
       testArticlesLayer,
       testDbLayerWithEmptyDb
     ),
+    suite("positive article deletion")(test("remove article and check if article list has two elements") {
+      for {
+        authHeader <- getValidAuthorizationHeader(email = "john@example.com")
+        _ <- callDeleteArticle(
+          authorizationHeader = authHeader,
+          uri = uri"http://test.com/api/articles/how-to-train-your-dragon-3"
+        )
+        result <- checkArticlesListAfterDeletion(
+          authorizationHeaderOpt = Some(authHeader),
+          uri = uri"http://test.com/api/articles"
+        )
+      } yield result
+    }).provide(
+      testArticlesLayer,
+      testDbLayerWithFixture("fixtures/articles/basic-data.sql")
+    ),
     suite("update article")(
       test("positive article update") {
         for {
