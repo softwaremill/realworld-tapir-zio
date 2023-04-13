@@ -17,6 +17,7 @@ import sttp.model.Uri
 import sttp.tapir.EndpointOutput.StatusCode
 import sttp.tapir.server.stub.TapirStubInterpreter
 import sttp.tapir.ztapir.{RIOMonadError, ZServerEndpoint}
+import zio.config.ReadError
 import zio.test.Assertion.*
 import zio.test.{Assertion, TestAspect, TestRandom, TestResult, ZIOSpecDefault, assertTrue, assertZIO}
 import zio.{Cause, RIO, Random, ZIO, ZLayer}
@@ -26,6 +27,15 @@ import javax.sql.DataSource
 import scala.language.postfixOps
 
 object ArticlesEndpointsSpec extends ZIOSpecDefault:
+
+  val base: ZLayer[Any, ReadError[String], AuthService & BaseEndpoints] =
+    Configuration.live >+> AuthService.live >+> BaseEndpoints.live
+
+  val repositories: ZLayer[TestDbLayer, Nothing, UsersRepository & ArticlesRepository & ProfilesRepository] =
+    UsersRepository.live ++ ArticlesRepository.live ++ ProfilesRepository.live
+
+  val testArticlesLayer: ZLayer[TestDbLayer, ReadError[String], AuthService & ArticlesRepository & ArticlesEndpoints] =
+    (base ++ repositories) >+> ProfilesService.live >+> ArticlesService.live >+> ArticlesEndpoints.live
 
   def spec = suite("check articles endpoints")(
     suite("check articles list")(
@@ -38,15 +48,7 @@ object ArticlesEndpointsSpec extends ZIOSpecDefault:
             } yield result
           }
         ).provide(
-          Configuration.live,
-          AuthService.live,
-          UsersRepository.live,
-          ArticlesRepository.live,
-          ArticlesService.live,
-          ArticlesEndpoints.live,
-          BaseEndpoints.live,
-          ProfilesRepository.live,
-          ProfilesService.live,
+          testArticlesLayer,
           testDbLayerWithEmptyDb
         ),
         suite("with populated db")(
@@ -96,15 +98,7 @@ object ArticlesEndpointsSpec extends ZIOSpecDefault:
             } yield result
           }
         ).provide(
-          Configuration.live,
-          AuthService.live,
-          UsersRepository.live,
-          ArticlesRepository.live,
-          ArticlesService.live,
-          ArticlesEndpoints.live,
-          BaseEndpoints.live,
-          ProfilesRepository.live,
-          ProfilesService.live,
+          testArticlesLayer,
           testDbLayerWithFixture("fixtures/articles/basic-data.sql")
         )
       ),
@@ -113,15 +107,7 @@ object ArticlesEndpointsSpec extends ZIOSpecDefault:
           checkIfArticleListIsEmpty(authorizationHeaderOpt = None, uri = uri"http://test.com/api/articles")
         }
       ).provide(
-        Configuration.live,
-        AuthService.live,
-        UsersRepository.live,
-        ArticlesRepository.live,
-        ArticlesService.live,
-        ArticlesEndpoints.live,
-        BaseEndpoints.live,
-        ProfilesRepository.live,
-        ProfilesService.live,
+        testArticlesLayer,
         testDbLayerWithEmptyDb
       ),
       suite("with populated db")(
@@ -156,15 +142,7 @@ object ArticlesEndpointsSpec extends ZIOSpecDefault:
           )
         }
       ).provide(
-        Configuration.live,
-        AuthService.live,
-        UsersRepository.live,
-        ArticlesRepository.live,
-        ArticlesService.live,
-        ArticlesEndpoints.live,
-        BaseEndpoints.live,
-        ProfilesRepository.live,
-        ProfilesService.live,
+        testArticlesLayer,
         testDbLayerWithFixture("fixtures/articles/basic-data.sql")
       )
     ),
@@ -186,15 +164,7 @@ object ArticlesEndpointsSpec extends ZIOSpecDefault:
           )(isLeft(equalTo(HttpError("{\"error\":\"Article with slug unknown-article doesn't exist.\"}", sttp.model.StatusCode(404)))))
         }
       ).provide(
-        Configuration.live,
-        AuthService.live,
-        UsersRepository.live,
-        ArticlesRepository.live,
-        ArticlesService.live,
-        ArticlesEndpoints.live,
-        BaseEndpoints.live,
-        ProfilesRepository.live,
-        ProfilesService.live,
+        testArticlesLayer,
         testDbLayerWithEmptyDb
       ),
       suite("with populated db")(
@@ -233,15 +203,7 @@ object ArticlesEndpointsSpec extends ZIOSpecDefault:
           )
         }
       ).provide(
-        Configuration.live,
-        AuthService.live,
-        UsersRepository.live,
-        ArticlesRepository.live,
-        ArticlesService.live,
-        ArticlesEndpoints.live,
-        BaseEndpoints.live,
-        ProfilesRepository.live,
-        ProfilesService.live,
+        testArticlesLayer,
         testDbLayerWithFixture("fixtures/articles/basic-data.sql")
       )
     ),
@@ -323,15 +285,7 @@ object ArticlesEndpointsSpec extends ZIOSpecDefault:
         )
       }
     ).provide(
-      Configuration.live,
-      AuthService.live,
-      UsersRepository.live,
-      ArticlesRepository.live,
-      ArticlesService.live,
-      ArticlesEndpoints.live,
-      BaseEndpoints.live,
-      ProfilesRepository.live,
-      ProfilesService.live,
+      testArticlesLayer,
       testDbLayerWithEmptyDb
     ),
     suite("update article")(
@@ -440,15 +394,7 @@ object ArticlesEndpointsSpec extends ZIOSpecDefault:
         )
       }
     ).provide(
-      Configuration.live,
-      AuthService.live,
-      UsersRepository.live,
-      ArticlesRepository.live,
-      ArticlesService.live,
-      ArticlesEndpoints.live,
-      BaseEndpoints.live,
-      ProfilesRepository.live,
-      ProfilesService.live,
+      testArticlesLayer,
       testDbLayerWithEmptyDb
     )
   )
