@@ -1,7 +1,6 @@
 package com.softwaremill.realworld.users
 
 import com.softwaremill.realworld.common.Exceptions
-import com.softwaremill.realworld.users.UserMapper.toUserData
 import com.softwaremill.realworld.users.model.{UserRegisterData, UserRow, UserUpdateData, UserWithPassword}
 import io.getquill.*
 import io.getquill.jdbczio.*

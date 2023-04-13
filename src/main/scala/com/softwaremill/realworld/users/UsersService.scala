@@ -3,7 +3,6 @@ package com.softwaremill.realworld.users
 import com.softwaremill.realworld.auth.AuthService
 import com.softwaremill.realworld.common.Exceptions.{NotFound, Unauthorized}
 import com.softwaremill.realworld.common.{Exceptions, Pagination}
-import com.softwaremill.realworld.users.UserMapper.toUserData
 import com.softwaremill.realworld.users.model.*
 import zio.{Console, IO, ZIO, ZLayer}
 
@@ -15,7 +14,7 @@ class UsersService(authService: AuthService, usersRepository: UsersRepository):
   def get(email: String): IO[Exception, UserData] = usersRepository
     .findByEmail(email)
     .flatMap {
-      case Some(a) => ZIO.succeed(toUserData(a))
+      case Some(a) => ZIO.succeed(UserData.fromRow(a))
       case None    => ZIO.fail(Exceptions.NotFound("User doesn't exist."))
     }
 
