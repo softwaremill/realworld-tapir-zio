@@ -5,6 +5,7 @@ import com.softwaremill.realworld.articles.model.*
 import com.softwaremill.realworld.common.Exceptions.{BadRequest, NotFound, Unauthorized}
 import com.softwaremill.realworld.common.{Exceptions, Pagination}
 import com.softwaremill.realworld.profiles.{ProfileRow, ProfilesService}
+import com.softwaremill.realworld.tags.TagsRepository
 import com.softwaremill.realworld.users.UserMapper.toUserData
 import com.softwaremill.realworld.users.{UserData, UserMapper, UserRow, UsersRepository}
 import zio.{Console, IO, Task, ZIO, ZLayer}
@@ -13,7 +14,12 @@ import java.sql.SQLException
 import java.time.Instant
 import javax.sql.DataSource
 
-class ArticlesService(articlesRepository: ArticlesRepository, usersRepository: UsersRepository, profilesService: ProfilesService):
+class ArticlesService(
+    articlesRepository: ArticlesRepository,
+    usersRepository: UsersRepository,
+    profilesService: ProfilesService,
+    tagsRepository: TagsRepository
+):
 
   def list(filters: ArticlesFilters, pagination: Pagination): IO[SQLException, List[ArticleData]] = articlesRepository
     .list(filters, pagination)
@@ -41,6 +47,16 @@ class ArticlesService(articlesRepository: ArticlesRepository, usersRepository: U
       }
       articleData <- findBySlugAsSeenBy(articleId, userEmail)
     } yield articleData
+
+  def delete(slug: String, email: String): Task[Unit] = for {
+    user <- userByEmail(email)
+    article <- articlesRepository.findArticleBySlug(slug)
+    _ <- ZIO.fail(Unauthorized("Can't remove the article you're not an author of")).when(user.userId != article.authorId)
+    _ <- articlesRepository.deleteCommentsByArticleId(article.articleId)
+    _ <- articlesRepository.deleteFavoritesByArticleId(article.articleId)
+    _ <- tagsRepository.deleteTagsByArticleId(article.articleId)
+    _ <- articlesRepository.deleteArticle(article.articleId)
+  } yield ()
 
   def update(articleUpdateData: ArticleUpdateData, slug: String, email: String): Task[ArticleData] =
     for {
@@ -104,5 +120,5 @@ class ArticlesService(articlesRepository: ArticlesRepository, usersRepository: U
   } yield ()
 
 object ArticlesService:
-  val live: ZLayer[ArticlesRepository with UsersRepository with ProfilesService, Nothing, ArticlesService] =
-    ZLayer.fromFunction(ArticlesService(_, _, _))
+  val live: ZLayer[ArticlesRepository with UsersRepository with ProfilesService with TagsRepository, Nothing, ArticlesService] =
+    ZLayer.fromFunction(ArticlesService(_, _, _, _))

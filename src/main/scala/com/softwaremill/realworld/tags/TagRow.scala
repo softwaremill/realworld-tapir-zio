@@ -1,6 +1,6 @@
 package com.softwaremill.realworld.tags
 
 case class TagRow(
-    articleId: String,
+    articleId: Int,
     tag: String
 )

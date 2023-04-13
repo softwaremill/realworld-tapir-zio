@@ -87,6 +87,17 @@ class ArticlesRepository(quill: Quill.Sqlite[SnakeCase]):
         case None    => ZIO.fail(Exceptions.NotFound(s"Article with slug $slug doesn't exist."))
       }
 
+  def findArticleBySlug(slug: String): Task[ArticleRow] =
+    run(
+      queryArticle
+        .filter(a => a.slug == lift(slug))
+    )
+      .map(_.headOption)
+      .flatMap {
+        case Some(a) => ZIO.succeed(a)
+        case None    => ZIO.fail(Exceptions.NotFound(s"Article with slug $slug doesn't exist."))
+      }
+
   def findBySlugAsSeenBy(slug: String, viewerEmail: String): IO[SQLException, Option[ArticleData]] =
     run(for {
       ar <- queryArticle if ar.slug == lift(slug)
@@ -150,6 +161,15 @@ class ArticlesRepository(quill: Quill.Sqlite[SnakeCase]):
     )
       .pipe(mapUniqueConstraintViolationError)
   }
+
+  def deleteArticle(articleId: Int): Task[Long] =
+    run(queryArticle.filter(_.articleId == lift(articleId)).delete)
+
+  def deleteCommentsByArticleId(articleId: Int): Task[Long] =
+    run(queryCommentArticle.filter(_.articleId == lift(articleId)).delete)
+
+  def deleteFavoritesByArticleId(articleId: Int): Task[Long] =
+    run(queryFavoriteArticle.filter(_.articleId == lift(articleId)).delete)
 
   def updateById(updateData: ArticleData, articleId: Int): Task[Unit] = run(
     queryArticle

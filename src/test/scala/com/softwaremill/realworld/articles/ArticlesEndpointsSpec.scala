@@ -9,6 +9,7 @@ import com.softwaremill.realworld.common.{BaseEndpoints, Configuration}
 import com.softwaremill.realworld.db.{Db, DbConfig, DbMigrator}
 import com.softwaremill.realworld.profiles.{ProfilesRepository, ProfilesService}
 import com.softwaremill.realworld.users.UsersRepository
+import com.softwaremill.realworld.tags.TagsRepository
 import com.softwaremill.realworld.utils.TestUtils.*
 import sttp.client3.testing.SttpBackendStub
 import sttp.client3.ziojson.*
@@ -47,6 +48,7 @@ object ArticlesEndpointsSpec extends ZIOSpecDefault:
           BaseEndpoints.live,
           ProfilesRepository.live,
           ProfilesService.live,
+          TagsRepository.live,
           testDbLayerWithEmptyDb
         ),
         suite("with populated db")(
@@ -105,6 +107,7 @@ object ArticlesEndpointsSpec extends ZIOSpecDefault:
           BaseEndpoints.live,
           ProfilesRepository.live,
           ProfilesService.live,
+          TagsRepository.live,
           testDbLayerWithFixture("fixtures/articles/basic-data.sql")
         )
       ),
@@ -122,6 +125,7 @@ object ArticlesEndpointsSpec extends ZIOSpecDefault:
         BaseEndpoints.live,
         ProfilesRepository.live,
         ProfilesService.live,
+        TagsRepository.live,
         testDbLayerWithEmptyDb
       ),
       suite("with populated db")(
@@ -165,6 +169,7 @@ object ArticlesEndpointsSpec extends ZIOSpecDefault:
         BaseEndpoints.live,
         ProfilesRepository.live,
         ProfilesService.live,
+        TagsRepository.live,
         testDbLayerWithFixture("fixtures/articles/basic-data.sql")
       )
     ),
@@ -195,6 +200,7 @@ object ArticlesEndpointsSpec extends ZIOSpecDefault:
         BaseEndpoints.live,
         ProfilesRepository.live,
         ProfilesService.live,
+        TagsRepository.live,
         testDbLayerWithEmptyDb
       ),
       suite("with populated db")(
@@ -242,6 +248,7 @@ object ArticlesEndpointsSpec extends ZIOSpecDefault:
         BaseEndpoints.live,
         ProfilesRepository.live,
         ProfilesService.live,
+        TagsRepository.live,
         testDbLayerWithFixture("fixtures/articles/basic-data.sql")
       )
     ),
@@ -332,6 +339,7 @@ object ArticlesEndpointsSpec extends ZIOSpecDefault:
       BaseEndpoints.live,
       ProfilesRepository.live,
       ProfilesService.live,
+      TagsRepository.live,
       testDbLayerWithEmptyDb
     ),
     suite("update article")(
@@ -449,6 +457,7 @@ object ArticlesEndpointsSpec extends ZIOSpecDefault:
       BaseEndpoints.live,
       ProfilesRepository.live,
       ProfilesService.live,
+      TagsRepository.live,
       testDbLayerWithEmptyDb
     )
   )
