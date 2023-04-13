@@ -175,15 +175,7 @@ object ArticlesEndpointsSpec extends ZIOSpecDefault:
         } yield result
       }
     ).provide(
-      Configuration.live,
-      AuthService.live,
-      UsersRepository.live,
-      ArticlesRepository.live,
-      ArticlesService.live,
-      ArticlesEndpoints.live,
-      BaseEndpoints.live,
-      ProfilesRepository.live,
-      ProfilesService.live,
+      testArticlesLayer,
       testDbLayerWithFixture("fixtures/articles/feed-data.sql")
     ),
     suite("check articles get")(
