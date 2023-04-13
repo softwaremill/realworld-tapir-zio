@@ -2,6 +2,14 @@ package com.softwaremill.realworld.users.model
 
 import zio.json.{DeriveJsonDecoder, DeriveJsonEncoder}
 
+case class UserUpdateData(
+    email: Option[String],
+    username: Option[String],
+    password: Option[String],
+    bio: Option[String],
+    image: Option[String]
+)
+
 object UserUpdateData:
   def apply(
       email: Option[String],
@@ -20,11 +28,3 @@ object UserUpdateData:
   }
   given userUpdateDataEncoder: zio.json.JsonEncoder[UserUpdateData] = DeriveJsonEncoder.gen[UserUpdateData]
   given userUpdateDataDecoder: zio.json.JsonDecoder[UserUpdateData] = DeriveJsonDecoder.gen[UserUpdateData]
-
-case class UserUpdateData(
-    email: Option[String],
-    username: Option[String],
-    password: Option[String],
-    bio: Option[String],
-    image: Option[String]
-)
