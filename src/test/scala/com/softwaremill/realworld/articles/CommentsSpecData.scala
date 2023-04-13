@@ -16,7 +16,7 @@ import java.time.Instant
 
 object CommentsSpecData {
 
-  def zioEffect(
+  def getCommentsFromArticleRequest(
       authorizationHeaderOpt: Option[Map[String, String]],
       uri: Uri
   ): ZIO[ArticlesEndpoints, Throwable, Either[ResponseException[String, String], CommentsList]] = {
@@ -40,7 +40,7 @@ object CommentsSpecData {
       }
   }
 
-  def zioEffectForAddComment(
+  def addCommentRequest(
       authorizationHeader: Map[String, String],
       uri: Uri,
       bodyComment: String
@@ -60,13 +60,29 @@ object CommentsSpecData {
       }
   }
 
+  def deleteCommentRequest(
+      authorizationHeader: Map[String, String],
+      uri: Uri
+  ): ZIO[ArticlesEndpoints, Throwable, Response[Either[String, String]]] = {
+
+    ZIO
+      .service[ArticlesEndpoints]
+      .map(_.deleteComment)
+      .flatMap { endpoint =>
+        basicRequest
+          .delete(uri)
+          .headers(authorizationHeader)
+          .send(backendStub(endpoint))
+      }
+  }
+
   def checkIfCommentsListIsEmpty(
       authorizationHeaderOpt: Option[Map[String, String]],
       uri: Uri
   ): ZIO[ArticlesEndpoints, Throwable, TestResult] = {
 
     assertZIO(
-      zioEffect(authorizationHeaderOpt, uri)
+      getCommentsFromArticleRequest(authorizationHeaderOpt, uri)
     )(
       isRight(
         equalTo(
@@ -85,7 +101,7 @@ object CommentsSpecData {
   ): ZIO[ArticlesEndpoints, Throwable, TestResult] = {
 
     for {
-      result <- zioEffectForAddComment(authorizationHeader, uri, body)
+      result <- addCommentRequest(authorizationHeader, uri, body)
     } yield assertTrue {
       // TODO there must be better way to implement this...
       val comment = result.toOption.get.comment
@@ -107,7 +123,7 @@ object CommentsSpecData {
   ): ZIO[ArticlesEndpoints, Throwable, TestResult] = {
 
     for {
-      result <- zioEffect(authorizationHeaderOpt, uri)
+      result <- getCommentsFromArticleRequest(authorizationHeaderOpt, uri)
     } yield assertTrue {
       // TODO there must be better way to implement this...
       val listComments = result.toOption.get.comments
@@ -134,45 +150,27 @@ object CommentsSpecData {
     }
   }
 
-//TODO remove comment possible to check?
+  def checkCommentsListAfterDelete(
+      authorizationHeaderOpt: Option[Map[String, String]],
+      uri: Uri
+  ): ZIO[ArticlesEndpoints, Throwable, TestResult] = {
 
-//  def deleteComment(
-//      authorizationHeader: Map[String, String],
-//      uri: Uri
-//  ): ZIO[ArticlesEndpoints, Throwable, Response[Either[String, String]]] = {
-//
-//    ZIO
-//      .service[ArticlesEndpoints]
-//      .map(_.deleteComment)
-//      .flatMap { endpoint =>
-//        basicRequest
-//          .delete(uri)
-//          .headers(authorizationHeader)
-//          .send(backendStub(endpoint))
-//      }
-//  }
-//
-//  def checkCommentsListAfterDelete(
-//      authorizationHeaderOpt: Option[Map[String, String]],
-//      uri: Uri
-//  ): ZIO[ArticlesEndpoints, Throwable, TestResult] = {
-//
-//    for {
-//      result <- zioEffect(authorizationHeaderOpt, uri)
-//    } yield assertTrue {
-//      // TODO there must be better way to implement this...
-//      val listComments = result.toOption.get.comments
-//      val firstComment = listComments.head
-//
-//      listComments.size == 1 &&
-//      firstComment.body == "Not bad." && firstComment.author.equals(
-//        ProfileData(
-//          username = "michael",
-//          bio = Some("I no longer work in the bank"),
-//          image = Some("https://i.stack.imgur.com/xHWG8.jpg"),
-//          following = false
-//        )
-//      )
-//    }
-//  }
+    for {
+      result <- getCommentsFromArticleRequest(authorizationHeaderOpt, uri)
+    } yield assertTrue {
+      // TODO there must be better way to implement this...
+      val listComments = result.toOption.get.comments
+      val firstComment = listComments.head
+
+      listComments.size == 1 &&
+      firstComment.body == "Not bad." && firstComment.author.equals(
+        ProfileData(
+          username = "michael",
+          bio = Some("I no longer work in the bank"),
+          image = Some("https://i.stack.imgur.com/xHWG8.jpg"),
+          following = false
+        )
+      )
+    }
+  }
 }

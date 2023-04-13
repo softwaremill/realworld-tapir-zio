@@ -113,19 +113,15 @@ class ArticlesService(
       commentRowList <- articlesRepository.findComments(articleId)
       commentDataList <- ZIO.collectAllPar(
         commentRowList.map(commentRow =>
-          val profile: Task[ProfileData] = userEmailOpt match
+          (userEmailOpt match
             case Some(userEmail) =>
               for {
                 user <- userByEmail(userEmail)
                 profile <- profilesService.getProfileData(commentRow.authorId, Some(user.userId))
               } yield profile
 
-            case None =>
-              for {
-                profile <- profilesService.getProfileData(commentRow.authorId, None)
-              } yield profile
-
-          profile.map(profile =>
+            case None => profilesService.getProfileData(commentRow.authorId, None)
+          ).map(profile =>
             CommentData(
               id = commentRow.commentId,
               createdAt = commentRow.createdAt,

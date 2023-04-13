@@ -35,21 +35,19 @@ object CommentsEndpointsSpec extends ZIOSpecDefault:
             )
           } yield result
         },
-        // TODO remove comment possible to check?
-
-//        test("remove comment and check if comment list has one element") {
-//          for {
-//            authHeader <- getValidAuthorizationHeader(email = "john@example.com")
-//            _ <- deleteComment(
-//              authorizationHeader = authHeader,
-//              uri = uri"http://test.com/api/articles/how-to-train-your-dragon-4/comments/3"
-//            )
-//            result <- checkCommentsListAfterDelete(
-//              authorizationHeaderOpt = Some(authHeader),
-//              uri = uri"http://test.com/api/articles/how-to-train-your-dragon-4/comments"
-//            )
-//          } yield result
-//        },
+        test("remove comment and check if comment list has one element") {
+          for {
+            authHeader <- getValidAuthorizationHeader(email = "bill@example.com")
+            _ <- deleteCommentRequest(
+              authorizationHeader = authHeader,
+              uri = uri"http://test.com/api/articles/how-to-train-your-dragon-4/comments/3"
+            )
+            result <- checkCommentsListAfterDelete(
+              authorizationHeaderOpt = Some(authHeader),
+              uri = uri"http://test.com/api/articles/how-to-train-your-dragon-4/comments"
+            )
+          } yield result
+        },
         test("positive comment creation") {
           for {
             authHeader <- getValidAuthorizationHeader(email = "john@example.com")
