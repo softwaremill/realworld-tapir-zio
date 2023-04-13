@@ -33,10 +33,10 @@ object ArticleTestSupport {
   private def executeRequest(
       authorizationHeaderOpt: Option[Map[String, String]],
       uri: Uri,
-      zioEndpoint: ZIO[ArticlesEndpoints, Nothing, ZServerEndpoint[Any, Any]]
+      endpoint: ZIO[ArticlesEndpoints, Nothing, ZServerEndpoint[Any, Any]]
   ): ZIO[ArticlesEndpoints, Throwable, Either[ResponseException[String, String], ArticlesList]] = {
 
-    zioEndpoint
+    endpoint
       .flatMap { endpoint =>
 
         val requestWithUri = basicRequest
