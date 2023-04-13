@@ -146,6 +146,38 @@ object ArticlesEndpointsSpec extends ZIOSpecDefault:
         testDbLayerWithFixture("fixtures/articles/basic-data.sql")
       )
     ),
+    suite("check feed article")(
+      test("validation failed on pagination") {
+        for {
+          authHeader <- getValidAuthorizationHeader(email = "john@example.com")
+          result <- checkIfPaginationErrorOccurInFeed(
+            authorizationHeaderOpt = Some(authHeader),
+            uri = uri"http://test.com/api/articles/feed?limit=invalid-limit&offset=invalid-offset"
+          )
+        } yield result
+      },
+      test("check pagination") {
+        for {
+          authHeader <- getValidAuthorizationHeader(email = "john@example.com")
+          result <- checkFeedPagination(
+            authorizationHeaderOpt = Some(authHeader),
+            uri = uri"http://test.com/api/articles/feed?limit=1&offset=1"
+          )
+        } yield result
+      },
+      test("list available articles") {
+        for {
+          authHeader <- getValidAuthorizationHeader(email = "john@example.com")
+          result <- listFeedAvailableArticles(
+            authorizationHeaderOpt = Some(authHeader),
+            uri = uri"http://test.com/api/articles/feed"
+          )
+        } yield result
+      }
+    ).provide(
+      testArticlesLayer,
+      testDbLayerWithFixture("fixtures/articles/feed-data.sql")
+    ),
     suite("check articles get")(
       suite("with auth data only")(
         test("return error on get") {

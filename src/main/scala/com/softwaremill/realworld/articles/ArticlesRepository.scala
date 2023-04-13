@@ -61,6 +61,32 @@ class ArticlesRepository(quill: Quill.Sqlite[SnakeCase]):
       .map(x => x.map(article))
   }
 
+  def listArticlesByFollowedUsers(
+      pagination: Pagination,
+      followerId: Int
+  ): IO[SQLException, List[ArticleData]] = {
+
+    run(for {
+      ar <- sql"""
+                     SELECT DISTINCT * FROM articles a
+                     WHERE a.author_id IN (SELECT f.user_id FROM followers f
+                                           WHERE f.follower_id = ${lift(followerId)})
+                   """
+        .as[Query[ArticleRow]]
+        .drop(lift(pagination.offset))
+        .take(lift(pagination.limit))
+        .sortBy(ar => ar.slug)
+      tr <- queryTagArticle
+        .groupByMap(_.articleId)(atr => (atr.articleId, tagsConcat(atr.tag)))
+        .leftJoin(a => a._1 == ar.articleId)
+      fr <- queryFavoriteArticle
+        .groupByMap(_.articleId)(fr => (fr.articleId, count(fr.profileId)))
+        .leftJoin(f => f._1 == ar.articleId)
+      pr <- queryProfile if ar.authorId == pr.userId
+    } yield (ar, pr, tr.map(_._2), fr.map(_._2)))
+      .map(_.map(article))
+  }
+
   def findBySlug(slug: String): IO[SQLException, Option[ArticleData]] =
     run(for {
       ar <- queryArticle if ar.slug == lift(slug)
