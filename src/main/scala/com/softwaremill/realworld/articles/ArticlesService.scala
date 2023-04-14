@@ -4,10 +4,10 @@ import com.softwaremill.realworld.articles.comments.{CommentData, CommentRow}
 import com.softwaremill.realworld.articles.model.*
 import com.softwaremill.realworld.common.Exceptions.{BadRequest, NotFound, Unauthorized}
 import com.softwaremill.realworld.common.{Exceptions, Pagination}
-import com.softwaremill.realworld.profiles.{ProfileData, Followers, ProfileRow, ProfilesService}
+import com.softwaremill.realworld.profiles.{Followers, ProfileData, ProfileRow, ProfilesService}
 import com.softwaremill.realworld.tags.TagsRepository
 import com.softwaremill.realworld.users.UserMapper.toUserData
-import com.softwaremill.realworld.users.{UserData, UserMapper, UserRow, UserSession, UsersRepository}
+import com.softwaremill.realworld.users.*
 import zio.{Console, IO, Task, ZIO, ZLayer}
 
 import java.sql.SQLException
@@ -20,6 +20,9 @@ class ArticlesService(
     profilesService: ProfilesService,
     tagsRepository: TagsRepository
 ):
+
+  private val ArticleNotFoundMessage = (slug: String) => s"Article with slug $slug doesn't exist."
+  private val CommentNotFoundMessage = (commentId: Int) => s"Comment with ID=$commentId doesn't exist"
 
   def list(filters: ArticlesFilters, pagination: Pagination): IO[SQLException, List[ArticleData]] = articlesRepository
     .list(filters, pagination)
@@ -36,11 +39,11 @@ class ArticlesService(
 
   def findBySlugAsSeenBy(slug: String, email: String): Task[ArticleData] = articlesRepository
     .findBySlugAsSeenBy(slug, email)
-    .flatMap(handleProcessingResult(_, s"Article with slug $slug doesn't exist."))
+    .someOrFail(Exceptions.NotFound(ArticleNotFoundMessage(slug)))
 
   def findBySlugAsSeenBy(articleId: Int, email: String): Task[ArticleData] = articlesRepository
     .findBySlugAsSeenBy(articleId, email)
-    .flatMap(handleProcessingResult(_, s"Article doesn't exist."))
+    .someOrFail(Exceptions.NotFound(s"Article doesn't exist."))
 
   def create(createData: ArticleCreateData, userEmail: String): Task[ArticleData] =
     for {
@@ -54,8 +57,7 @@ class ArticlesService(
 
   def delete(slug: String, email: String): Task[Unit] = for {
     user <- userByEmail(email)
-    articleOpt <- articlesRepository.findArticleBySlug(slug)
-    article <- handleProcessingResult(articleOpt, s"Article with slug $slug doesn't exist.")
+    article <- articlesRepository.findArticleBySlug(slug).someOrFail(NotFound(ArticleNotFoundMessage(slug)))
     _ <- ZIO.fail(Unauthorized("Can't remove the article you're not an author of")).when(user.userId != article.authorId)
     _ <- articlesRepository.deleteCommentsByArticleId(article.articleId)
     _ <- articlesRepository.deleteFavoritesByArticleId(article.articleId)
@@ -66,14 +68,14 @@ class ArticlesService(
   def update(articleUpdateData: ArticleUpdateData, slug: String, email: String): Task[ArticleData] =
     for {
       user <- userByEmail(email)
-      maybeOldArticle <- articlesRepository.findBySlugAsSeenBy(slug.trim.toLowerCase, email)
-      oldArticle <- ZIO.fromOption(maybeOldArticle).mapError(_ => NotFound(s"Article with slug $slug doesn't exist."))
+      oldArticle <- articlesRepository
+        .findBySlugAsSeenBy(slug.trim.toLowerCase, email)
+        .someOrFail(NotFound(ArticleNotFoundMessage(slug)))
       _ <- ZIO
         .fail(Unauthorized(s"You're not an author of article that you're trying to update"))
         .when(user.username != oldArticle.author.username)
       updatedArticle = updateArticleData(oldArticle, articleUpdateData)
-      articleIdOpt <- articlesRepository.findArticleIdBySlug(slug)
-      articleId <- handleProcessingResult(articleIdOpt, s"Article with slug $slug doesn't exist.")
+      articleId <- articlesRepository.findArticleIdBySlug(slug).someOrFail(NotFound(ArticleNotFoundMessage(slug)))
       _ <- articlesRepository.updateById(updatedArticle, articleId)
     } yield updatedArticle
 
@@ -93,16 +95,18 @@ class ArticlesService(
 
   def makeFavorite(slug: String, email: String): Task[ArticleData] = for {
     user <- userByEmail(email)
-    articleIdOpt <- articlesRepository.findArticleIdBySlug(slug)
-    articleId <- handleProcessingResult(articleIdOpt, s"Article with slug $slug doesn't exist.")
+    articleId <- articlesRepository
+      .findArticleIdBySlug(slug)
+      .someOrFail(Exceptions.NotFound(ArticleNotFoundMessage(slug)))
     _ <- articlesRepository.makeFavorite(articleId, user.userId)
     articleData <- findBySlugAsSeenBy(slug, email)
   } yield articleData
 
   def removeFavorite(slug: String, email: String): Task[ArticleData] = for {
     user <- userByEmail(email)
-    articleIdOpt <- articlesRepository.findArticleIdBySlug(slug)
-    articleId <- handleProcessingResult(articleIdOpt, s"Article with slug $slug doesn't exist.")
+    articleId <- articlesRepository
+      .findArticleIdBySlug(slug)
+      .someOrFail(Exceptions.NotFound(ArticleNotFoundMessage(slug)))
     _ <- articlesRepository.removeFavorite(articleId, user.userId)
     articleData <- findBySlugAsSeenBy(slug, email)
   } yield articleData
@@ -112,20 +116,16 @@ class ArticlesService(
 
   def addComment(slug: String, email: String, comment: String): Task[CommentData] = for {
     user <- userByEmail(email)
-    articleIdOpt <- articlesRepository.findArticleIdBySlug(slug)
-    articleId <- handleProcessingResult(articleIdOpt, s"Article with slug $slug doesn't exist.")
+    articleId <- articlesRepository.findArticleIdBySlug(slug).someOrFail(NotFound(ArticleNotFoundMessage(slug)))
     commentId <- articlesRepository.addComment(articleId, user.userId, comment)
-    commentRowOpt <- articlesRepository.findComment(commentId)
-    commentRow <- handleProcessingResult(commentRowOpt, s"Comment with ID=$commentId doesn't exist")
+    commentRow <- articlesRepository.findComment(commentId).someOrFail(NotFound(CommentNotFoundMessage(commentId)))
     profile <- profilesService.getProfileData(commentRow.authorId, Some(user.userId))
   } yield CommentData(commentRow.commentId, commentRow.createdAt, commentRow.updatedAt, commentRow.body, profile)
 
   def deleteComment(slug: String, email: String, commentId: Int): Task[Unit] = for {
     user <- userByEmail(email)
-    articleIdOpt <- articlesRepository.findArticleIdBySlug(slug)
-    articleId <- handleProcessingResult(articleIdOpt, s"Article with slug $slug doesn't exist.")
-    commentRowOpt <- articlesRepository.findComment(commentId)
-    commentRow <- handleProcessingResult(commentRowOpt, s"Comment with ID=$commentId doesn't exist")
+    articleId <- articlesRepository.findArticleIdBySlug(slug).someOrFail(NotFound(ArticleNotFoundMessage(slug)))
+    commentRow <- articlesRepository.findComment(commentId).someOrFail(NotFound(CommentNotFoundMessage(commentId)))
     _ <- ZIO.fail(BadRequest(s"Comment with ID=$commentId is not linked to slug $slug")).when(commentRow.articleId != articleId)
     _ <- ZIO.fail(Unauthorized("Can't remove the comment you're not an author of")).when(user.userId != commentRow.authorId)
     _ <- articlesRepository.deleteComment(commentId)
