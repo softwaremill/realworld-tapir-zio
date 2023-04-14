@@ -1,7 +1,7 @@
 package com.softwaremill.realworld.articles
 
 import com.softwaremill.diffx.{Diff, compare}
-import com.softwaremill.realworld.articles.ArticlesSpecData.*
+import com.softwaremill.realworld.articles.ArticleTestSupport.*
 import com.softwaremill.realworld.articles.model.*
 import com.softwaremill.realworld.auth.AuthService
 import com.softwaremill.realworld.common.Exceptions.AlreadyInUse
@@ -179,65 +179,57 @@ object ArticlesEndpointsSpec extends ZIOSpecDefault:
       testDbLayerWithFixture("fixtures/articles/feed-data.sql")
     ),
     suite("check articles get")(
-      suite("with auth data only")(
-        test("return error on get") {
-          assertZIO(
-            for {
-              articlesEndpoints <- ZIO.service[ArticlesEndpoints]
-              endpoint = articlesEndpoints.get
-              authHeader <- getValidAuthorizationHeader()
-              response <- basicRequest
-                .get(uri"http://test.com/api/articles/unknown-article")
-                .headers(authHeader)
-                .response(asJson[Article])
-                .send(backendStub(endpoint))
-              body = response.body
-            } yield body
-          )(isLeft(equalTo(HttpError("{\"error\":\"Article with slug unknown-article doesn't exist.\"}", sttp.model.StatusCode(404)))))
-        }
-      ).provide(
-        testArticlesLayer,
-        testDbLayerWithEmptyDb
-      ),
-      suite("with populated db")(
-        test("get existing article") {
-          assertZIO(
-            for {
-              articlesEndpoints <- ZIO.service[ArticlesEndpoints]
-              endpoint = articlesEndpoints.get
-              authHeader <- getValidAuthorizationHeader()
-              response <- basicRequest
-                .get(uri"http://test.com/api/articles/how-to-train-your-dragon-2")
-                .headers(authHeader)
-                .response(asJson[Article])
-                .send(backendStub(endpoint))
-              body = response.body
-            } yield body
-          )(
-            isRight(
-              equalTo(
-                Article(
-                  ArticleData(
-                    "how-to-train-your-dragon-2",
-                    "How to train your dragon 2",
-                    "So toothless",
-                    "Its a dragon",
-                    List("dragons", "goats", "training"),
-                    Instant.ofEpochMilli(1455765776637L),
-                    Instant.ofEpochMilli(1455767315824L),
-                    false,
-                    1,
-                    ArticleAuthor("jake", Some("I work at statefarm"), Some("https://i.stack.imgur.com/xHWG8.jpg"), following = false)
-                  )
+      test("return error when requesting article doesn't exist") {
+        for {
+          authHeader <- getValidAuthorizationHeader()
+          result <- checkIfNonExistentArticleErrorOccur(
+            authorizationHeader = authHeader,
+            uri = uri"http://test.com/api/articles/unknown-article"
+          )
+        } yield result
+      }
+    ).provide(
+      testArticlesLayer,
+      testDbLayerWithEmptyDb
+    ),
+    suite("with populated db")(
+      test("get existing article") {
+        assertZIO(
+          for {
+            articlesEndpoints <- ZIO.service[ArticlesEndpoints]
+            endpoint = articlesEndpoints.get
+            authHeader <- getValidAuthorizationHeader()
+            response <- basicRequest
+              .get(uri"http://test.com/api/articles/how-to-train-your-dragon-2")
+              .headers(authHeader)
+              .response(asJson[Article])
+              .send(backendStub(endpoint))
+            body = response.body
+          } yield body
+        )(
+          isRight(
+            equalTo(
+              Article(
+                ArticleData(
+                  "how-to-train-your-dragon-2",
+                  "How to train your dragon 2",
+                  "So toothless",
+                  "Its a dragon",
+                  List("dragons", "goats", "training"),
+                  Instant.ofEpochMilli(1455765776637L),
+                  Instant.ofEpochMilli(1455767315824L),
+                  false,
+                  1,
+                  ArticleAuthor("jake", Some("I work at statefarm"), Some("https://i.stack.imgur.com/xHWG8.jpg"), following = false)
                 )
               )
             )
           )
-        }
-      ).provide(
-        testArticlesLayer,
-        testDbLayerWithFixture("fixtures/articles/basic-data.sql")
-      )
+        )
+      }
+    ).provide(
+      testArticlesLayer,
+      testDbLayerWithFixture("fixtures/articles/basic-data.sql")
     ),
     suite("create article")(
       test("positive article creation") {

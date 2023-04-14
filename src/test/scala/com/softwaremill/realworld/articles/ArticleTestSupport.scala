@@ -1,10 +1,11 @@
 package com.softwaremill.realworld.articles
 
-import com.softwaremill.realworld.articles.model.{ArticleAuthor, ArticleData, ArticlesList}
+import com.softwaremill.realworld.articles.model.{Article, ArticleAuthor, ArticleData, ArticlesList}
 import com.softwaremill.realworld.utils.TestUtils.backendStub
 import sttp.client3.ziojson.asJson
-import sttp.client3.{HttpError, ResponseException, basicRequest}
+import sttp.client3.{HttpError, Response, ResponseException, basicRequest}
 import sttp.model.Uri
+import sttp.tapir.ztapir.ZServerEndpoint
 import zio.ZIO
 import zio.test.Assertion.{equalTo, isLeft, isRight}
 import zio.test.{TestResult, assertTrue, assertZIO}
@@ -12,25 +13,33 @@ import zio.test.{TestResult, assertTrue, assertZIO}
 import java.time.Instant
 import scala.collection.immutable.Map
 
-object ArticlesSpecData {
+object ArticleTestSupport {
 
-  val listArticleEndpointZIO = ZIO
-    .service[ArticlesEndpoints]
-    .map(_.listArticles)
+  def callGetFeedArticles(authorizationHeaderOpt: Option[Map[String, String]], uri: Uri) =
+    val feedArticlesEndpoint = ZIO
+      .service[ArticlesEndpoints]
+      .map(_.feedArticles)
 
-  val feedArticleEndpointZIO = ZIO
-    .service[ArticlesEndpoints]
-    .map(_.feedArticles)
+    executeArticleRequest(authorizationHeaderOpt, uri, feedArticlesEndpoint)
 
-  def zioEffect(
+  def callGetListArticles(
+      authorizationHeaderOpt: Option[Map[String, String]],
+      uri: Uri
+  ): ZIO[ArticlesEndpoints, Throwable, Either[ResponseException[String, String], ArticlesList]] =
+    val listArticlesEndpoint = ZIO
+      .service[ArticlesEndpoints]
+      .map(_.listArticles)
+
+    executeArticleRequest(authorizationHeaderOpt, uri, listArticlesEndpoint)
+
+  private def executeArticleRequest(
       authorizationHeaderOpt: Option[Map[String, String]],
       uri: Uri,
-      zioEndpoint: ZIO[ArticlesEndpoints, Nothing, _root_.sttp.tapir.ztapir.ZServerEndpoint[Any, Any]]
+      endpointZIO: ZIO[ArticlesEndpoints, Nothing, ZServerEndpoint[Any, Any]]
   ): ZIO[ArticlesEndpoints, Throwable, Either[ResponseException[String, String], ArticlesList]] = {
 
-    zioEndpoint
+    endpointZIO
       .flatMap { endpoint =>
-
         val requestWithUri = basicRequest
           .get(uri)
 
@@ -45,13 +54,29 @@ object ArticlesSpecData {
       }
   }
 
+  def callGetArticle(
+      authorizationHeader: Map[String, String],
+      uri: Uri
+  ) =
+    ZIO
+      .service[ArticlesEndpoints]
+      .map(_.get)
+      .flatMap { endpoint =>
+        basicRequest
+          .get(uri)
+          .headers(authorizationHeader)
+          .response(asJson[Article])
+          .send(backendStub(endpoint))
+          .map(_.body)
+      }
+
   def checkIfArticleListIsEmpty(
       authorizationHeaderOpt: Option[Map[String, String]],
       uri: Uri
   ): ZIO[ArticlesEndpoints, Throwable, TestResult] = {
 
     assertZIO(
-      zioEffect(authorizationHeaderOpt, uri, listArticleEndpointZIO)
+      callGetListArticles(authorizationHeaderOpt, uri)
     )(
       isRight(
         equalTo(
@@ -70,7 +95,7 @@ object ArticlesSpecData {
   ): ZIO[ArticlesEndpoints, Throwable, TestResult] = {
 
     assertZIO(
-      zioEffect(authorizationHeaderOpt, uri, listArticleEndpointZIO)
+      callGetListArticles(authorizationHeaderOpt, uri)
     )(
       isLeft(
         equalTo(
@@ -89,7 +114,7 @@ object ArticlesSpecData {
   ): ZIO[ArticlesEndpoints, Throwable, TestResult] = {
 
     assertZIO(
-      zioEffect(authorizationHeaderOpt, uri, listArticleEndpointZIO)
+      callGetListArticles(authorizationHeaderOpt, uri)
     )(
       isLeft(
         equalTo(
@@ -108,7 +133,7 @@ object ArticlesSpecData {
   ): ZIO[ArticlesEndpoints, Throwable, TestResult] = {
 
     assertZIO(
-      zioEffect(authorizationHeaderOpt, uri, feedArticleEndpointZIO)
+      callGetFeedArticles(authorizationHeaderOpt, uri)
     )(
       isLeft(
         equalTo(
@@ -127,7 +152,7 @@ object ArticlesSpecData {
   ): ZIO[ArticlesEndpoints, Throwable, TestResult] = {
 
     for {
-      result <- zioEffect(authorizationHeaderOpt, uri, listArticleEndpointZIO)
+      result <- callGetListArticles(authorizationHeaderOpt, uri)
     } yield assertTrue {
       // TODO there must be better way to implement this...
       import com.softwaremill.realworld.common.model.UserDiff.{*, given}
@@ -158,7 +183,7 @@ object ArticlesSpecData {
   ): ZIO[ArticlesEndpoints, Throwable, TestResult] = {
 
     for {
-      result <- zioEffect(authorizationHeaderOpt, uri, feedArticleEndpointZIO)
+      result <- callGetFeedArticles(authorizationHeaderOpt, uri)
     } yield assertTrue {
       // TODO there must be better way to implement this...
       import com.softwaremill.realworld.common.model.UserDiff.{*, given}
@@ -189,7 +214,7 @@ object ArticlesSpecData {
   ): ZIO[ArticlesEndpoints, Throwable, TestResult] = {
 
     for {
-      result <- zioEffect(authorizationHeaderOpt, uri, listArticleEndpointZIO)
+      result <- callGetListArticles(authorizationHeaderOpt, uri)
     } yield assertTrue {
       // TODO there must be better way to implement this...
       import com.softwaremill.realworld.common.model.UserDiff.{*, given}
@@ -220,7 +245,7 @@ object ArticlesSpecData {
   ): ZIO[ArticlesEndpoints, Throwable, TestResult] = {
 
     for {
-      result <- zioEffect(authorizationHeaderOpt, uri, listArticleEndpointZIO)
+      result <- callGetListArticles(authorizationHeaderOpt, uri)
     } yield assertTrue {
       // TODO there must be better way to implement this...
       import com.softwaremill.realworld.common.model.UserDiff.{*, given}
@@ -284,7 +309,7 @@ object ArticlesSpecData {
   ): ZIO[ArticlesEndpoints, Throwable, TestResult] = {
 
     for {
-      result <- zioEffect(authorizationHeaderOpt, uri, feedArticleEndpointZIO)
+      result <- callGetFeedArticles(authorizationHeaderOpt, uri)
     } yield assertTrue {
       // TODO there must be better way to implement this...
       import com.softwaremill.realworld.common.model.UserDiff.{*, given}
@@ -340,5 +365,19 @@ object ArticlesSpecData {
         )
       )
     }
+  }
+
+  def checkIfNonExistentArticleErrorOccur(
+      authorizationHeader: Map[String, String],
+      uri: Uri
+  ): ZIO[ArticlesEndpoints, Throwable, TestResult] = {
+
+    assertZIO(callGetArticle(authorizationHeader, uri))(
+      isLeft(
+        equalTo(
+          HttpError("{\"error\":\"Article with slug unknown-article doesn't exist.\"}", sttp.model.StatusCode(404))
+        )
+      )
+    )
   }
 }
