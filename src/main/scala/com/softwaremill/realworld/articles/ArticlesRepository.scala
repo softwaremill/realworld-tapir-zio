@@ -225,10 +225,9 @@ class ArticlesRepository(quill: Quill.Sqlite[SnakeCase]):
     }
   }
 
-  def findComment(commentId: Int): Task[CommentRow] =
+  def findComment(commentId: Int): Task[Option[CommentRow]] =
     run(queryCommentArticle.filter(_.commentId == lift(commentId)))
       .map(_.headOption)
-      .someOrFail(Exceptions.NotFound(s"Comment with ID=$commentId doesn't exist"))
 
   def deleteComment(commentId: Int): Task[Long] =
     run(queryCommentArticle.filter(_.commentId == lift(commentId)).delete)
