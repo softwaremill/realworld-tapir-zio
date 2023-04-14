@@ -1,13 +1,13 @@
 package com.softwaremill.realworld.articles
 
-import com.softwaremill.realworld.articles.comments.CommentData
+import com.softwaremill.realworld.articles.comments.{CommentData, CommentRow}
 import com.softwaremill.realworld.articles.model.*
 import com.softwaremill.realworld.common.Exceptions.{BadRequest, NotFound, Unauthorized}
 import com.softwaremill.realworld.common.{Exceptions, Pagination}
-import com.softwaremill.realworld.profiles.{Followers, ProfileRow, ProfilesService}
+import com.softwaremill.realworld.profiles.{Followers, ProfileData, ProfileRow, ProfilesService}
 import com.softwaremill.realworld.tags.TagsRepository
-import com.softwaremill.realworld.users.*
 import com.softwaremill.realworld.users.UserMapper.toUserData
+import com.softwaremill.realworld.users.*
 import zio.{Console, IO, Task, ZIO, ZLayer}
 
 import java.sql.SQLException
@@ -119,7 +119,7 @@ class ArticlesService(
     articleId <- articlesRepository.findArticleIdBySlug(slug).someOrFail(NotFound(ArticleNotFoundMessage(slug)))
     commentId <- articlesRepository.addComment(articleId, user.userId, comment)
     commentRow <- articlesRepository.findComment(commentId).someOrFail(NotFound(CommentNotFoundMessage(commentId)))
-    profile <- profilesService.getProfileData(commentRow.authorId, user.userId)
+    profile <- profilesService.getProfileData(commentRow.authorId, Some(user.userId))
   } yield CommentData(commentRow.commentId, commentRow.createdAt, commentRow.updatedAt, commentRow.body, profile)
 
   def deleteComment(slug: String, email: String, commentId: Int): Task[Unit] = for {
@@ -130,6 +130,43 @@ class ArticlesService(
     _ <- ZIO.fail(Unauthorized("Can't remove the comment you're not an author of")).when(user.userId != commentRow.authorId)
     _ <- articlesRepository.deleteComment(commentId)
   } yield ()
+
+  def getCommentsFromArticle(slug: String, userEmailOpt: Option[String]): Task[List[CommentData]] =
+    for {
+      articleIdOpt <- articlesRepository.findArticleIdBySlug(slug)
+      articleId <- handleProcessingResult(articleIdOpt, s"Article with slug $slug doesn't exist.")
+      commentRowList <- articlesRepository.findComments(articleId)
+      commentDataList <- ZIO.collectAllPar(
+        commentRowList.map(commentRow =>
+          (userEmailOpt match
+            case Some(userEmail) =>
+              for {
+                user <- userByEmail(userEmail)
+                profile <- profilesService.getProfileData(commentRow.authorId, Some(user.userId))
+              } yield profile
+
+            case None => profilesService.getProfileData(commentRow.authorId, None)
+          ).map(profile =>
+            CommentData(
+              id = commentRow.commentId,
+              createdAt = commentRow.createdAt,
+              updatedAt = commentRow.updatedAt,
+              body = commentRow.body,
+              author = profile
+            )
+          )
+        )
+      )
+    } yield commentDataList
+
+  private def handleProcessingResult[T](
+      option: Option[T],
+      errorMessage: String
+  ): Task[T] =
+    option match {
+      case Some(value) => ZIO.succeed(value)
+      case None        => ZIO.fail(Exceptions.NotFound(errorMessage))
+    }
 
 object ArticlesService:
   val live: ZLayer[ArticlesRepository with UsersRepository with ProfilesService with TagsRepository, Nothing, ArticlesService] =
