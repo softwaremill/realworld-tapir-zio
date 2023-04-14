@@ -232,6 +232,9 @@ class ArticlesRepository(quill: Quill.Sqlite[SnakeCase]):
   def deleteComment(commentId: Int): Task[Long] =
     run(queryCommentArticle.filter(_.commentId == lift(commentId)).delete)
 
+  def findComments(articleId: Int): Task[List[CommentRow]] =
+    run(queryCommentArticle.filter(_.articleId == lift(articleId)))
+
   private def article(tuple: (ArticleRow, ProfileRow, Option[String], Option[Int])): ArticleData = {
     val (ar, pr, tags, favorites) = tuple
     ArticleData(
