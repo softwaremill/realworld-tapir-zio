@@ -57,3 +57,7 @@ object ArticleAuthEndpointParameters:
     endpoint = ZIO.service[ArticlesEndpoints].map(endpoints => endpoints.deleteComment),
     request = basicRequest.delete(uri"http://test.com/api/articles/$slug/comments/$commentId")
   )
+  def getCommentsFromArticle(slug: String): ArticleAuthEndpointParameters = ArticleAuthEndpointParameters(
+    endpoint = ZIO.service[ArticlesEndpoints].map(endpoints => endpoints.getCommentsFromArticle),
+    request = basicRequest.get(uri"http://test.com/api/articles/$slug/comments")
+  )

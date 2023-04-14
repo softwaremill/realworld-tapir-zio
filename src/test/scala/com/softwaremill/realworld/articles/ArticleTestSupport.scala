@@ -5,6 +5,7 @@ import com.softwaremill.realworld.utils.TestUtils.backendStub
 import sttp.client3.ziojson.asJson
 import sttp.client3.{HttpError, ResponseException, basicRequest}
 import sttp.model.Uri
+import sttp.tapir.ztapir.ZServerEndpoint
 import zio.ZIO
 import zio.test.Assertion.{equalTo, isLeft, isRight}
 import zio.test.{TestResult, assertTrue, assertZIO}
@@ -12,23 +13,29 @@ import zio.test.{TestResult, assertTrue, assertZIO}
 import java.time.Instant
 import scala.collection.immutable.Map
 
-object ArticlesSpecData {
+object ArticleTestSupport {
 
-  val listArticleEndpointZIO = ZIO
-    .service[ArticlesEndpoints]
-    .map(_.listArticles)
+  def callGetListArticles(authorizationHeaderOpt: Option[Map[String, String]], uri: Uri) =
+    val feedArticleEndpoint = ZIO
+      .service[ArticlesEndpoints]
+      .map(_.listArticles)
 
-  val feedArticleEndpointZIO = ZIO
-    .service[ArticlesEndpoints]
-    .map(_.feedArticles)
+    executeRequest(authorizationHeaderOpt, uri, feedArticleEndpoint)
 
-  def zioEffect(
+  def callGetFeedArticles(authorizationHeaderOpt: Option[Map[String, String]], uri: Uri) =
+    val listArticleEndpoint = ZIO
+      .service[ArticlesEndpoints]
+      .map(_.feedArticles)
+
+    executeRequest(authorizationHeaderOpt, uri, listArticleEndpoint)
+
+  private def executeRequest(
       authorizationHeaderOpt: Option[Map[String, String]],
       uri: Uri,
-      zioEndpoint: ZIO[ArticlesEndpoints, Nothing, _root_.sttp.tapir.ztapir.ZServerEndpoint[Any, Any]]
+      endpoint: ZIO[ArticlesEndpoints, Nothing, ZServerEndpoint[Any, Any]]
   ): ZIO[ArticlesEndpoints, Throwable, Either[ResponseException[String, String], ArticlesList]] = {
 
-    zioEndpoint
+    endpoint
       .flatMap { endpoint =>
 
         val requestWithUri = basicRequest
@@ -51,7 +58,7 @@ object ArticlesSpecData {
   ): ZIO[ArticlesEndpoints, Throwable, TestResult] = {
 
     assertZIO(
-      zioEffect(authorizationHeaderOpt, uri, listArticleEndpointZIO)
+      callGetListArticles(authorizationHeaderOpt, uri)
     )(
       isRight(
         equalTo(
@@ -70,7 +77,7 @@ object ArticlesSpecData {
   ): ZIO[ArticlesEndpoints, Throwable, TestResult] = {
 
     assertZIO(
-      zioEffect(authorizationHeaderOpt, uri, listArticleEndpointZIO)
+      callGetListArticles(authorizationHeaderOpt, uri)
     )(
       isLeft(
         equalTo(
@@ -89,7 +96,7 @@ object ArticlesSpecData {
   ): ZIO[ArticlesEndpoints, Throwable, TestResult] = {
 
     assertZIO(
-      zioEffect(authorizationHeaderOpt, uri, listArticleEndpointZIO)
+      callGetListArticles(authorizationHeaderOpt, uri)
     )(
       isLeft(
         equalTo(
@@ -108,7 +115,7 @@ object ArticlesSpecData {
   ): ZIO[ArticlesEndpoints, Throwable, TestResult] = {
 
     assertZIO(
-      zioEffect(authorizationHeaderOpt, uri, feedArticleEndpointZIO)
+      callGetFeedArticles(authorizationHeaderOpt, uri)
     )(
       isLeft(
         equalTo(
@@ -127,7 +134,7 @@ object ArticlesSpecData {
   ): ZIO[ArticlesEndpoints, Throwable, TestResult] = {
 
     for {
-      result <- zioEffect(authorizationHeaderOpt, uri, listArticleEndpointZIO)
+      result <- callGetListArticles(authorizationHeaderOpt, uri)
     } yield assertTrue {
       // TODO there must be better way to implement this...
       import com.softwaremill.realworld.common.model.UserDiff.{*, given}
@@ -158,7 +165,7 @@ object ArticlesSpecData {
   ): ZIO[ArticlesEndpoints, Throwable, TestResult] = {
 
     for {
-      result <- zioEffect(authorizationHeaderOpt, uri, feedArticleEndpointZIO)
+      result <- callGetFeedArticles(authorizationHeaderOpt, uri)
     } yield assertTrue {
       // TODO there must be better way to implement this...
       import com.softwaremill.realworld.common.model.UserDiff.{*, given}
@@ -189,7 +196,7 @@ object ArticlesSpecData {
   ): ZIO[ArticlesEndpoints, Throwable, TestResult] = {
 
     for {
-      result <- zioEffect(authorizationHeaderOpt, uri, listArticleEndpointZIO)
+      result <- callGetListArticles(authorizationHeaderOpt, uri)
     } yield assertTrue {
       // TODO there must be better way to implement this...
       import com.softwaremill.realworld.common.model.UserDiff.{*, given}
@@ -220,7 +227,7 @@ object ArticlesSpecData {
   ): ZIO[ArticlesEndpoints, Throwable, TestResult] = {
 
     for {
-      result <- zioEffect(authorizationHeaderOpt, uri, listArticleEndpointZIO)
+      result <- callGetListArticles(authorizationHeaderOpt, uri)
     } yield assertTrue {
       // TODO there must be better way to implement this...
       import com.softwaremill.realworld.common.model.UserDiff.{*, given}
@@ -284,7 +291,7 @@ object ArticlesSpecData {
   ): ZIO[ArticlesEndpoints, Throwable, TestResult] = {
 
     for {
-      result <- zioEffect(authorizationHeaderOpt, uri, feedArticleEndpointZIO)
+      result <- callGetFeedArticles(authorizationHeaderOpt, uri)
     } yield assertTrue {
       // TODO there must be better way to implement this...
       import com.softwaremill.realworld.common.model.UserDiff.{*, given}
