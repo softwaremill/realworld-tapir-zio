@@ -101,17 +101,20 @@ class ArticlesRepository(quill: Quill.Sqlite[SnakeCase]):
       .map(_.headOption)
       .map(_.map(mapToArticleData))
 
-  def findArticleIdBySlug(slug: String): Task[Int] =
+  def findArticleIdBySlug(slug: String): Task[Option[Int]] =
     run(
       queryArticle
         .filter(a => a.slug == lift(slug))
         .map(_.articleId)
     )
       .map(_.headOption)
-      .flatMap {
-        case Some(a) => ZIO.succeed(a)
-        case None    => ZIO.fail(Exceptions.NotFound(s"Article with slug $slug doesn't exist."))
-      }
+
+  def findArticleBySlug(slug: String): Task[Option[ArticleRow]] =
+    run(
+      queryArticle
+        .filter(a => a.slug == lift(slug))
+    )
+      .map(_.headOption)
 
   def findBySlugAsSeenBy(slug: String, viewerEmail: String): IO[SQLException, Option[ArticleData]] =
     run(for {
@@ -177,6 +180,15 @@ class ArticlesRepository(quill: Quill.Sqlite[SnakeCase]):
       .pipe(mapUniqueConstraintViolationError)
   }
 
+  def deleteArticle(articleId: Int): Task[Long] =
+    run(queryArticle.filter(_.articleId == lift(articleId)).delete)
+
+  def deleteCommentsByArticleId(articleId: Int): Task[Long] =
+    run(queryCommentArticle.filter(_.articleId == lift(articleId)).delete)
+
+  def deleteFavoritesByArticleId(articleId: Int): Task[Long] =
+    run(queryFavoriteArticle.filter(_.articleId == lift(articleId)).delete)
+
   def updateById(updateData: ArticleData, articleId: Int): Task[Unit] = run(
     queryArticle
       .filter(_.articleId == lift(articleId))
@@ -213,10 +225,9 @@ class ArticlesRepository(quill: Quill.Sqlite[SnakeCase]):
     }
   }
 
-  def findComment(commentId: Int): Task[CommentRow] =
+  def findComment(commentId: Int): Task[Option[CommentRow]] =
     run(queryCommentArticle.filter(_.commentId == lift(commentId)))
       .map(_.headOption)
-      .someOrFail(Exceptions.NotFound(s"Comment with ID=$commentId doesn't exist"))
 
   def deleteComment(commentId: Int): Task[Long] =
     run(queryCommentArticle.filter(_.commentId == lift(commentId)).delete)
@@ -231,7 +242,7 @@ class ArticlesRepository(quill: Quill.Sqlite[SnakeCase]):
       ar.title,
       ar.description,
       ar.body,
-      tags.map(explodeTags).getOrElse(List()),
+      tags.map(explodeTags).map(_.sorted).getOrElse(List()),
       ar.createdAt,
       ar.updatedAt,
       // TODO implement "favorited" (after authentication is ready)
@@ -249,7 +260,7 @@ class ArticlesRepository(quill: Quill.Sqlite[SnakeCase]):
         ar.title,
         ar.description,
         ar.body,
-        tags.map(explodeTags).getOrElse(List()),
+        tags.map(explodeTags).map(_.sorted).getOrElse(List()),
         ar.createdAt,
         ar.updatedAt,
         favorited = isFavorite,

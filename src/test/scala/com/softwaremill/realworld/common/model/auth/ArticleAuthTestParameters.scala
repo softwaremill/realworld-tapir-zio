@@ -37,6 +37,10 @@ object ArticleAuthEndpointParameters:
     endpoint = ZIO.service[ArticlesEndpoints].map(endpoints => endpoints.create),
     request = basicRequest.post(uri"http://test.com/api/articles")
   )
+  def delete(slug: String): ArticleAuthEndpointParameters = ArticleAuthEndpointParameters(
+    endpoint = ZIO.service[ArticlesEndpoints].map(endpoints => endpoints.delete),
+    request = basicRequest.delete(uri"http://test.com/api/articles/$slug")
+  )
   def update(slug: String): ArticleAuthEndpointParameters = ArticleAuthEndpointParameters(
     endpoint = ZIO.service[ArticlesEndpoints].map(endpoints => endpoints.update),
     request = basicRequest.put(uri"http://test.com/api/articles/$slug")
