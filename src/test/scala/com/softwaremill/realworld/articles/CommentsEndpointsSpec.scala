@@ -6,6 +6,7 @@ import com.softwaremill.realworld.articles.comments.CommentCreateData
 import com.softwaremill.realworld.auth.AuthService
 import com.softwaremill.realworld.common.{BaseEndpoints, Configuration}
 import com.softwaremill.realworld.profiles.{ProfilesRepository, ProfilesService}
+import com.softwaremill.realworld.tags.TagsRepository
 import com.softwaremill.realworld.users.UsersRepository
 import com.softwaremill.realworld.utils.TestUtils.{getValidAuthorizationHeader, testDbLayerWithFixture}
 import sttp.client3.UriContext
@@ -88,5 +89,6 @@ object CommentsEndpointsSpec extends ZIOSpecDefault:
     BaseEndpoints.live,
     ProfilesService.live,
     ProfilesRepository.live,
+    TagsRepository.live,
     testDbLayerWithFixture("fixtures/articles/comment-data.sql")
   )

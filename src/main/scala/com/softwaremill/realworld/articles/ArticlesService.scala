@@ -117,7 +117,7 @@ class ArticlesService(
     commentId <- articlesRepository.addComment(articleId, user.userId, comment)
     commentRowOpt <- articlesRepository.findComment(commentId)
     commentRow <- handleProcessingResult(commentRowOpt, s"Comment with ID=$commentId doesn't exist")
-    profile <- profilesService.getProfileData(commentRow.authorId, user.userId)
+    profile <- profilesService.getProfileData(commentRow.authorId, Some(user.userId))
   } yield CommentData(commentRow.commentId, commentRow.createdAt, commentRow.updatedAt, commentRow.body, profile)
 
   def deleteComment(slug: String, email: String, commentId: Int): Task[Unit] = for {
@@ -133,7 +133,8 @@ class ArticlesService(
 
   def getCommentsFromArticle(slug: String, userEmailOpt: Option[String]): Task[List[CommentData]] =
     for {
-      articleId <- articlesRepository.findArticleIdBySlug(slug)
+      articleIdOpt <- articlesRepository.findArticleIdBySlug(slug)
+      articleId <- handleProcessingResult(articleIdOpt, s"Article with slug $slug doesn't exist.")
       commentRowList <- articlesRepository.findComments(articleId)
       commentDataList <- ZIO.collectAllPar(
         commentRowList.map(commentRow =>
@@ -145,7 +146,7 @@ class ArticlesService(
               } yield profile
 
             case None => profilesService.getProfileData(commentRow.authorId, None)
-            ).map(profile =>
+          ).map(profile =>
             CommentData(
               id = commentRow.commentId,
               createdAt = commentRow.createdAt,

@@ -171,7 +171,19 @@ class ArticlesEndpoints(articlesService: ArticlesService, base: BaseEndpoints):
     )
 
   val endpoints: List[ZServerEndpoint[Any, Any]] =
-    List(listArticles, feedArticles, get, update, create, delete, makeFavorite, removeFavorite, addComment, deleteComment, getCommentsFromArticle)
+    List(
+      listArticles,
+      feedArticles,
+      get,
+      update,
+      create,
+      delete,
+      makeFavorite,
+      removeFavorite,
+      addComment,
+      deleteComment,
+      getCommentsFromArticle
+    )
 
 object ArticlesEndpoints:
   val live: ZLayer[ArticlesService with BaseEndpoints, Nothing, ArticlesEndpoints] = ZLayer.fromFunction(new ArticlesEndpoints(_, _))
