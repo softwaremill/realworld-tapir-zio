@@ -242,7 +242,7 @@ class ArticlesRepository(quill: Quill.Sqlite[SnakeCase]):
       ar.title,
       ar.description,
       ar.body,
-      tags.map(explodeTags).getOrElse(List()),
+      tags.map(explodeTags).map(_.sorted).getOrElse(List()),
       ar.createdAt,
       ar.updatedAt,
       // TODO implement "favorited" (after authentication is ready)
@@ -260,7 +260,7 @@ class ArticlesRepository(quill: Quill.Sqlite[SnakeCase]):
         ar.title,
         ar.description,
         ar.body,
-        tags.map(explodeTags).getOrElse(List()),
+        tags.map(explodeTags).map(_.sorted).getOrElse(List()),
         ar.createdAt,
         ar.updatedAt,
         favorited = isFavorite,
