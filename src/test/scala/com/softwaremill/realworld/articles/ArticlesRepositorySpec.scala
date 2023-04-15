@@ -395,7 +395,8 @@ object ArticlesRepositorySpec extends ZIOSpecDefault:
               ),
               10
             )
-            articleId <- repo.findArticleIdBySlug("new-article-under-test")
+            articleIdOpt <- repo.findArticleIdBySlug("new-article-under-test")
+            articleId <- ZIO.succeed(articleIdOpt.get)
             _ <- repo.updateById(
               ArticleData(
                 updatedSlug,
@@ -458,7 +459,8 @@ object ArticlesRepositorySpec extends ZIOSpecDefault:
               ),
               10
             )
-            articleId <- repo.findArticleIdBySlug("slug-to-update")
+            articleIdOpt <- repo.findArticleIdBySlug("slug-to-update")
+            articleId <- ZIO.succeed(articleIdOpt.get)
             _ <- repo.updateById(
               ArticleData(
                 "existing-slug",

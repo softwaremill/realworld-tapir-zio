@@ -15,30 +15,27 @@ import scala.collection.immutable.Map
 
 object ArticleTestSupport {
 
-  def callGetFeedArticles(authorizationHeaderOpt: Option[Map[String, String]], uri: Uri) =
-    val feedArticlesEndpoint = ZIO
-      .service[ArticlesEndpoints]
-      .map(_.feedArticles)
-
-    executeArticleRequest(authorizationHeaderOpt, uri, feedArticlesEndpoint)
-
-  def callGetListArticles(
-      authorizationHeaderOpt: Option[Map[String, String]],
-      uri: Uri
-  ): ZIO[ArticlesEndpoints, Throwable, Either[ResponseException[String, String], ArticlesList]] =
-    val listArticlesEndpoint = ZIO
+  def callGetListArticles(authorizationHeaderOpt: Option[Map[String, String]], uri: Uri) =
+    val listArticleEndpoint = ZIO
       .service[ArticlesEndpoints]
       .map(_.listArticles)
 
-    executeArticleRequest(authorizationHeaderOpt, uri, listArticlesEndpoint)
+    executeRequest(authorizationHeaderOpt, uri, listArticleEndpoint)
 
-  private def executeArticleRequest(
+  def callGetFeedArticles(authorizationHeaderOpt: Option[Map[String, String]], uri: Uri) =
+    val feedArticleEndpoint = ZIO
+      .service[ArticlesEndpoints]
+      .map(_.feedArticles)
+
+    executeRequest(authorizationHeaderOpt, uri, feedArticleEndpoint)
+
+  private def executeRequest(
       authorizationHeaderOpt: Option[Map[String, String]],
       uri: Uri,
-      endpointZIO: ZIO[ArticlesEndpoints, Nothing, ZServerEndpoint[Any, Any]]
+      endpoint: ZIO[ArticlesEndpoints, Nothing, ZServerEndpoint[Any, Any]]
   ): ZIO[ArticlesEndpoints, Throwable, Either[ResponseException[String, String], ArticlesList]] = {
 
-    endpointZIO
+    endpoint
       .flatMap { endpoint =>
         val requestWithUri = basicRequest
           .get(uri)
@@ -69,6 +66,22 @@ object ArticleTestSupport {
           .send(backendStub(endpoint))
           .map(_.body)
       }
+
+  def callDeleteArticle(
+      authorizationHeader: Map[String, String],
+      uri: Uri
+  ): ZIO[ArticlesEndpoints, Throwable, Response[Either[String, String]]] = {
+
+    ZIO
+      .service[ArticlesEndpoints]
+      .map(_.delete)
+      .flatMap { endpoint =>
+        basicRequest
+          .delete(uri)
+          .headers(authorizationHeader)
+          .send(backendStub(endpoint))
+      }
+  }
 
   def checkIfArticleListIsEmpty(
       authorizationHeaderOpt: Option[Map[String, String]],
@@ -359,6 +372,41 @@ object ArticleTestSupport {
           ArticleAuthor(
             "bill",
             Some("I work in the bank"),
+            Some("https://i.stack.imgur.com/xHWG8.jpg"),
+            following = false
+          )
+        )
+      )
+    }
+  }
+
+  def checkArticlesListAfterDeletion(
+      authorizationHeaderOpt: Option[Map[String, String]],
+      uri: Uri
+  ): ZIO[ArticlesEndpoints, Throwable, TestResult] = {
+
+    for {
+      result <- callGetListArticles(authorizationHeaderOpt, uri)
+    } yield assertTrue {
+      // TODO there must be better way to implement this...
+      import com.softwaremill.realworld.common.model.UserDiff.{*, given}
+
+      val articlesList = result.toOption.get
+
+      articlesList.articlesCount == 2 && !articlesList.articles.contains(
+        ArticleData(
+          "how-to-train-your-dragon-3",
+          "How to train your dragon 3",
+          "The tagless one",
+          "Its not a dragon",
+          List(),
+          Instant.ofEpochMilli(1455765776637L),
+          Instant.ofEpochMilli(1455767315824L),
+          false,
+          0,
+          ArticleAuthor(
+            "john",
+            Some("I no longer work at statefarm"),
             Some("https://i.stack.imgur.com/xHWG8.jpg"),
             following = false
           )

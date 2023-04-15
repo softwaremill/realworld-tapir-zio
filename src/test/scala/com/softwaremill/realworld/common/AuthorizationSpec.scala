@@ -7,6 +7,7 @@ import com.softwaremill.realworld.common.model.auth.*
 import com.softwaremill.realworld.common.{BaseEndpoints, Configuration}
 import com.softwaremill.realworld.db.{Db, DbConfig, DbMigrator}
 import com.softwaremill.realworld.profiles.{ProfilesRepository, ProfilesService}
+import com.softwaremill.realworld.tags.TagsRepository
 import com.softwaremill.realworld.users.UsersEndpointsSpec.test
 import com.softwaremill.realworld.users.{User, UsersEndpoints, UsersRepository, UsersService}
 import com.softwaremill.realworld.utils.TestUtils.*
@@ -80,6 +81,16 @@ object AuthorizationSpec extends ZIOSpecDefault:
       expectedError = "Invalid value for: header Authorization (missing)"
     ),
     ArticleAuthTestParameters(
+      endpointParam = ArticleAuthEndpointParameters.delete("slug"),
+      headers = Map("Authorization" -> "Token Invalid JWT"),
+      expectedError = "{\"error\":\"Invalid token!\"}"
+    ),
+    ArticleAuthTestParameters(
+      endpointParam = ArticleAuthEndpointParameters.delete("slug"),
+      headers = Map(),
+      expectedError = "Invalid value for: header Authorization (missing)"
+    ),
+    ArticleAuthTestParameters(
       endpointParam = ArticleAuthEndpointParameters.update("slug"),
       headers = Map("Authorization" -> "Token Invalid JWT"),
       expectedError = "{\"error\":\"Invalid token!\"}"
@@ -128,6 +139,11 @@ object AuthorizationSpec extends ZIOSpecDefault:
       endpointParam = ArticleAuthEndpointParameters.deleteComment("slug", 1),
       headers = Map(),
       expectedError = "Invalid value for: header Authorization (missing)"
+    ),
+    ArticleAuthTestParameters(
+      endpointParam = ArticleAuthEndpointParameters.getCommentsFromArticle("slug"),
+      headers = Map("Authorization" -> "Token Invalid JWT"),
+      expectedError = "{\"error\":\"Invalid token!\"}"
     )
   )
 
@@ -180,5 +196,6 @@ object AuthorizationSpec extends ZIOSpecDefault:
     BaseEndpoints.live,
     ProfilesRepository.live,
     ProfilesService.live,
+    TagsRepository.live,
     testDbLayer
   )

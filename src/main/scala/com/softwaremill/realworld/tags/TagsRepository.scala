@@ -2,7 +2,7 @@ package com.softwaremill.realworld.tags
 
 import io.getquill.*
 import io.getquill.jdbczio.*
-import zio.{ZIO, ZLayer}
+import zio.{Task, ZIO, ZLayer}
 
 import java.sql.SQLException
 
@@ -12,6 +12,9 @@ class TagsRepository(quill: Quill.Sqlite[SnakeCase]):
   private inline def queryTags = quote(querySchema[TagRow](entity = "tags_articles"))
 
   def listTags: ZIO[Any, SQLException, List[TagRow]] = run(queryTags)
+
+  def deleteTagsByArticleId(articleId: Int): Task[Long] =
+    run(queryTags.filter(_.articleId == lift(articleId)).delete)
 
 object TagsRepository:
   val live: ZLayer[Quill.Sqlite[SnakeCase], Nothing, TagsRepository] =

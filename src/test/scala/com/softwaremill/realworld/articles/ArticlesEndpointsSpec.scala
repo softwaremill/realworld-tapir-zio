@@ -9,6 +9,7 @@ import com.softwaremill.realworld.common.{BaseEndpoints, Configuration}
 import com.softwaremill.realworld.db.{Db, DbConfig, DbMigrator}
 import com.softwaremill.realworld.profiles.{ProfilesRepository, ProfilesService}
 import com.softwaremill.realworld.users.UsersRepository
+import com.softwaremill.realworld.tags.TagsRepository
 import com.softwaremill.realworld.utils.TestUtils.*
 import sttp.client3.testing.SttpBackendStub
 import sttp.client3.ziojson.*
@@ -31,8 +32,8 @@ object ArticlesEndpointsSpec extends ZIOSpecDefault:
   val base: ZLayer[Any, ReadError[String], AuthService & BaseEndpoints] =
     Configuration.live >+> AuthService.live >+> BaseEndpoints.live
 
-  val repositories: ZLayer[TestDbLayer, Nothing, UsersRepository & ArticlesRepository & ProfilesRepository] =
-    UsersRepository.live ++ ArticlesRepository.live ++ ProfilesRepository.live
+  val repositories: ZLayer[TestDbLayer, Nothing, UsersRepository & ArticlesRepository & ProfilesRepository & TagsRepository] =
+    UsersRepository.live ++ ArticlesRepository.live ++ ProfilesRepository.live >+> TagsRepository.live
 
   val testArticlesLayer: ZLayer[TestDbLayer, ReadError[String], AuthService & ArticlesRepository & ArticlesEndpoints] =
     (base ++ repositories) >+> ProfilesService.live >+> ArticlesService.live >+> ArticlesEndpoints.live
@@ -311,6 +312,22 @@ object ArticlesEndpointsSpec extends ZIOSpecDefault:
     ).provide(
       testArticlesLayer,
       testDbLayerWithEmptyDb
+    ),
+    suite("positive article deletion")(test("remove article and check if article list has two elements") {
+      for {
+        authHeader <- getValidAuthorizationHeader(email = "john@example.com")
+        _ <- callDeleteArticle(
+          authorizationHeader = authHeader,
+          uri = uri"http://test.com/api/articles/how-to-train-your-dragon-3"
+        )
+        result <- checkArticlesListAfterDeletion(
+          authorizationHeaderOpt = Some(authHeader),
+          uri = uri"http://test.com/api/articles"
+        )
+      } yield result
+    }).provide(
+      testArticlesLayer,
+      testDbLayerWithFixture("fixtures/articles/basic-data.sql")
     ),
     suite("update article")(
       test("positive article update") {

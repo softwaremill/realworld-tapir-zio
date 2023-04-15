@@ -96,6 +96,16 @@ class ArticlesEndpoints(articlesService: ArticlesService, base: BaseEndpoints):
           .map(Article.apply)
     )
 
+  val delete: ZServerEndpoint[Any, Any] = base.secureEndpoint.delete
+    .in("api" / "articles" / path[String]("slug"))
+    .serverLogic(session =>
+      slug =>
+        articlesService
+          .delete(slug, session.email)
+          .logError
+          .pipe(defaultErrorsMappings)
+    )
+
   val update: ZServerEndpoint[Any, Any] = base.secureEndpoint.put
     .in("api" / "articles" / path[String]("slug"))
     .in(jsonBody[ArticleUpdate]) // TODO Input Validation
@@ -149,8 +159,31 @@ class ArticlesEndpoints(articlesService: ArticlesService, base: BaseEndpoints):
       case (slug, commentId) => articlesService.deleteComment(slug, session.email, commentId).pipe(defaultErrorsMappings)
     )
 
+  val getCommentsFromArticle: ZServerEndpoint[Any, Any] = base.optionallySecureEndpoint.get
+    .in("api" / "articles" / path[String]("slug") / "comments")
+    .out(jsonBody[CommentsList])
+    .serverLogic(sessionOpt =>
+      slug =>
+        articlesService
+          .getCommentsFromArticle(slug, sessionOpt.map(_.email))
+          .map(foundComments => CommentsList(comments = foundComments))
+          .pipe(defaultErrorsMappings)
+    )
+
   val endpoints: List[ZServerEndpoint[Any, Any]] =
-    List(listArticles, feedArticles, get, update, create, makeFavorite, removeFavorite, addComment, deleteComment)
+    List(
+      listArticles,
+      feedArticles,
+      get,
+      update,
+      create,
+      delete,
+      makeFavorite,
+      removeFavorite,
+      addComment,
+      deleteComment,
+      getCommentsFromArticle
+    )
 
 object ArticlesEndpoints:
   val live: ZLayer[ArticlesService with BaseEndpoints, Nothing, ArticlesEndpoints] = ZLayer.fromFunction(new ArticlesEndpoints(_, _))
