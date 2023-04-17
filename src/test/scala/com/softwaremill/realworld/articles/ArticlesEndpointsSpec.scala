@@ -180,104 +180,53 @@ object ArticlesEndpointsSpec extends ZIOSpecDefault:
       testDbLayerWithFixture("fixtures/articles/feed-data.sql")
     ),
     suite("check articles get")(
-      test("return error when requesting article doesn't exist") {
-        for {
-          authHeader <- getValidAuthorizationHeader()
-          result <- checkIfNonExistentArticleErrorOccur(
-            authorizationHeader = authHeader,
-            uri = uri"http://test.com/api/articles/unknown-article"
-          )
-        } yield result
-      }
-    ).provide(
-      testArticlesLayer,
-      testDbLayerWithEmptyDb
-    ),
-    suite("with populated db")(
-      test("get existing article") {
-        assertZIO(
+      suite("with empty db")(
+        test("return error when requesting article doesn't exist") {
           for {
-            articlesEndpoints <- ZIO.service[ArticlesEndpoints]
-            endpoint = articlesEndpoints.get
             authHeader <- getValidAuthorizationHeader()
-            response <- basicRequest
-              .get(uri"http://test.com/api/articles/how-to-train-your-dragon-2")
-              .headers(authHeader)
-              .response(asJson[Article])
-              .send(backendStub(endpoint))
-            body = response.body
-          } yield body
-        )(
-          isRight(
-            equalTo(
-              Article(
-                ArticleData(
-                  "how-to-train-your-dragon-2",
-                  "How to train your dragon 2",
-                  "So toothless",
-                  "Its a dragon",
-                  List("dragons", "goats", "training"),
-                  Instant.ofEpochMilli(1455765776637L),
-                  Instant.ofEpochMilli(1455767315824L),
-                  false,
-                  1,
-                  ArticleAuthor("jake", Some("I work at statefarm"), Some("https://i.stack.imgur.com/xHWG8.jpg"), following = false)
-                )
-              )
+            result <- checkIfNonExistentArticleErrorOccur(
+              authorizationHeader = authHeader,
+              uri = uri"http://test.com/api/articles/unknown-article"
             )
-          )
-        )
-      }
-    ).provide(
-      testArticlesLayer,
-      testDbLayerWithFixture("fixtures/articles/basic-data.sql")
+          } yield result
+        }
+      ).provide(
+        testArticlesLayer,
+        testDbLayerWithEmptyDb
+      ),
+      suite("with populated db")(
+        test("get existing article") {
+          for {
+            authHeader <- getValidAuthorizationHeader()
+            result <- getAndCheckExistingArticle(
+              authorizationHeader = authHeader,
+              uri = uri"http://test.com/api/articles/how-to-train-your-dragon-2"
+            )
+          } yield result
+        }
+      ).provide(
+        testArticlesLayer,
+        testDbLayerWithFixture("fixtures/articles/basic-data.sql")
+      )
     ),
     suite("create article")(
       test("positive article creation") {
         for {
-          articlesEndpoints <- ZIO.service[ArticlesEndpoints]
-          endpoint = articlesEndpoints.create
           authHeader <- getValidAuthorizationHeader()
-          response <- basicRequest
-            .post(uri"http://test.com/api/articles")
-            .body(
-              ArticleCreate(
-                ArticleCreateData(
-                  title = "How to train your dragon 2",
-                  description = "So toothless",
-                  body = "Its a dragon",
-                  tagList = Some(List("drogon", "fly"))
-                )
-              )
+          result <- createAndCheckArticle(
+            authorizationHeader = authHeader,
+            uri = uri"http://test.com/api/articles",
+            createData = ArticleCreateData(
+              title = "How to train your dragon 2",
+              description = "So toothless",
+              body = "Its a dragon",
+              tagList = Some(List("drogon", "fly"))
             )
-            .headers(authHeader)
-            .response(asJson[Article])
-            .send(backendStub(endpoint))
-          body = response.body
-        } yield assertTrue {
-          // TODO there must be better way to implement this...
-          import com.softwaremill.realworld.common.model.ArticleDiff.{*, given}
-          compare(
-            body.toOption.get,
-            Article(
-              ArticleData(
-                "how-to-train-your-dragon-2",
-                "How to train your dragon 2",
-                "So toothless",
-                "Its a dragon",
-                List("drogon", "fly"),
-                null,
-                null,
-                false,
-                0,
-                ArticleAuthor("admin", Some("I dont work"), Some(""), following = false)
-              )
-            )
-          ).isIdentical
-        }
+          )
+        } yield result
       },
       test("article creation - check conflict") {
-        assertZIO(for {
+        for {
           repo <- ZIO.service[ArticlesRepository]
           createData = ArticleCreateData(
             title = "Test slug",
@@ -286,28 +235,13 @@ object ArticlesEndpointsSpec extends ZIOSpecDefault:
             tagList = Some(List("drogon", "fly"))
           )
           _ <- repo.add(createData = createData, userId = 1)
-          articlesEndpoints <- ZIO.service[ArticlesEndpoints]
-          endpoint = articlesEndpoints.create
           authHeader <- getValidAuthorizationHeader()
-          response <- basicRequest
-            .post(uri"http://test.com/api/articles")
-            .body(
-              ArticleCreate(createData)
-            )
-            .headers(authHeader)
-            .response(asJson[Article])
-            .send(backendStub(endpoint))
-          body = response.body
-        } yield body)(
-          isLeft(
-            equalTo(
-              HttpError(
-                "{\"error\":\"Article name already exists\"}",
-                sttp.model.StatusCode.Conflict
-              )
-            )
+          result <- createAndCheckIfInvalidNameErrorOccur(
+            authorizationHeader = authHeader,
+            uri = uri"http://test.com/api/articles",
+            createData = createData
           )
-        )
+        } yield result
       }
     ).provide(
       testArticlesLayer,
@@ -342,97 +276,54 @@ object ArticlesEndpointsSpec extends ZIOSpecDefault:
             ),
             1
           )
-          articlesEndpoints <- ZIO.service[ArticlesEndpoints]
-          endpoint = articlesEndpoints.update
           authHeader <- getValidAuthorizationHeader()
-          response <- basicRequest
-            .put(uri"http://test.com/api/articles/test-slug")
-            .body(
-              ArticleUpdate(
-                ArticleUpdateData(
-                  title = Option("Test slug 2"),
-                  description = Option("updated description"),
-                  body = Option("updated body")
-                )
-              )
-            )
-            .headers(authHeader)
-            .response(asJson[Article])
-            .send(backendStub(endpoint))
-          body = response.body
-        } yield assertTrue {
-          // TODO there must be better way to implement this...
-          import com.softwaremill.realworld.common.model.ArticleDiff.{*, given}
-          compare(
-            body.toOption.get,
-            Article(
-              ArticleData(
-                "test-slug-2",
-                "Test slug 2",
-                "updated description",
-                "updated body",
-                Nil,
-                null,
-                null,
-                false,
-                0,
-                ArticleAuthor("admin", Some("I dont work"), Some(""), following = false)
-              )
-            )
-          ).isIdentical
-        }
-      },
-      test("article update - check conflict") {
-        assertZIO(
-          for {
-            repo <- ZIO.service[ArticlesRepository]
-            _ <- repo.add(
-              ArticleCreateData(
-                title = "Test slug",
-                description = "description",
-                body = "body",
-                tagList = None
-              ),
-              1
-            )
-            _ <- repo.add(
-              ArticleCreateData(
-                title = "Test slug 2",
-                description = "description",
-                body = "body",
-                tagList = None
-              ),
-              1
-            )
-            articlesEndpoints <- ZIO.service[ArticlesEndpoints]
-            endpoint = articlesEndpoints.update
-            authHeader <- getValidAuthorizationHeader()
-            response <- basicRequest
-              .put(uri"http://test.com/api/articles/test-slug")
-              .body(
-                ArticleUpdate(
-                  ArticleUpdateData(
-                    title = Option("Test slug 2"),
-                    description = Option("updated description"),
-                    body = Option("updated body")
-                  )
-                )
-              )
-              .headers(authHeader)
-              .response(asJson[Article])
-              .send(backendStub(endpoint))
-            body = response.body
-          } yield body
-        )(
-          isLeft(
-            equalTo(
-              HttpError(
-                "{\"error\":\"Article name already exists\"}",
-                sttp.model.StatusCode.Conflict
+          result <- updateAndCheckArticle(
+            authorizationHeader = authHeader,
+            uri = uri"http://test.com/api/articles/test-slug",
+            updateData = ArticleUpdate(
+              ArticleUpdateData(
+                title = Option("Test slug 2"),
+                description = Option("updated description"),
+                body = Option("updated body")
               )
             )
           )
-        )
+        } yield result
+      },
+      test("article update - check conflict") {
+        for {
+          repo <- ZIO.service[ArticlesRepository]
+          _ <- repo.add(
+            ArticleCreateData(
+              title = "Test slug",
+              description = "description",
+              body = "body",
+              tagList = None
+            ),
+            1
+          )
+          _ <- repo.add(
+            ArticleCreateData(
+              title = "Test slug 2",
+              description = "description",
+              body = "body",
+              tagList = None
+            ),
+            1
+          )
+          authHeader <- getValidAuthorizationHeader()
+          result <- updateAndCheckIfInvalidNameErrorOccur(
+            authorizationHeader = authHeader,
+            uri = uri"http://test.com/api/articles/test-slug",
+            updateData = ArticleUpdate(
+              ArticleUpdateData(
+                title = Option("Test slug 2"),
+                description = Option("updated description"),
+                body = Option("updated body")
+              )
+            )
+          )
+        } yield result
       }
     ).provide(
       testArticlesLayer,
