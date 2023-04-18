@@ -16,8 +16,9 @@ We decided on the following layers:
 * api
 * infrastructure
 
-App layer will contain domain models and service interfaces. Api layer will contain endpoint descriptions, without logic. 
-Infrastructure layer will house concrete implementations, that use external services, filesystem, etc.
+The app layer will contain domain models and service interfaces. The api layer will contain endpoint descriptions, without logic.
+Infrastructure layer will house concrete implementations of infrastructure-specific elements. 
+These include database queries based on concrete DB and access library (Quill), and, in the future, possible other technical components like external services, cache, etc.
 Each layer can have separate packages inside. Those packages can group models and services that are connected, by a common entity. 
 For example, User model, UserRepository interface and UserService interface would be placed in the app layer, 
 and could be grouped into a separate user package inside. 
