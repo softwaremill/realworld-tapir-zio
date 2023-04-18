@@ -9,7 +9,7 @@ We would like to make a clear decision, what application structure should be goi
 
 ## Decision
 
-We will use onion architecture. We will separate application into layers. Layers will be represented by packages.
+We will divide application into layers represented by packages.
 
 We decided on the following layers:
 * app
