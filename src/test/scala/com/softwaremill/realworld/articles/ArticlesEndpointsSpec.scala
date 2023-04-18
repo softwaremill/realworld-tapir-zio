@@ -1,14 +1,15 @@
 package com.softwaremill.realworld.articles
 
 import com.softwaremill.diffx.{Diff, compare}
-import com.softwaremill.realworld.articles.ArticleTestSupport.*
+import com.softwaremill.realworld.articles.ArticleEndpointTestSupport.*
+import com.softwaremill.realworld.articles.ArticlesRepositoryTestSupport.*
 import com.softwaremill.realworld.articles.model.*
 import com.softwaremill.realworld.auth.AuthService
 import com.softwaremill.realworld.common.Exceptions.AlreadyInUse
 import com.softwaremill.realworld.common.{BaseEndpoints, Configuration}
 import com.softwaremill.realworld.db.{Db, DbConfig, DbMigrator}
 import com.softwaremill.realworld.profiles.{ProfilesRepository, ProfilesService}
-import com.softwaremill.realworld.users.UsersRepository
+import com.softwaremill.realworld.users.{UserRegisterData, UsersRepository}
 import com.softwaremill.realworld.tags.TagsRepository
 import com.softwaremill.realworld.utils.TestUtils.*
 import sttp.client3.testing.SttpBackendStub
@@ -33,121 +34,123 @@ object ArticlesEndpointsSpec extends ZIOSpecDefault:
     Configuration.live >+> AuthService.live >+> BaseEndpoints.live
 
   val repositories: ZLayer[TestDbLayer, Nothing, UsersRepository & ArticlesRepository & ProfilesRepository & TagsRepository] =
-    UsersRepository.live ++ ArticlesRepository.live ++ ProfilesRepository.live >+> TagsRepository.live
+    UsersRepository.live ++ ArticlesRepository.live ++ ProfilesRepository.live ++ TagsRepository.live
 
-  val testArticlesLayer: ZLayer[TestDbLayer, ReadError[String], AuthService & ArticlesRepository & ArticlesEndpoints] =
+  val testArticlesLayer: ZLayer[
+    TestDbLayer,
+    ReadError[String],
+    AuthService & ArticlesRepository & UsersRepository & TagsRepository & ProfilesRepository & ArticlesEndpoints
+  ] =
     (base ++ repositories) >+> ProfilesService.live >+> ArticlesService.live >+> ArticlesEndpoints.live
 
   def spec = suite("check articles endpoints")(
     suite("check articles list")(
       suite("with auth header")(
-        suite("with auth data only")(
-          test("return empty list") {
-            for {
-              authHeader <- getValidAuthorizationHeader()
-              result <- checkIfArticleListIsEmpty(authorizationHeaderOpt = Some(authHeader), uri = uri"http://test.com/api/articles")
-            } yield result
-          }
-        ).provide(
-          testArticlesLayer,
-          testDbLayerWithEmptyDb
-        ),
-        suite("with populated db")(
-          test("validation failed on filter") {
-            for {
-              authHeader <- getValidAuthorizationHeader()
-              result <- checkIfFilterErrorOccur(
-                authorizationHeaderOpt = Some(authHeader),
-                uri = uri"http://test.com/api/articles?tag=invalid-tag"
-              )
-            } yield result
-          },
-          test("validation failed on pagination") {
-            for {
-              authHeader <- getValidAuthorizationHeader()
-              result <- checkIfPaginationErrorOccur(
-                authorizationHeaderOpt = Some(authHeader),
-                uri = uri"http://test.com/api/articles?limit=invalid-limit&offset=invalid-offset"
-              )
-            } yield result
-          },
-          test("check pagination") {
-            for {
-              authHeader <- getValidAuthorizationHeader()
-              result <- checkPagination(
-                authorizationHeaderOpt = Some(authHeader),
-                uri = uri"http://test.com/api/articles?limit=1&offset=1"
-              )
-            } yield result
-          },
-          test("check filters") {
-            for {
-              authHeader <- getValidAuthorizationHeader()
-              result <- checkFilters(
-                authorizationHeaderOpt = Some(authHeader),
-                uri = uri"http://test.com/api/articles?author=jake&favorited=john&tag=goats"
-              )
-            } yield result
-          },
-          test("list available articles") {
-            for {
-              authHeader <- getValidAuthorizationHeader()
-              result <- listAvailableArticles(
-                authorizationHeaderOpt = Some(authHeader),
-                uri = uri"http://test.com/api/articles"
-              )
-            } yield result
-          }
-        ).provide(
-          testArticlesLayer,
-          testDbLayerWithFixture("fixtures/articles/basic-data.sql")
-        )
+        test("return empty list") {
+          for {
+            authHeader <- getValidAuthorizationHeader()
+            result <- checkIfArticleListIsEmpty(authorizationHeaderOpt = Some(authHeader), uri = uri"http://test.com/api/articles")
+          } yield result
+        },
+        test("validation failed on filter") {
+          for {
+            authHeader <- getValidAuthorizationHeader()
+            result <- checkIfFilterErrorOccur(
+              authorizationHeaderOpt = Some(authHeader),
+              uri = uri"http://test.com/api/articles?tag=invalid-tag"
+            )
+          } yield result
+        },
+        test("validation failed on pagination") {
+          for {
+            authHeader <- getValidAuthorizationHeader()
+            result <- checkIfPaginationErrorOccur(
+              authorizationHeaderOpt = Some(authHeader),
+              uri = uri"http://test.com/api/articles?limit=invalid-limit&offset=invalid-offset"
+            )
+          } yield result
+        },
+        test("check pagination") {
+          for {
+            _ <- prepareDataForListingArticles
+            authHeader <- getValidAuthorizationHeader()
+            result <- checkPagination(
+              authorizationHeaderOpt = Some(authHeader),
+              uri = uri"http://test.com/api/articles?limit=1&offset=1"
+            )
+          } yield result
+        },
+        test("check filters") {
+          for {
+            _ <- prepareDataForListingArticles
+            authHeader <- getValidAuthorizationHeader()
+            result <- checkFilters(
+              authorizationHeaderOpt = Some(authHeader),
+              uri = uri"http://test.com/api/articles?author=jake&favorited=john&tag=goats"
+            )
+          } yield result
+        },
+        test("list available articles") {
+          for {
+            _ <- prepareDataForListingArticles
+            authHeader <- getValidAuthorizationHeader()
+            result <- listAvailableArticles(
+              authorizationHeaderOpt = Some(authHeader),
+              uri = uri"http://test.com/api/articles"
+            )
+          } yield result
+        }
       ),
       suite("with no header")(
         test("return empty list") {
           checkIfArticleListIsEmpty(authorizationHeaderOpt = None, uri = uri"http://test.com/api/articles")
-        }
-      ).provide(
-        testArticlesLayer,
-        testDbLayerWithEmptyDb
-      ),
-      suite("with populated db")(
+        },
         test("validation failed on filter") {
-          checkIfFilterErrorOccur(
-            authorizationHeaderOpt = None,
-            uri = uri"http://test.com/api/articles?tag=invalid-tag"
-          )
+          for {
+            result <- checkIfFilterErrorOccur(
+              authorizationHeaderOpt = None,
+              uri = uri"http://test.com/api/articles?tag=invalid-tag"
+            )
+          } yield result
         },
         test("validation failed on pagination") {
-          checkIfPaginationErrorOccur(
-            authorizationHeaderOpt = None,
-            uri = uri"http://test.com/api/articles?limit=invalid-limit&offset=invalid-offset"
-          )
+          for {
+            result <- checkIfPaginationErrorOccur(
+              authorizationHeaderOpt = None,
+              uri = uri"http://test.com/api/articles?limit=invalid-limit&offset=invalid-offset"
+            )
+          } yield result
         },
         test("check pagination") {
-          checkPagination(
-            authorizationHeaderOpt = None,
-            uri = uri"http://test.com/api/articles?limit=1&offset=1"
-          )
+          for {
+            _ <- prepareDataForListingArticles
+            result <- checkPagination(
+              authorizationHeaderOpt = None,
+              uri = uri"http://test.com/api/articles?limit=1&offset=1"
+            )
+          } yield result
         },
         test("check filters") {
-          checkFilters(
-            authorizationHeaderOpt = None,
-            uri = uri"http://test.com/api/articles?author=jake&favorited=john&tag=goats"
-          )
+          for {
+            _ <- prepareDataForListingArticles
+            result <- checkFilters(
+              authorizationHeaderOpt = None,
+              uri = uri"http://test.com/api/articles?author=jake&favorited=john&tag=goats"
+            )
+          } yield result
         },
         test("list available articles") {
-          listAvailableArticles(
-            authorizationHeaderOpt = None,
-            uri = uri"http://test.com/api/articles"
-          )
+          for {
+            _ <- prepareDataForListingArticles
+            result <- listAvailableArticles(
+              authorizationHeaderOpt = None,
+              uri = uri"http://test.com/api/articles"
+            )
+          } yield result
         }
-      ).provide(
-        testArticlesLayer,
-        testDbLayerWithFixture("fixtures/articles/basic-data.sql")
       )
     ),
-    suite("check feed article")(
+    suite("check articles feed")(
       test("validation failed on pagination") {
         for {
           authHeader <- getValidAuthorizationHeader(email = "john@example.com")
@@ -159,6 +162,7 @@ object ArticlesEndpointsSpec extends ZIOSpecDefault:
       },
       test("check pagination") {
         for {
+          _ <- prepareDataForFeedingArticles
           authHeader <- getValidAuthorizationHeader(email = "john@example.com")
           result <- checkFeedPagination(
             authorizationHeaderOpt = Some(authHeader),
@@ -168,6 +172,7 @@ object ArticlesEndpointsSpec extends ZIOSpecDefault:
       },
       test("list available articles") {
         for {
+          _ <- prepareDataForFeedingArticles
           authHeader <- getValidAuthorizationHeader(email = "john@example.com")
           result <- listFeedAvailableArticles(
             authorizationHeaderOpt = Some(authHeader),
@@ -175,114 +180,79 @@ object ArticlesEndpointsSpec extends ZIOSpecDefault:
           )
         } yield result
       }
-    ).provide(
-      testArticlesLayer,
-      testDbLayerWithFixture("fixtures/articles/feed-data.sql")
     ),
     suite("check articles get")(
-      suite("with empty db")(
-        test("return error when requesting article doesn't exist") {
-          for {
-            authHeader <- getValidAuthorizationHeader()
-            result <- checkIfNonExistentArticleErrorOccur(
-              authorizationHeader = authHeader,
-              uri = uri"http://test.com/api/articles/unknown-article"
-            )
-          } yield result
-        }
-      ).provide(
-        testArticlesLayer,
-        testDbLayerWithEmptyDb
-      ),
-      suite("with populated db")(
-        test("get existing article") {
-          for {
-            authHeader <- getValidAuthorizationHeader()
-            result <- getAndCheckExistingArticle(
-              authorizationHeader = authHeader,
-              uri = uri"http://test.com/api/articles/how-to-train-your-dragon-2"
-            )
-          } yield result
-        }
-      ).provide(
-        testArticlesLayer,
-        testDbLayerWithFixture("fixtures/articles/basic-data.sql")
-      )
-    ),
-    suite("create article")(
-      test("positive article creation") {
+      test("return error when requesting article doesn't exist") {
         for {
           authHeader <- getValidAuthorizationHeader()
+          result <- checkIfNonExistentArticleErrorOccur(
+            authorizationHeader = authHeader,
+            uri = uri"http://test.com/api/articles/unknown-article"
+          )
+        } yield result
+      },
+      test("get existing article") {
+        for {
+          _ <- prepareDataForGettingArticle
+          authHeader <- getValidAuthorizationHeader()
+          result <- getAndCheckExistingArticle(
+            authorizationHeader = authHeader,
+            uri = uri"http://test.com/api/articles/how-to-train-your-dragon-2"
+          )
+        } yield result
+      }
+    ),
+    suite("check article creation")(
+      test("positive article creation") {
+        for {
+          _ <- prepareDataForArticleCreation
+          authHeader <- getValidAuthorizationHeader(email = "jake@example.com")
           result <- createAndCheckArticle(
             authorizationHeader = authHeader,
             uri = uri"http://test.com/api/articles",
-            createData = ArticleCreateData(
-              title = "How to train your dragon 2",
-              description = "So toothless",
-              body = "Its a dragon",
-              tagList = Some(List("drogon", "fly"))
-            )
+            createData = exampleArticle2
           )
         } yield result
       },
       test("article creation - check conflict") {
         for {
-          repo <- ZIO.service[ArticlesRepository]
-          createData = ArticleCreateData(
-            title = "Test slug",
-            description = "So toothless",
-            body = "Its a dragon",
-            tagList = Some(List("drogon", "fly"))
-          )
-          _ <- repo.add(createData = createData, userId = 1)
-          authHeader <- getValidAuthorizationHeader()
+          _ <- prepareDataForCreatingNameConflict
+          authHeader <- getValidAuthorizationHeader(email = "jake@example.com")
           result <- createAndCheckIfInvalidNameErrorOccur(
             authorizationHeader = authHeader,
             uri = uri"http://test.com/api/articles",
-            createData = createData
+            createData = exampleArticle2
           )
         } yield result
       }
-    ).provide(
-      testArticlesLayer,
-      testDbLayerWithEmptyDb
     ),
-    suite("positive article deletion")(test("remove article and check if article list has two elements") {
-      for {
-        authHeader <- getValidAuthorizationHeader(email = "john@example.com")
-        _ <- callDeleteArticle(
-          authorizationHeader = authHeader,
-          uri = uri"http://test.com/api/articles/how-to-train-your-dragon-3"
-        )
-        result <- checkArticlesListAfterDeletion(
-          authorizationHeaderOpt = Some(authHeader),
-          uri = uri"http://test.com/api/articles"
-        )
-      } yield result
-    }).provide(
-      testArticlesLayer,
-      testDbLayerWithFixture("fixtures/articles/basic-data.sql")
+    suite("check article deletion")(
+      test("positive remove article and check if article list has two elements")(
+        for {
+          _ <- prepareDataForArticleDeletion
+          authHeader <- getValidAuthorizationHeader(email = "jake@example.com")
+          _ <- callDeleteArticle(
+            authorizationHeader = authHeader,
+            uri = uri"http://test.com/api/articles/how-to-train-your-dragon-3"
+          )
+          result <- checkArticlesListAfterDeletion(
+            authorizationHeaderOpt = Some(authHeader),
+            uri = uri"http://test.com/api/articles"
+          )
+        } yield result
+      )
     ),
     suite("update article")(
       test("positive article update") {
         for {
-          repo <- ZIO.service[ArticlesRepository]
-          _ <- repo.add(
-            ArticleCreateData(
-              title = "Test slug",
-              description = "description",
-              body = "body",
-              tagList = None
-            ),
-            1
-          )
-          authHeader <- getValidAuthorizationHeader()
+          _ <- prepareDataForArticleUpdating
+          authHeader <- getValidAuthorizationHeader(email = "jake@example.com")
           result <- updateAndCheckArticle(
             authorizationHeader = authHeader,
-            uri = uri"http://test.com/api/articles/test-slug",
+            uri = uri"http://test.com/api/articles/how-to-train-your-dragon",
             updateData = ArticleUpdate(
               ArticleUpdateData(
-                title = Option("Test slug 2"),
+                title = Option("Updated slug"),
                 description = Option("updated description"),
                 body = Option("updated body")
               )
@@ -292,32 +262,14 @@ object ArticlesEndpointsSpec extends ZIOSpecDefault:
       },
       test("article update - check conflict") {
         for {
-          repo <- ZIO.service[ArticlesRepository]
-          _ <- repo.add(
-            ArticleCreateData(
-              title = "Test slug",
-              description = "description",
-              body = "body",
-              tagList = None
-            ),
-            1
-          )
-          _ <- repo.add(
-            ArticleCreateData(
-              title = "Test slug 2",
-              description = "description",
-              body = "body",
-              tagList = None
-            ),
-            1
-          )
-          authHeader <- getValidAuthorizationHeader()
+          _ <- prepareDataForUpdatingNameConflict
+          authHeader <- getValidAuthorizationHeader(email = "jake@example.com")
           result <- updateAndCheckIfInvalidNameErrorOccur(
             authorizationHeader = authHeader,
-            uri = uri"http://test.com/api/articles/test-slug",
+            uri = uri"http://test.com/api/articles/how-to-train-your-dragon",
             updateData = ArticleUpdate(
               ArticleUpdateData(
-                title = Option("Test slug 2"),
+                title = Option("How to train your dragon 2"),
                 description = Option("updated description"),
                 body = Option("updated body")
               )
@@ -325,8 +277,8 @@ object ArticlesEndpointsSpec extends ZIOSpecDefault:
           )
         } yield result
       }
-    ).provide(
-      testArticlesLayer,
-      testDbLayerWithEmptyDb
     )
+  ).provide(
+    testArticlesLayer,
+    testDbLayerWithEmptyDb
   )
