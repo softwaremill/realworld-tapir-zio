@@ -40,6 +40,6 @@ Postgres based implementation of UserRepository would be placed in the infrastru
 
 ## Conclusion
 
-We decided that, from now on, application will be structured in layers. Onion architecture has its drawbacks. 
-It takes more effort upfront and requires discipline to maintain, but we believe that benefits outweigh the costs.
+We decided that, from now on, application will have a layered structure. 
+Such layered design requires to invest additional effort, but benefits outweigh the costs.
 New app structure will allow for easier changes in the future, and will better showcase tapirs potential.
