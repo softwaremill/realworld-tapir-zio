@@ -54,17 +54,19 @@ class UsersService(authService: AuthService, usersRepository: UsersRepository):
   }
 
   def update(updateData: UserUpdateData, email: String): IO[Throwable, UserData] =
-    for {
+    (for {
       maybeOldUser <- usersRepository.findUserWithPasswordByEmail(email)
       oldUser <- ZIO.fromOption(maybeOldUser).mapError(_ => NotFound("User doesn't exist."))
       password <- updateData.password
         .map(newPassword => authService.encryptPassword(newPassword))
         .getOrElse(ZIO.succeed(oldUser.hashedPassword))
-      updatedData <- usersRepository.updateByEmail(
+      _ <- usersRepository.updateByEmail(
         toUserUpdateDataWithFallback(updateData, oldUser.copy(hashedPassword = password)),
         email
       )
-    } yield toUserData(updatedData)
+      updatedData <- usersRepository.findByEmail(email)
+      result = updatedData.map(toUserData)
+    } yield result).someOrFail(new Exception(s"User with email $email does not exists"))
 
   private def userWithToken(email: String, username: String, jwt: String): UserData = {
     UserData(
