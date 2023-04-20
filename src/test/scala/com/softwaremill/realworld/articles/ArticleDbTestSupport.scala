@@ -6,7 +6,7 @@ import com.softwaremill.realworld.tags.TagsRepository
 import com.softwaremill.realworld.users.{UserRegisterData, UsersRepository}
 import zio.ZIO
 
-object ArticlesRepositoryTestSupport {
+object ArticleDbTestSupport {
 
   private val exampleUser1 = UserRegisterData(
     email = "jake@example.com",

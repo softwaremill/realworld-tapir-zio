@@ -1,32 +1,19 @@
 package com.softwaremill.realworld.articles
 
-import com.softwaremill.diffx.{Diff, compare}
+import com.softwaremill.realworld.articles.ArticleDbTestSupport.*
 import com.softwaremill.realworld.articles.ArticleEndpointTestSupport.*
-import com.softwaremill.realworld.articles.ArticlesRepositoryTestSupport.*
 import com.softwaremill.realworld.articles.model.*
 import com.softwaremill.realworld.auth.AuthService
-import com.softwaremill.realworld.common.Exceptions.AlreadyInUse
 import com.softwaremill.realworld.common.{BaseEndpoints, Configuration}
-import com.softwaremill.realworld.db.{Db, DbConfig, DbMigrator}
 import com.softwaremill.realworld.profiles.{ProfilesRepository, ProfilesService}
-import com.softwaremill.realworld.users.{UserRegisterData, UsersRepository}
 import com.softwaremill.realworld.tags.TagsRepository
+import com.softwaremill.realworld.users.{UserRegisterData, UsersRepository}
 import com.softwaremill.realworld.utils.TestUtils.*
-import sttp.client3.testing.SttpBackendStub
-import sttp.client3.ziojson.*
-import sttp.client3.{HttpError, Response, ResponseException, UriContext, basicRequest}
+import sttp.client3.UriContext
 import sttp.model.Uri
-import sttp.tapir.EndpointOutput.StatusCode
-import sttp.tapir.server.stub.TapirStubInterpreter
-import sttp.tapir.ztapir.{RIOMonadError, ZServerEndpoint}
+import zio.ZLayer
 import zio.config.ReadError
-import zio.test.Assertion.*
-import zio.test.{Assertion, TestAspect, TestRandom, TestResult, ZIOSpecDefault, assertTrue, assertZIO}
-import zio.{Cause, RIO, Random, ZIO, ZLayer}
-
-import java.time.{Instant, ZonedDateTime}
-import javax.sql.DataSource
-import scala.language.postfixOps
+import zio.test.ZIOSpecDefault
 
 object ArticlesEndpointsSpec extends ZIOSpecDefault:
 

@@ -11,7 +11,7 @@ import sttp.client3.{HttpError, Response, ResponseException, basicRequest}
 import sttp.model.Uri
 import sttp.tapir.ztapir.ZServerEndpoint
 import zio.ZIO
-import zio.test.Assertion.{equalTo, hasField, isFalse, isLeft, isRight}
+import zio.test.Assertion.*
 import zio.test.{Assertion, TestResult, assertTrue, assertZIO}
 
 import java.time.Instant
