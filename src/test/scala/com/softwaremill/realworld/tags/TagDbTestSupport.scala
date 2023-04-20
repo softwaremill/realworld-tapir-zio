@@ -1,12 +1,12 @@
 package com.softwaremill.realworld.tags
 
-import com.softwaremill.realworld.articles.model.ArticleCreateData
 import com.softwaremill.realworld.articles.ArticlesRepository
+import com.softwaremill.realworld.articles.model.ArticleCreateData
 import com.softwaremill.realworld.tags.TagsRepository
 import com.softwaremill.realworld.users.{UserRegisterData, UsersRepository}
 import zio.ZIO
 
-object TagRepositoryTestSupport {
+object TagDbTestSupport {
 
   private val exampleUser1 = UserRegisterData(
     email = "jake@example.com",

@@ -5,8 +5,8 @@ import sttp.client3.basicRequest
 import sttp.client3.ziojson.asJson
 import sttp.model.Uri
 import zio.ZIO
-import zio.test.{TestResult, assertZIO}
 import zio.test.Assertion.{equalTo, isRight}
+import zio.test.{TestResult, assertZIO}
 
 object TagEndpointTestSupport {
 
