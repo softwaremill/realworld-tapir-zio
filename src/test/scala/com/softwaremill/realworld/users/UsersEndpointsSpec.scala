@@ -1,23 +1,11 @@
 package com.softwaremill.realworld.users
 
-import com.softwaremill.diffx.{Diff, compare}
 import com.softwaremill.realworld.auth.AuthService
 import com.softwaremill.realworld.common.{BaseEndpoints, Configuration}
-import com.softwaremill.realworld.db.{Db, DbConfig, DbMigrator}
 import com.softwaremill.realworld.users.UserEndpointTestSupport.*
 import com.softwaremill.realworld.utils.TestUtils.*
-import sttp.client3.testing.SttpBackendStub
-import sttp.client3.ziojson.*
-import sttp.client3.{HttpError, Response, ResponseException, UriContext, basicRequest}
-import sttp.tapir.EndpointOutput.StatusCode
-import sttp.tapir.server.stub.TapirStubInterpreter
-import sttp.tapir.ztapir.{RIOMonadError, ZServerEndpoint}
-import zio.test.Assertion.*
-import zio.test.{Assertion, TestAspect, TestRandom, ZIOSpecDefault, assertTrue, assertZIO}
-import zio.{RIO, Random, ZIO, ZLayer}
-
-import java.time.{Instant, ZonedDateTime}
-import javax.sql.DataSource
+import sttp.client3.UriContext
+import zio.test.ZIOSpecDefault
 
 object UsersEndpointsSpec extends ZIOSpecDefault:
   def spec = suite("users endpoints tests")(
