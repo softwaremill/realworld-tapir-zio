@@ -1,17 +1,14 @@
 package com.softwaremill.realworld.profiles
 
-import com.softwaremill.realworld.profiles.ProfileEndpointTestSupport.*
-import com.softwaremill.realworld.profiles.ProfileRepositoryTestSupport.*
 import com.softwaremill.realworld.auth.AuthService
 import com.softwaremill.realworld.common.{BaseEndpoints, Configuration}
+import com.softwaremill.realworld.profiles.ProfileDbTestSupport.*
+import com.softwaremill.realworld.profiles.ProfileEndpointTestSupport.*
 import com.softwaremill.realworld.users.UsersRepository
 import com.softwaremill.realworld.utils.TestUtils.*
 import sttp.client3.*
-import sttp.client3.ziojson.*
 import sttp.model.StatusCode
-import zio.*
 import zio.test.*
-import zio.test.Assertion.*
 
 object ProfilesEndpointsSpec extends ZIOSpecDefault:
 

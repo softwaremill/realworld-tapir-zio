@@ -1,15 +1,13 @@
 package com.softwaremill.realworld.profiles
 
 import com.softwaremill.realworld.utils.TestUtils.backendStub
-import sttp.client3.{HttpError, Request, ResponseException, basicRequest}
 import sttp.client3.ziojson.asJson
-import sttp.model.StatusCode
-import sttp.model.Uri
+import sttp.client3.{HttpError, Request, ResponseException, basicRequest}
+import sttp.model.{StatusCode, Uri}
 import sttp.tapir.ztapir.ZServerEndpoint
 import zio.ZIO
-import zio.test.*
 import zio.test.Assertion.*
-import zio.test.{TestResult, assertZIO}
+import zio.test.*
 
 object ProfileEndpointTestSupport {
 

@@ -1,9 +1,9 @@
 package com.softwaremill.realworld.profiles
 
-import zio.ZIO
 import com.softwaremill.realworld.users.{UserRegisterData, UsersRepository}
+import zio.ZIO
 
-object ProfileRepositoryTestSupport {
+object ProfileDbTestSupport {
 
   private val exampleUser1 = UserRegisterData(
     email = "jake@example.com",
