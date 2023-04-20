@@ -202,25 +202,6 @@ object ArticleEndpointTestSupport {
     )
   }
 
-  def checkIfArticleListIsEmpty(
-      authorizationHeaderOpt: Option[Map[String, String]],
-      uri: Uri
-  ): ZIO[ArticlesEndpoints, Throwable, TestResult] = {
-
-    assertZIO(
-      callGetListArticles(authorizationHeaderOpt, uri)
-    )(
-      isRight(
-        equalTo(
-          ArticlesList(
-            articles = List.empty[ArticleData],
-            articlesCount = 0
-          )
-        )
-      )
-    )
-  }
-
   def createAndCheckIfInvalidNameErrorOccur(
       authorizationHeader: Map[String, String],
       uri: Uri,
@@ -250,6 +231,25 @@ object ArticleEndpointTestSupport {
       isLeft(
         equalTo(
           HttpError("{\"error\":\"Article with slug unknown-article doesn't exist.\"}", sttp.model.StatusCode(404))
+        )
+      )
+    )
+  }
+
+  def checkIfArticleListIsEmpty(
+      authorizationHeaderOpt: Option[Map[String, String]],
+      uri: Uri
+  ): ZIO[ArticlesEndpoints, Throwable, TestResult] = {
+
+    assertZIO(
+      callGetListArticles(authorizationHeaderOpt, uri)
+    )(
+      isRight(
+        equalTo(
+          ArticlesList(
+            articles = List.empty[ArticleData],
+            articlesCount = 0
+          )
         )
       )
     )
