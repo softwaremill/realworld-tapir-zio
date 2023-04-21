@@ -22,14 +22,13 @@ import zio.test.*
 import zio.test.Assertion.*
 import zio.{Cause, RIO, Random, ZIO, ZLayer}
 
-import java.time.Instant
 import javax.sql.DataSource
 
 object ArticlesRepositorySpec extends ZIOSpecDefault:
 
-  def spec = suite("check list features")(
+  override def spec = suite("check list features")(
     suite("list articles")(
-      suite("with auth data only")(
+      suite("with empty db")(
         test("no filters") {
           checkIfArticleListIsEmpty(ArticlesFilters.empty, Pagination(20, 0))
         },
@@ -90,7 +89,7 @@ object ArticlesRepositorySpec extends ZIOSpecDefault:
         } yield result
       }
     ),
-    suite("add & update tags")(
+    suite("add and update tags")(
       test("add tag") {
         for {
           _ <- prepareDataForListingArticles
@@ -107,6 +106,61 @@ object ArticlesRepositorySpec extends ZIOSpecDefault:
           )
         } yield result
       }
+    ),
+    suite("create and update article")(
+      test("create article") {
+        for {
+          _ <- prepareDataForListingArticles
+          result <- createAndCheckArticle(
+            slug = "new-article-under-test",
+            articleCreateData = ArticleCreateData(
+              title = "New-article-under-test",
+              description = "What a nice day!",
+              body = "Writing scala code is quite challenging pleasure",
+              tagList = None
+            ),
+            userEmail = exampleUser1.email
+          )
+        } yield result
+      },
+      test("create non unique article - check article already exists") {
+        for {
+          _ <- prepareDataForListingArticles
+          result <- checkIfArticleAlreadyExistsInCreate(
+            articleCreateData = ArticleCreateData(
+              title = "How-to-train-your-dragon",
+              description = "What a nice day!",
+              body = "Writing scala code is quite challenging pleasure",
+              tagList = None
+            ),
+            userEmail = exampleUser1.email
+          )
+        } yield result
+      },
+      test("update article") {
+        for {
+          _ <- prepareDataForListingArticles
+          result <- updateAndCheckArticle(
+            existingSlug = "how-to-train-your-dragon",
+            updatedSlug = "updated-article-under-test",
+            updatedTitle = "Updated article under test",
+            updatedDescription = "What a nice updated day!",
+            updatedBody = "Updating scala code is quite challenging pleasure"
+          )
+        } yield result
+      },
+      test("update article - check article already exist") {
+        for {
+          _ <- prepareDataForListingArticles
+          result <- checkIfArticleAlreadyExistsInUpdate(
+            existingSlug = "how-to-train-your-dragon",
+            updatedSlug = "how-to-train-your-dragon-2",
+            updatedTitle = "How to train your dragon 2",
+            updatedDescription = "What a nice updated day!",
+            updatedBody = "Updating scala code is quite challenging pleasure"
+          )
+        } yield result
+      }
     )
   ).provide(
     ArticlesRepository.live,
@@ -114,169 +168,3 @@ object ArticlesRepositorySpec extends ZIOSpecDefault:
     ProfilesRepository.live,
     testDbLayerWithEmptyDb
   )
-
-//      suite("create and update article")(
-//        test("create article") {
-//          for {
-//            repo <- ZIO.service[ArticlesRepository]
-//            slug = "new-article-under-test"
-//            _ <- repo.add(
-//              ArticleCreateData(
-//                title = "New-article-under-test",
-//                description = "What a nice day!",
-//                body = "Writing scala code is quite challenging pleasure",
-//                tagList = None
-//              ),
-//              10
-//            )
-//            result <- repo.findBySlug(slug).map(_.get)
-//          } yield assertTrue {
-//            // TODO there must be better way to implement this...
-//            import com.softwaremill.realworld.common.model.ArticleDiff.{*, given}
-//            compare(
-//              result,
-//              ArticleData(
-//                slug,
-//                "New-article-under-test",
-//                "What a nice day!",
-//                "Writing scala code is quite challenging pleasure",
-//                Nil,
-//                null,
-//                null,
-//                false,
-//                0,
-//                ArticleAuthor(
-//                  username = "jake",
-//                  bio = Some("I work at statefarm"),
-//                  image = Some("https://i.stack.imgur.com/xHWG8.jpg"),
-//                  following = false
-//                )
-//              )
-//            ).isIdentical
-//          }
-//        },
-//        test("create non unique article - check article already exists") {
-//          assertZIO((for {
-//            repo <- ZIO.service[ArticlesRepository]
-//            v <- repo.add(
-//              ArticleCreateData(
-//                title = "How-to-train-your-dragon",
-//                description = "What a nice day!",
-//                body = "Writing scala code is quite challenging pleasure",
-//                tagList = None
-//              ),
-//              10
-//            )
-//          } yield v).exit)(
-//            failsCause(
-//              containsCause(Cause.fail(AlreadyInUse(message = "Article name already exists")))
-//            )
-//          )
-//        },
-//        test("update article") {
-//          for {
-//            repo <- ZIO.service[ArticlesRepository]
-//            updatedSlug = "updated-article-under-test"
-//            _ <- repo.add(
-//              ArticleCreateData(
-//                title = "New article under test",
-//                description = "What a nice day!",
-//                body = "Writing scala code is quite challenging pleasure",
-//                tagList = None
-//              ),
-//              10
-//            )
-//            articleIdOpt <- repo.findArticleIdBySlug("new-article-under-test")
-//            articleId <- ZIO.succeed(articleIdOpt.get)
-//            _ <- repo.updateById(
-//              ArticleData(
-//                updatedSlug,
-//                "Updated article under test",
-//                "What a nice updated day!",
-//                "Updating scala code is quite challenging pleasure",
-//                Nil,
-//                null, // TODO I think more specialized class should be used for article creation
-//                Instant.now(),
-//                false,
-//                0,
-//                null
-//              ),
-//              articleId
-//            )
-//            result <- repo.findBySlug(updatedSlug).map(_.get)
-//          } yield assertTrue {
-//            // TODO there must be better way to implement this...
-//            import com.softwaremill.realworld.common.model.ArticleDiffWithSameCreateAt.{*, given}
-//            compare(
-//              result,
-//              ArticleData(
-//                updatedSlug,
-//                "Updated article under test",
-//                "What a nice updated day!",
-//                "Updating scala code is quite challenging pleasure",
-//                Nil,
-//                null,
-//                null,
-//                false,
-//                0,
-//                ArticleAuthor(
-//                  username = "jake",
-//                  bio = Some("I work at statefarm"),
-//                  image = Some("https://i.stack.imgur.com/xHWG8.jpg"),
-//                  following = false
-//                )
-//              )
-//            ).isIdentical
-//          } && zio.test.assert(result.updatedAt)(isGreaterThan(result.createdAt))
-//        },
-//        test("update article - check article already exist") {
-//          assertZIO((for {
-//            repo <- ZIO.service[ArticlesRepository]
-//            _ <- repo.add(
-//              ArticleCreateData(
-//                title = "Slug to update",
-//                description = "What a nice day!",
-//                body = "Writing scala code is quite challenging pleasure",
-//                tagList = None
-//              ),
-//              10
-//            )
-//            _ <- repo.add(
-//              ArticleCreateData(
-//                title = "Existing slug",
-//                description = "It occupies article slug",
-//                body = "Which will be used for updating another article during next step",
-//                tagList = None
-//              ),
-//              10
-//            )
-//            articleIdOpt <- repo.findArticleIdBySlug("slug-to-update")
-//            articleId <- ZIO.succeed(articleIdOpt.get)
-//            _ <- repo.updateById(
-//              ArticleData(
-//                "existing-slug",
-//                "Existing slug",
-//                "Updated article under test",
-//                "Updating scala code is quite challenging pleasure",
-//                Nil,
-//                null, // TODO I think more specialized class should be used for article creation
-//                Instant.now(),
-//                false,
-//                0,
-//                null
-//              ),
-//              articleId
-//            )
-//            v <- repo.findBySlug("existing-slug").map(_.get)
-//          } yield v).exit)(
-//            failsCause(
-//              containsCause(Cause.fail(AlreadyInUse(message = "Article name already exists")))
-//            )
-//          )
-//        }
-//      ).provide(
-//        ArticlesRepository.live,
-//        testDbLayerWithFixture("fixtures/articles/basic-data.sql")
-//      )
-//    )
-//  )

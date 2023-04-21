@@ -1,8 +1,10 @@
 package com.softwaremill.realworld.articles
 
 import com.softwaremill.diffx.{Diff, compare}
-import com.softwaremill.realworld.articles.model.{ArticleAuthor, ArticleData}
+import com.softwaremill.realworld.articles.model.{ArticleAuthor, ArticleCreateData, ArticleData}
+import com.softwaremill.realworld.common.Exceptions.AlreadyInUse
 import com.softwaremill.realworld.common.Pagination
+import com.softwaremill.realworld.users.{UserRow, UsersRepository}
 import sttp.client3.testing.SttpBackendStub
 import sttp.client3.{HttpError, Response, ResponseException, UriContext, basicRequest}
 import sttp.tapir.EndpointOutput.StatusCode
@@ -13,6 +15,7 @@ import zio.test.Assertion.*
 import zio.{Cause, RIO, Random, ZIO, ZLayer}
 
 import java.sql.SQLException
+import java.time.Instant
 
 object ArticleRepositoryTestSupport {
 
@@ -51,10 +54,84 @@ object ArticleRepositoryTestSupport {
     } yield result
   }
 
+  def callCreateArticle(articleCreateData: ArticleCreateData, userId: Int): ZIO[ArticlesRepository, Throwable, Int] = {
+    for {
+      repo <- ZIO.service[ArticlesRepository]
+      result <- repo.add(articleCreateData, userId)
+    } yield result
+  }
+
+  def callFindUserByEmail(email: String): ZIO[UsersRepository, Exception, Option[UserRow]] = {
+    for {
+      repo <- ZIO.service[UsersRepository]
+      result <- repo.findByEmail(email)
+    } yield result
+  }
+
+  def callUpdateArticle(articleUpdateData: ArticleData, articleId: Int): ZIO[ArticlesRepository, Throwable, Unit] = {
+    for {
+      repo <- ZIO.service[ArticlesRepository]
+      result <- repo.updateById(articleUpdateData, articleId)
+    } yield result
+  }
+
   def checkIfArticleListIsEmpty(filters: ArticlesFilters, pagination: Pagination): ZIO[ArticlesRepository, SQLException, TestResult] = {
     for {
       result <- callListArticles(filters, pagination)
     } yield zio.test.assert(result)(isEmpty)
+  }
+
+  def checkArticleNotFound(
+      slug: String
+  ): ZIO[ArticlesRepository, SQLException, TestResult] = {
+
+    assertZIO(callFindBySlug(slug))(isNone)
+  }
+
+  def checkIfArticleAlreadyExistsInCreate(
+      articleCreateData: ArticleCreateData,
+      userEmail: String
+  ): ZIO[ArticlesRepository with UsersRepository, Object, TestResult] = {
+
+    assertZIO((for {
+      userId <- callFindUserByEmail(userEmail).someOrFail(s"User $userEmail doesn't exist").map(_.userId)
+      articleId <- callCreateArticle(articleCreateData, userId)
+    } yield articleId).exit)(
+      failsCause(
+        containsCause(Cause.fail(AlreadyInUse(message = "Article name already exists")))
+      )
+    )
+  }
+
+  def checkIfArticleAlreadyExistsInUpdate(
+      existingSlug: String,
+      updatedSlug: String,
+      updatedTitle: String,
+      updatedDescription: String,
+      updatedBody: String
+  ): ZIO[ArticlesRepository with UsersRepository, Object, TestResult] = {
+
+    assertZIO((for {
+      articleId <- callFindArticleIdBySlug(existingSlug).someOrFail(s"Article $existingSlug doesn't exist")
+      articleUpdateData = ArticleData(
+        slug = updatedSlug,
+        title = updatedTitle,
+        description = updatedDescription,
+        body = updatedBody,
+        tagList = Nil,
+        createdAt = null, // TODO I think more specialized class should be used for article creation
+        updatedAt = Instant.now(),
+        favorited = false,
+        favoritesCount = 0,
+        author = null
+      )
+      _ <- callUpdateArticle(articleUpdateData, articleId)
+      article <- callFindBySlug(articleUpdateData.slug)
+    } yield article).exit)(
+      failsCause(
+        containsCause(Cause.fail(AlreadyInUse(message = "Article name already exists")))
+      )
+    )
   }
 
   def listArticlesWithSmallPagination(
@@ -222,13 +299,6 @@ object ArticleRepositoryTestSupport {
     )
   }
 
-  def checkArticleNotFound(
-      slug: String
-  ): ZIO[ArticlesRepository, SQLException, TestResult] = {
-
-    assertZIO(callFindBySlug(slug))(isNone)
-  }
-
   def findBySlugAsSeenBy(
       slug: String,
       viewerEmail: String
@@ -253,7 +323,7 @@ object ArticleRepositoryTestSupport {
   def addAndCheckTag(
       newTag: String,
       articleSlug: String
-  ) = {
+  ): ZIO[ArticlesRepository, Object, TestResult] = {
 
     for {
       articleId <- callFindArticleIdBySlug(articleSlug).someOrFail(s"Article $articleSlug doesn't exist")
@@ -266,7 +336,7 @@ object ArticleRepositoryTestSupport {
       newTag: String,
       articleSlugToChange: String,
       articleSlugWithoutChange: String
-  ) = {
+  ): ZIO[ArticlesRepository, Object, TestResult] = {
 
     for {
       articleToChangeId <- callFindArticleIdBySlug(articleSlugToChange).someOrFail(s"Article $articleSlugToChange doesn't exist")
@@ -275,5 +345,63 @@ object ArticleRepositoryTestSupport {
         .someOrFail(s"Article $articleSlugWithoutChange doesn't exist")
         .map(_.tagList)
     } yield zio.test.assert(articleWithoutChange)(hasNoneOf(newTag))
+  }
+
+  def createAndCheckArticle(
+      slug: String,
+      articleCreateData: ArticleCreateData,
+      userEmail: String
+  ): ZIO[ArticlesRepository with UsersRepository, Object, TestResult] = {
+
+    for {
+      userId <- callFindUserByEmail(userEmail).someOrFail(s"User $userEmail doesn't exist").map(_.userId)
+      _ <- callCreateArticle(articleCreateData, userId)
+      article <- callFindBySlug(slug)
+    } yield zio.test.assert(article) {
+      isSome(
+        (hasField("slug", _.slug, equalTo("new-article-under-test")): Assertion[ArticleData])
+          && hasField("title", _.title, equalTo("New-article-under-test"))
+          && hasField("description", _.description, equalTo("What a nice day!"))
+          && hasField("body", _.body, equalTo("Writing scala code is quite challenging pleasure"))
+          && hasField("tagList", _.tagList, equalTo(Nil))
+          && hasField("favorited", _.favorited, isFalse)
+          && hasField("favoritesCount", _.favoritesCount, equalTo(0))
+          && hasField("author", _.author, hasField("username", _.username, equalTo("jake")): Assertion[ArticleAuthor])
+      )
+    }
+  }
+
+  def updateAndCheckArticle(
+      existingSlug: String,
+      updatedSlug: String,
+      updatedTitle: String,
+      updatedDescription: String,
+      updatedBody: String
+  ): ZIO[ArticlesRepository with UsersRepository, Object, TestResult] = {
+
+    for {
+      articleId <- callFindArticleIdBySlug(existingSlug).someOrFail(s"Article $existingSlug doesn't exist")
+      articleUpdateData = ArticleData(
+        slug = updatedSlug,
+        title = updatedTitle,
+        description = updatedDescription,
+        body = updatedBody,
+        tagList = Nil,
+        createdAt = null, // TODO I think more specialized class should be used for article creation
+        updatedAt = Instant.now(),
+        favorited = false,
+        favoritesCount = 0,
+        author = null
+      )
+      _ <- callUpdateArticle(articleUpdateData, articleId)
+      article <- callFindBySlug(articleUpdateData.slug)
+    } yield zio.test.assert(article) {
+      isSome(
+        (hasField("slug", _.slug, equalTo("updated-article-under-test")): Assertion[ArticleData])
+          && hasField("title", _.title, equalTo("Updated article under test"))
+          && hasField("description", _.description, equalTo("What a nice updated day!"))
+          && hasField("body", _.body, equalTo("Updating scala code is quite challenging pleasure"))
+      )
+    }
   }
 }

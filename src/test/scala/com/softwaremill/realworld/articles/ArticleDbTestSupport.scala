@@ -8,7 +8,7 @@ import zio.ZIO
 
 object ArticleDbTestSupport {
 
-  private val exampleUser1 = UserRegisterData(
+  val exampleUser1 = UserRegisterData(
     email = "jake@example.com",
     username = "jake",
     password = "secret password"
