@@ -19,7 +19,10 @@ import scala.collection.immutable.Map
 
 object ArticleEndpointTestSupport {
 
-  def callGetListArticles(authorizationHeaderOpt: Option[Map[String, String]], uri: Uri) =
+  def callGetListArticles(
+      authorizationHeaderOpt: Option[Map[String, String]],
+      uri: Uri
+  ): ZIO[ArticlesEndpoints, Throwable, Either[ResponseException[String, String], ArticlesList]] =
     val listArticleEndpoint = ZIO
       .service[ArticlesEndpoints]
       .map(_.listArticles)
@@ -58,7 +61,7 @@ object ArticleEndpointTestSupport {
   def callGetArticle(
       authorizationHeader: Map[String, String],
       uri: Uri
-  ) =
+  ): ZIO[ArticlesEndpoints, Throwable, Either[ResponseException[String, String], Article]] =
     ZIO
       .service[ArticlesEndpoints]
       .map(_.get)
@@ -261,22 +264,24 @@ object ArticleEndpointTestSupport {
   ): ZIO[ArticlesEndpoints, Throwable, TestResult] = {
 
     for {
-      result <- callGetListArticles(authorizationHeaderOpt, uri)
-    } yield assertTrue {
-      // TODO there must be better way to implement this...
-      val articlesList = result.toOption.get
-
-      articlesList.articlesCount == 1 &&
-      articlesList.articles.exists(article =>
-        article.slug == "how-to-train-your-dragon-2" &&
-          article.title == "How to train your dragon 2" &&
-          article.description == "So toothless" &&
-          article.body == "Its a dragon" &&
-          article.tagList == List("dragons", "goats", "training") &&
-          !article.favorited &&
-          article.favoritesCount == 1 &&
-          article.author.username == "jake" &&
-          !article.author.following
+      articlesListOrError <- callGetListArticles(authorizationHeaderOpt, uri)
+    } yield zio.test.assert(articlesListOrError.toOption) {
+      isSome(
+        (hasField("articlesCount", _.articlesCount, equalTo(1)): Assertion[ArticlesList]) &&
+          hasField(
+            "articles",
+            _.articles,
+            exists(
+              (hasField("slug", _.slug, equalTo("how-to-train-your-dragon-2")): Assertion[ArticleData])
+                && hasField("title", _.title, equalTo("How to train your dragon 2"))
+                && hasField("description", _.description, equalTo("So toothless"))
+                && hasField("body", _.body, equalTo("Its a dragon"))
+                && hasField("tagList", _.tagList, equalTo(List("dragons", "goats", "training")))
+                && hasField("favorited", _.favorited, isFalse)
+                && hasField("favoritesCount", _.favoritesCount, equalTo(1))
+                && hasField("author", _.author, hasField("username", _.username, equalTo("jake")): Assertion[ArticleAuthor])
+            )
+          )
       )
     }
   }
@@ -287,22 +292,24 @@ object ArticleEndpointTestSupport {
   ): ZIO[ArticlesEndpoints, Throwable, TestResult] = {
 
     for {
-      result <- callGetFeedArticles(authorizationHeaderOpt, uri)
-    } yield assertTrue {
-      // TODO there must be better way to implement this...
-      val articlesList = result.toOption.get
-
-      articlesList.articlesCount == 1 &&
-      articlesList.articles.exists(article =>
-        article.slug == "how-to-train-your-dragon-2" &&
-          article.title == "How to train your dragon 2" &&
-          article.description == "So toothless" &&
-          article.body == "Its a dragon" &&
-          article.tagList == List("dragons", "goats", "training") &&
-          !article.favorited &&
-          article.favoritesCount == 1 &&
-          article.author.username == "jake" &&
-          !article.author.following
+      articlesFeedOrError <- callGetFeedArticles(authorizationHeaderOpt, uri)
+    } yield zio.test.assert(articlesFeedOrError.toOption) {
+      isSome(
+        (hasField("articlesCount", _.articlesCount, equalTo(1)): Assertion[ArticlesList]) &&
+          hasField(
+            "articles",
+            _.articles,
+            exists(
+              (hasField("slug", _.slug, equalTo("how-to-train-your-dragon-2")): Assertion[ArticleData])
+                && hasField("title", _.title, equalTo("How to train your dragon 2"))
+                && hasField("description", _.description, equalTo("So toothless"))
+                && hasField("body", _.body, equalTo("Its a dragon"))
+                && hasField("tagList", _.tagList, equalTo(List("dragons", "goats", "training")))
+                && hasField("favorited", _.favorited, isFalse)
+                && hasField("favoritesCount", _.favoritesCount, equalTo(1))
+                && hasField("author", _.author, hasField("username", _.username, equalTo("jake")): Assertion[ArticleAuthor])
+            )
+          )
       )
     }
   }
@@ -313,22 +320,24 @@ object ArticleEndpointTestSupport {
   ): ZIO[ArticlesEndpoints, Throwable, TestResult] = {
 
     for {
-      result <- callGetListArticles(authorizationHeaderOpt, uri)
-    } yield assertTrue {
-      // TODO there must be better way to implement this...
-      val articlesList = result.toOption.get
-
-      articlesList.articlesCount == 1 &&
-      articlesList.articles.exists(article =>
-        article.slug == "how-to-train-your-dragon-2" &&
-          article.title == "How to train your dragon 2" &&
-          article.description == "So toothless" &&
-          article.body == "Its a dragon" &&
-          article.tagList == List("dragons", "goats", "training") &&
-          !article.favorited &&
-          article.favoritesCount == 1 &&
-          article.author.username == "jake" &&
-          !article.author.following
+      articlesListOrError <- callGetListArticles(authorizationHeaderOpt, uri)
+    } yield zio.test.assert(articlesListOrError.toOption) {
+      isSome(
+        (hasField("articlesCount", _.articlesCount, equalTo(1)): Assertion[ArticlesList]) &&
+          hasField(
+            "articles",
+            _.articles,
+            exists(
+              (hasField("slug", _.slug, equalTo("how-to-train-your-dragon-2")): Assertion[ArticleData])
+                && hasField("title", _.title, equalTo("How to train your dragon 2"))
+                && hasField("description", _.description, equalTo("So toothless"))
+                && hasField("body", _.body, equalTo("Its a dragon"))
+                && hasField("tagList", _.tagList, equalTo(List("dragons", "goats", "training")))
+                && hasField("favorited", _.favorited, isFalse)
+                && hasField("favoritesCount", _.favoritesCount, equalTo(1))
+                && hasField("author", _.author, hasField("username", _.username, equalTo("jake")): Assertion[ArticleAuthor])
+            )
+          )
       )
     }
   }
@@ -339,44 +348,44 @@ object ArticleEndpointTestSupport {
   ): ZIO[ArticlesEndpoints, Throwable, TestResult] = {
 
     for {
-      result <- callGetListArticles(authorizationHeaderOpt, uri)
-    } yield assertTrue {
-      // TODO there must be better way to implement this...
-      val articlesList = result.toOption.get
-
-      articlesList.articlesCount == 3 &&
-      articlesList.articles.exists(article =>
-        article.slug == "how-to-train-your-dragon" &&
-          article.title == "How to train your dragon" &&
-          article.description == "Ever wonder how?" &&
-          article.body == "It takes a Jacobian" &&
-          article.tagList == List("dragons", "training") &&
-          !article.favorited &&
-          article.favoritesCount == 2 &&
-          article.author.username == "jake" &&
-          !article.author.following
-      ) &&
-      articlesList.articles.exists(article =>
-        article.slug == "how-to-train-your-dragon-2" &&
-          article.title == "How to train your dragon 2" &&
-          article.description == "So toothless" &&
-          article.body == "Its a dragon" &&
-          article.tagList == List("dragons", "goats", "training") &&
-          !article.favorited &&
-          article.favoritesCount == 1 &&
-          article.author.username == "jake" &&
-          !article.author.following
-      ) &&
-      articlesList.articles.exists(article =>
-        article.slug == "how-to-train-your-dragon-3" &&
-          article.title == "How to train your dragon 3" &&
-          article.description == "The tagless one" &&
-          article.body == "Its not a dragon" &&
-          article.tagList == List() &&
-          !article.favorited &&
-          article.favoritesCount == 0 &&
-          article.author.username == "john" &&
-          !article.author.following
+      articlesListOrError <- callGetListArticles(authorizationHeaderOpt, uri)
+    } yield zio.test.assert(articlesListOrError.toOption) {
+      isSome(
+        (hasField("articlesCount", _.articlesCount, equalTo(3)): Assertion[ArticlesList]) &&
+          hasField(
+            "articles",
+            _.articles,
+            exists(
+              (hasField("slug", _.slug, equalTo("how-to-train-your-dragon")): Assertion[ArticleData])
+                && hasField("title", _.title, equalTo("How to train your dragon"))
+                && hasField("description", _.description, equalTo("Ever wonder how?"))
+                && hasField("body", _.body, equalTo("It takes a Jacobian"))
+                && hasField("tagList", _.tagList, equalTo(List("dragons", "training")))
+                && hasField("favorited", _.favorited, isFalse)
+                && hasField("favoritesCount", _.favoritesCount, equalTo(2))
+                && hasField("author", _.author, hasField("username", _.username, equalTo("jake")): Assertion[ArticleAuthor])
+            ) &&
+              exists(
+                (hasField("slug", _.slug, equalTo("how-to-train-your-dragon-2")): Assertion[ArticleData])
+                  && hasField("title", _.title, equalTo("How to train your dragon 2"))
+                  && hasField("description", _.description, equalTo("So toothless"))
+                  && hasField("body", _.body, equalTo("Its a dragon"))
+                  && hasField("tagList", _.tagList, equalTo(List("dragons", "goats", "training")))
+                  && hasField("favorited", _.favorited, isFalse)
+                  && hasField("favoritesCount", _.favoritesCount, equalTo(1))
+                  && hasField("author", _.author, hasField("username", _.username, equalTo("jake")): Assertion[ArticleAuthor])
+              ) &&
+              exists(
+                (hasField("slug", _.slug, equalTo("how-to-train-your-dragon-3")): Assertion[ArticleData])
+                  && hasField("title", _.title, equalTo("How to train your dragon 3"))
+                  && hasField("description", _.description, equalTo("The tagless one"))
+                  && hasField("body", _.body, equalTo("Its not a dragon"))
+                  && hasField("tagList", _.tagList, equalTo(List()))
+                  && hasField("favorited", _.favorited, isFalse)
+                  && hasField("favoritesCount", _.favoritesCount, equalTo(0))
+                  && hasField("author", _.author, hasField("username", _.username, equalTo("john")): Assertion[ArticleAuthor])
+              )
+          )
       )
     }
   }
@@ -387,44 +396,44 @@ object ArticleEndpointTestSupport {
   ): ZIO[ArticlesEndpoints, Throwable, TestResult] = {
 
     for {
-      result <- callGetFeedArticles(authorizationHeaderOpt, uri)
-    } yield assertTrue {
-      // TODO there must be better way to implement this...
-      val articlesList = result.toOption.get
-
-      articlesList.articlesCount == 3 &&
-      articlesList.articles.exists(article =>
-        article.slug == "how-to-train-your-dragon" &&
-          article.title == "How to train your dragon" &&
-          article.description == "Ever wonder how?" &&
-          article.body == "It takes a Jacobian" &&
-          article.tagList == List("dragons", "training") &&
-          !article.favorited &&
-          article.favoritesCount == 2 &&
-          article.author.username == "jake" &&
-          !article.author.following
-      ) &&
-      articlesList.articles.exists(article =>
-        article.slug == "how-to-train-your-dragon-2" &&
-          article.title == "How to train your dragon 2" &&
-          article.description == "So toothless" &&
-          article.body == "Its a dragon" &&
-          article.tagList == List("dragons", "goats", "training") &&
-          !article.favorited &&
-          article.favoritesCount == 1 &&
-          article.author.username == "jake" &&
-          !article.author.following
-      ) &&
-      articlesList.articles.exists(article =>
-        article.slug == "how-to-train-your-dragon-5" &&
-          article.title == "How to train your dragon 5" &&
-          article.description == "The tagfull one" &&
-          article.body == "Its a blue dragon" &&
-          article.tagList == Nil &&
-          !article.favorited &&
-          article.favoritesCount == 0 &&
-          article.author.username == "bill" &&
-          !article.author.following
+      articlesFeedOrError <- callGetFeedArticles(authorizationHeaderOpt, uri)
+    } yield zio.test.assert(articlesFeedOrError.toOption) {
+      isSome(
+        (hasField("articlesCount", _.articlesCount, equalTo(3)): Assertion[ArticlesList]) &&
+          hasField(
+            "articles",
+            _.articles,
+            exists(
+              (hasField("slug", _.slug, equalTo("how-to-train-your-dragon")): Assertion[ArticleData])
+                && hasField("title", _.title, equalTo("How to train your dragon"))
+                && hasField("description", _.description, equalTo("Ever wonder how?"))
+                && hasField("body", _.body, equalTo("It takes a Jacobian"))
+                && hasField("tagList", _.tagList, equalTo(List("dragons", "training")))
+                && hasField("favorited", _.favorited, isFalse)
+                && hasField("favoritesCount", _.favoritesCount, equalTo(2))
+                && hasField("author", _.author, hasField("username", _.username, equalTo("jake")): Assertion[ArticleAuthor])
+            ) &&
+              exists(
+                (hasField("slug", _.slug, equalTo("how-to-train-your-dragon-2")): Assertion[ArticleData])
+                  && hasField("title", _.title, equalTo("How to train your dragon 2"))
+                  && hasField("description", _.description, equalTo("So toothless"))
+                  && hasField("body", _.body, equalTo("Its a dragon"))
+                  && hasField("tagList", _.tagList, equalTo(List("dragons", "goats", "training")))
+                  && hasField("favorited", _.favorited, isFalse)
+                  && hasField("favoritesCount", _.favoritesCount, equalTo(1))
+                  && hasField("author", _.author, hasField("username", _.username, equalTo("jake")): Assertion[ArticleAuthor])
+              ) &&
+              exists(
+                (hasField("slug", _.slug, equalTo("how-to-train-your-dragon-5")): Assertion[ArticleData])
+                  && hasField("title", _.title, equalTo("How to train your dragon 5"))
+                  && hasField("description", _.description, equalTo("The tagfull one"))
+                  && hasField("body", _.body, equalTo("Its a blue dragon"))
+                  && hasField("tagList", _.tagList, equalTo(List()))
+                  && hasField("favorited", _.favorited, isFalse)
+                  && hasField("favoritesCount", _.favoritesCount, equalTo(0))
+                  && hasField("author", _.author, hasField("username", _.username, equalTo("bill")): Assertion[ArticleAuthor])
+              )
+          )
       )
     }
   }
@@ -435,12 +444,16 @@ object ArticleEndpointTestSupport {
   ): ZIO[ArticlesEndpoints, Throwable, TestResult] = {
 
     for {
-      result <- callGetListArticles(authorizationHeaderOpt, uri)
-    } yield assertTrue {
-      // TODO there must be better way to implement this...
-      val articlesList = result.toOption.get
-
-      articlesList.articlesCount == 2 && !articlesList.articles.exists(article => article.slug == "how-to-train-your-dragon-3")
+      articlesListOrError <- callGetListArticles(authorizationHeaderOpt, uri)
+    } yield zio.test.assert(articlesListOrError.toOption) {
+      isSome(
+        (hasField("articlesCount", _.articlesCount, equalTo(2)): Assertion[ArticlesList]) &&
+          hasField(
+            "articles",
+            _.articles,
+            !exists(hasField("slug", _.slug, equalTo("how-to-train-your-dragon-3")): Assertion[ArticleData])
+          )
+      )
     }
   }
 

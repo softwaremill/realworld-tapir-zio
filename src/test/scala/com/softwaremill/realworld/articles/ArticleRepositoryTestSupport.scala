@@ -139,64 +139,58 @@ object ArticleRepositoryTestSupport {
       pagination: Pagination
   ): ZIO[ArticlesRepository, SQLException, TestResult] = {
     for {
-      result <- callListArticles(filters, pagination)
-    } yield assertTrue {
-
-      result.size == 1 &&
-      result.exists(article =>
-        article.slug == "how-to-train-your-dragon-2" &&
-          article.title == "How to train your dragon 2" &&
-          article.description == "So toothless" &&
-          article.body == "Its a dragon" &&
-          article.tagList == List("dragons", "goats", "training") &&
-          !article.favorited &&
-          article.favoritesCount == 1 &&
-          article.author.username == "jake" &&
-          !article.author.following
-      )
-    }
+      articlesList <- callListArticles(filters, pagination)
+    } yield zio.test.assert(articlesList)(
+      hasSize(equalTo(1)) &&
+        exists(
+          (hasField("slug", _.slug, equalTo("how-to-train-your-dragon-2")): Assertion[ArticleData])
+            && hasField("title", _.title, equalTo("How to train your dragon 2"))
+            && hasField("description", _.description, equalTo("So toothless"))
+            && hasField("body", _.body, equalTo("Its a dragon"))
+            && hasField("tagList", _.tagList, equalTo(List("dragons", "goats", "training")))
+            && hasField("favorited", _.favorited, isFalse)
+            && hasField("favoritesCount", _.favoritesCount, equalTo(1))
+            && hasField("author", _.author, hasField("username", _.username, equalTo("jake")): Assertion[ArticleAuthor])
+        )
+    )
   }
 
   def listArticlesWithBigPagination(filters: ArticlesFilters, pagination: Pagination): ZIO[ArticlesRepository, SQLException, TestResult] = {
     for {
-      result <- callListArticles(filters, pagination)
-    } yield assertTrue {
-
-      result.size == 3 &&
-      result.exists(article =>
-        article.slug == "how-to-train-your-dragon" &&
-          article.title == "How to train your dragon" &&
-          article.description == "Ever wonder how?" &&
-          article.body == "It takes a Jacobian" &&
-          article.tagList == List("dragons", "training") &&
-          !article.favorited &&
-          article.favoritesCount == 2 &&
-          article.author.username == "jake" &&
-          !article.author.following
-      ) &&
-      result.exists(article =>
-        article.slug == "how-to-train-your-dragon-2" &&
-          article.title == "How to train your dragon 2" &&
-          article.description == "So toothless" &&
-          article.body == "Its a dragon" &&
-          article.tagList == List("dragons", "goats", "training") &&
-          !article.favorited &&
-          article.favoritesCount == 1 &&
-          article.author.username == "jake" &&
-          !article.author.following
-      ) &&
-      result.exists(article =>
-        article.slug == "how-to-train-your-dragon-3" &&
-          article.title == "How to train your dragon 3" &&
-          article.description == "The tagless one" &&
-          article.body == "Its not a dragon" &&
-          article.tagList == List() &&
-          !article.favorited &&
-          article.favoritesCount == 0 &&
-          article.author.username == "john" &&
-          !article.author.following
-      )
-    }
+      articlesList <- callListArticles(filters, pagination)
+    } yield zio.test.assert(articlesList)(
+      hasSize(equalTo(3)) &&
+        exists(
+          (hasField("slug", _.slug, equalTo("how-to-train-your-dragon")): Assertion[ArticleData])
+            && hasField("title", _.title, equalTo("How to train your dragon"))
+            && hasField("description", _.description, equalTo("Ever wonder how?"))
+            && hasField("body", _.body, equalTo("It takes a Jacobian"))
+            && hasField("tagList", _.tagList, equalTo(List("dragons", "training")))
+            && hasField("favorited", _.favorited, isFalse)
+            && hasField("favoritesCount", _.favoritesCount, equalTo(2))
+            && hasField("author", _.author, hasField("username", _.username, equalTo("jake")): Assertion[ArticleAuthor])
+        ) &&
+        exists(
+          (hasField("slug", _.slug, equalTo("how-to-train-your-dragon-2")): Assertion[ArticleData])
+            && hasField("title", _.title, equalTo("How to train your dragon 2"))
+            && hasField("description", _.description, equalTo("So toothless"))
+            && hasField("body", _.body, equalTo("Its a dragon"))
+            && hasField("tagList", _.tagList, equalTo(List("dragons", "goats", "training")))
+            && hasField("favorited", _.favorited, isFalse)
+            && hasField("favoritesCount", _.favoritesCount, equalTo(1))
+            && hasField("author", _.author, hasField("username", _.username, equalTo("jake")): Assertion[ArticleAuthor])
+        ) &&
+        exists(
+          (hasField("slug", _.slug, equalTo("how-to-train-your-dragon-3")): Assertion[ArticleData])
+            && hasField("title", _.title, equalTo("How to train your dragon 3"))
+            && hasField("description", _.description, equalTo("The tagless one"))
+            && hasField("body", _.body, equalTo("Its not a dragon"))
+            && hasField("tagList", _.tagList, equalTo(List()))
+            && hasField("favorited", _.favorited, isFalse)
+            && hasField("favoritesCount", _.favoritesCount, equalTo(0))
+            && hasField("author", _.author, hasField("username", _.username, equalTo("john")): Assertion[ArticleAuthor])
+        )
+    )
   }
 
   def listArticlesWithTagFilter(
@@ -204,33 +198,30 @@ object ArticleRepositoryTestSupport {
       pagination: Pagination
   ): ZIO[ArticlesRepository, SQLException, TestResult] = {
     for {
-      result <- callListArticles(filters, pagination)
-    } yield assertTrue {
-
-      result.size == 2 &&
-      result.exists(article =>
-        article.slug == "how-to-train-your-dragon" &&
-          article.title == "How to train your dragon" &&
-          article.description == "Ever wonder how?" &&
-          article.body == "It takes a Jacobian" &&
-          article.tagList == List("dragons", "training") &&
-          !article.favorited &&
-          article.favoritesCount == 2 &&
-          article.author.username == "jake" &&
-          !article.author.following
-      ) &&
-      result.exists(article =>
-        article.slug == "how-to-train-your-dragon-2" &&
-          article.title == "How to train your dragon 2" &&
-          article.description == "So toothless" &&
-          article.body == "Its a dragon" &&
-          article.tagList == List("dragons", "goats", "training") &&
-          !article.favorited &&
-          article.favoritesCount == 1 &&
-          article.author.username == "jake" &&
-          !article.author.following
-      )
-    }
+      articlesList <- callListArticles(filters, pagination)
+    } yield zio.test.assert(articlesList)(
+      hasSize(equalTo(2)) &&
+        exists(
+          (hasField("slug", _.slug, equalTo("how-to-train-your-dragon")): Assertion[ArticleData])
+            && hasField("title", _.title, equalTo("How to train your dragon"))
+            && hasField("description", _.description, equalTo("Ever wonder how?"))
+            && hasField("body", _.body, equalTo("It takes a Jacobian"))
+            && hasField("tagList", _.tagList, equalTo(List("dragons", "training")))
+            && hasField("favorited", _.favorited, isFalse)
+            && hasField("favoritesCount", _.favoritesCount, equalTo(2))
+            && hasField("author", _.author, hasField("username", _.username, equalTo("jake")): Assertion[ArticleAuthor])
+        ) &&
+        exists(
+          (hasField("slug", _.slug, equalTo("how-to-train-your-dragon-2")): Assertion[ArticleData])
+            && hasField("title", _.title, equalTo("How to train your dragon 2"))
+            && hasField("description", _.description, equalTo("So toothless"))
+            && hasField("body", _.body, equalTo("Its a dragon"))
+            && hasField("tagList", _.tagList, equalTo(List("dragons", "goats", "training")))
+            && hasField("favorited", _.favorited, isFalse)
+            && hasField("favoritesCount", _.favoritesCount, equalTo(1))
+            && hasField("author", _.author, hasField("username", _.username, equalTo("jake")): Assertion[ArticleAuthor])
+        )
+    )
   }
 
   def listArticlesWithFavoritedTagFilter(
@@ -238,22 +229,20 @@ object ArticleRepositoryTestSupport {
       pagination: Pagination
   ): ZIO[ArticlesRepository, SQLException, TestResult] = {
     for {
-      result <- callListArticles(filters, pagination)
-    } yield assertTrue {
-
-      result.size == 1 &&
-      result.exists(article =>
-        article.slug == "how-to-train-your-dragon" &&
-          article.title == "How to train your dragon" &&
-          article.description == "Ever wonder how?" &&
-          article.body == "It takes a Jacobian" &&
-          article.tagList == List("dragons", "training") &&
-          !article.favorited &&
-          article.favoritesCount == 2 &&
-          article.author.username == "jake" &&
-          !article.author.following
-      )
-    }
+      articlesList <- callListArticles(filters, pagination)
+    } yield zio.test.assert(articlesList)(
+      hasSize(equalTo(1)) &&
+        exists(
+          (hasField("slug", _.slug, equalTo("how-to-train-your-dragon")): Assertion[ArticleData])
+            && hasField("title", _.title, equalTo("How to train your dragon"))
+            && hasField("description", _.description, equalTo("Ever wonder how?"))
+            && hasField("body", _.body, equalTo("It takes a Jacobian"))
+            && hasField("tagList", _.tagList, equalTo(List("dragons", "training")))
+            && hasField("favorited", _.favorited, isFalse)
+            && hasField("favoritesCount", _.favoritesCount, equalTo(2))
+            && hasField("author", _.author, hasField("username", _.username, equalTo("jake")): Assertion[ArticleAuthor])
+        )
+    )
   }
 
   def listArticlesWithAuthorFilter(
@@ -261,22 +250,20 @@ object ArticleRepositoryTestSupport {
       pagination: Pagination
   ): ZIO[ArticlesRepository, SQLException, TestResult] = {
     for {
-      result <- callListArticles(filters, pagination)
-    } yield assertTrue {
-
-      result.size == 1 &&
-      result.exists(article =>
-        article.slug == "how-to-train-your-dragon-3" &&
-          article.title == "How to train your dragon 3" &&
-          article.description == "The tagless one" &&
-          article.body == "Its not a dragon" &&
-          article.tagList == List() &&
-          !article.favorited &&
-          article.favoritesCount == 0 &&
-          article.author.username == "john" &&
-          !article.author.following
-      )
-    }
+      articlesList <- callListArticles(filters, pagination)
+    } yield zio.test.assert(articlesList)(
+      hasSize(equalTo(1)) &&
+        exists(
+          (hasField("slug", _.slug, equalTo("how-to-train-your-dragon-3")): Assertion[ArticleData])
+            && hasField("title", _.title, equalTo("How to train your dragon 3"))
+            && hasField("description", _.description, equalTo("The tagless one"))
+            && hasField("body", _.body, equalTo("Its not a dragon"))
+            && hasField("tagList", _.tagList, equalTo(List()))
+            && hasField("favorited", _.favorited, isFalse)
+            && hasField("favoritesCount", _.favoritesCount, equalTo(0))
+            && hasField("author", _.author, hasField("username", _.username, equalTo("john")): Assertion[ArticleAuthor])
+        )
+    )
   }
 
   def findArticleBySlug(

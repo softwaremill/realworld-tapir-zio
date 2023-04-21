@@ -1,28 +1,15 @@
 package com.softwaremill.realworld.articles
 
-import com.softwaremill.diffx.{Diff, compare}
 import com.softwaremill.realworld.articles.ArticleDbTestSupport.*
 import com.softwaremill.realworld.articles.ArticleRepositoryTestSupport.*
 import com.softwaremill.realworld.articles.ArticlesEndpoints.{*, given}
-import com.softwaremill.realworld.articles.model.{ArticleAuthor, ArticleCreateData, ArticleData, ArticleRow}
-import com.softwaremill.realworld.common.Exceptions.AlreadyInUse
+import com.softwaremill.realworld.articles.model.{ArticleAuthor, ArticleCreateData, ArticleData}
 import com.softwaremill.realworld.common.Pagination
-import com.softwaremill.realworld.db.{Db, DbConfig, DbMigrator}
 import com.softwaremill.realworld.profiles.ProfilesRepository
 import com.softwaremill.realworld.users.UsersRepository
 import com.softwaremill.realworld.utils.TestUtils.*
-import org.sqlite.{SQLiteErrorCode, SQLiteException}
-import sttp.client3.testing.SttpBackendStub
-import sttp.client3.ziojson.*
-import sttp.client3.{HttpError, Response, ResponseException, UriContext, basicRequest}
-import sttp.tapir.EndpointOutput.StatusCode
-import sttp.tapir.server.stub.TapirStubInterpreter
-import sttp.tapir.ztapir.{RIOMonadError, ZServerEndpoint}
+import sttp.client3.UriContext
 import zio.test.*
-import zio.test.Assertion.*
-import zio.{Cause, RIO, Random, ZIO, ZLayer}
-
-import javax.sql.DataSource
 
 object ArticlesRepositorySpec extends ZIOSpecDefault:
 
