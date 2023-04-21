@@ -18,11 +18,69 @@ We decided on the following layers:
 
 The app layer will contain domain models and service interfaces. The api layer will contain endpoint descriptions, without logic.
 Infrastructure layer will house concrete implementations of infrastructure-specific elements. 
-These include database queries based on concrete DB and access library (Quill), and, in the future, possible other technical components like external services, cache, etc.
-Each layer can have separate packages inside. Those packages can group models and services that are connected, by a common entity. 
-For example, User model, UserRepository interface and UserService interface would be placed in the app layer, 
-and could be grouped into a separate user package inside. 
-Postgres based implementation of UserRepository would be placed in the infrastructure layer.
+These include database queries based on concrete DB and access library (Quill), and, in the future, possible other technical components like external services, cache, etc. 
+For example, User model, UserRepository interface and UserService interface would be placed in the app layer.
+Postgres based implementation of UserRepository would be placed in the infrastructure layer.  
+  
+Example with one implementation per service(no separate app and infrastructure package):
+
+```
+common
+├── BaseEndpoints
+├── Configuration
+├── Pagination
+├── ErrorInfo
+└── Exceptions
+auth
+└── AuthService
+articles
+├── api
+│   ├── ArticleResponse
+│   ├── ArticlesListResponse
+│   ├── ArticleCreateData
+│   ├── ArticleCreateRequest
+│   ├── ArticleUpdateData
+│   ├── ArticleUpdateRequest
+│   └── ArticlesEndpoints
+├── Author
+├── Article
+├── ArticlesRepository
+├── ArticlesService
+├── Tag
+├── TagsRepository
+├── TagsService
+└── ArticlesServerEndpoints
+comments
+├── api
+│   ├── CommentResponse
+│   ├── CommentsListResponse
+│   ├── CommentCreateData
+│   ├── CommentCreateRequest
+│   ├── CommentUpdateData
+│   ├── CommentUpdateRequest
+│   └── CommentsEndpoints
+├── Author
+├── Comment
+├── CommentsRepository
+├── CommentsService
+└── CommentsServerEndpoints
+users
+├── api
+│   ├── ProfileResponse
+│   ├── UserResponse
+│   ├── UserRegisterData
+│   ├── UserRegisterRequest
+│   ├── UserLoginData
+│   ├── UserLoginRequest
+│   ├── UserUpdateData
+│   ├── UserUpdateRequest
+│   └── UsersEndpoints
+├── Profile
+├── User
+├── UsersRepository
+├── UsersService
+└── UsersServerEndpoints
+```
 
 
 ## Rationale
@@ -36,7 +94,7 @@ Postgres based implementation of UserRepository would be placed in the infrastru
 
 * Maintaining layered structure requires discipline
 * Conforming to new structure will require refactoring the application
-* Separating interfaces and implementations puts more burden on the implementors side
+* Separation into layers requires more work upfront, when writing new code
 
 ## Conclusion
 
