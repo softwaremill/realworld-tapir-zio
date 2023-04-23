@@ -114,14 +114,19 @@ object UserEndpointTestSupport {
       userRegisterData: UserRegisterData
   ): ZIO[UsersEndpoints, Throwable, TestResult] =
     for {
-      result <- callRegisterUser(authorizationHeader, uri, userRegisterData)
-    } yield assertTrue {
-      // TODO there must be better way to implement this...
-      import com.softwaremill.realworld.common.model.UserDiff.{*, given}
-      compare(
-        result.toOption.get,
-        User(UserData(email = "new_user@example.com", token = None, username = "user", bio = None, image = None))
-      ).isIdentical
+      userOrError <- callRegisterUser(authorizationHeader, uri, userRegisterData)
+    } yield zio.test.assert(userOrError.toOption) {
+      isSome(
+        hasField(
+          "user",
+          _.user,
+          (hasField("email", _.email, equalTo("new_user@example.com")): Assertion[UserData]) &&
+            hasField("token", _.token, isSome) &&
+            hasField("username", _.username, equalTo("user")) &&
+            hasField("bio", _.bio, isNone) &&
+            hasField("image", _.image, isNone)
+        )
+      )
     }
 
   def checkLoginUser(
@@ -130,14 +135,18 @@ object UserEndpointTestSupport {
       userLoginData: UserLoginData
   ): ZIO[UsersEndpoints, Throwable, TestResult] =
     for {
-      result <- callLoginUser(authorizationHeader, uri, userLoginData)
-    } yield assertTrue {
-      // TODO there must be better way to implement this...
-      import com.softwaremill.realworld.common.model.UserDiff.{*, given}
-      compare(
-        result.toOption.get,
-        User(UserData(email = "admin@example.com", token = None, username = "admin", bio = Some("I dont work"), image = Some("")))
-      ).isIdentical
+      userOrError <- callLoginUser(authorizationHeader, uri, userLoginData)
+    } yield zio.test.assert(userOrError.toOption) {
+      isSome(
+        hasField(
+          "user",
+          _.user,
+          (hasField("email", _.email, equalTo("admin@example.com")): Assertion[UserData]) &&
+            hasField("token", _.token, isSome) &&
+            hasField("username", _.username, equalTo("admin")) &&
+            hasField("bio", _.bio, equalTo(Some("I dont work"))) &&
+            hasField("image", _.image, equalTo(Some("")))
+        )
+      )
     }
-
 }

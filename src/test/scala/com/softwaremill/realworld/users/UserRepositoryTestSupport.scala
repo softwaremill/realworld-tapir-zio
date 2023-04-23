@@ -46,8 +46,8 @@ object UserRepositoryTestSupport {
 
   def checkUserFound(email: String): ZIO[UsersRepository, Exception, TestResult] = {
     for {
-      result <- callFindByEmail(email)
-    } yield zio.test.assert(result)(
+      userRowOpt <- callFindByEmail(email)
+    } yield zio.test.assert(userRowOpt)(
       isSome(
         (hasField("userId", _.userId, equalTo(1)): Assertion[UserRow]) &&
           hasField("email", _.email, equalTo("admin@example.com")) &&
@@ -61,23 +61,20 @@ object UserRepositoryTestSupport {
 
   def checkUserWithPasswordFound(email: String): ZIO[UsersRepository, Exception, TestResult] = {
     for {
-      result <- callFindUserWithPasswordByEmail(email)
-    } yield assertTrue {
-      // TODO there must be better way to implement this...
-      import com.softwaremill.realworld.common.model.UserWithPasswordDiff.{*, given}
-      compare(
-        result.get,
-        UserWithPassword(
-          UserData(
-            "admin@example.com",
-            None,
-            "admin",
-            Some("I dont work"),
-            Some("")
-          ),
-          "password"
-        )
-      ).isIdentical
+      userWithPasswordOpt <- callFindUserWithPasswordByEmail(email)
+    } yield zio.test.assert(userWithPasswordOpt) {
+      isSome(
+        (hasField(
+          "user",
+          _.user,
+          (hasField("email", _.email, equalTo("admin@example.com")): Assertion[UserData]) &&
+            hasField("token", _.token, isSome) &&
+            hasField("username", _.username, equalTo("admin")) &&
+            hasField("bio", _.bio, equalTo(Some("I dont work"))) &&
+            hasField("image", _.image, equalTo(Some("")))
+        ): Assertion[UserWithPassword]) &&
+          hasField("hashedPassword", _.hashedPassword, equalTo("password"))
+      )
     }
   }
 
