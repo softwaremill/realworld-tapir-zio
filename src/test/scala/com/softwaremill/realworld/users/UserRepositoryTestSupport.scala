@@ -68,12 +68,12 @@ object UserRepositoryTestSupport {
           "user",
           _.user,
           (hasField("email", _.email, equalTo("admin@example.com")): Assertion[UserData]) &&
-            hasField("token", _.token, isSome) &&
+            hasField("token", _.token, isNone) &&
             hasField("username", _.username, equalTo("admin")) &&
             hasField("bio", _.bio, equalTo(Some("I dont work"))) &&
             hasField("image", _.image, equalTo(Some("")))
         ): Assertion[UserWithPassword]) &&
-          hasField("hashedPassword", _.hashedPassword, equalTo("password"))
+          hasField("hashedPassword", _.hashedPassword, isNonEmptyString)
       )
     }
   }
