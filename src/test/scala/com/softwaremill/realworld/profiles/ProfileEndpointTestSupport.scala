@@ -9,7 +9,7 @@ import zio.ZIO
 import zio.test.Assertion.*
 import zio.test.*
 
-object ProfileEndpointTestSupport {
+object ProfileEndpointTestSupport:
 
   def callGetProfile(
       authorizationHeaderOpt: Option[Map[String, String]],
@@ -147,4 +147,3 @@ object ProfileEndpointTestSupport {
       )
     )
   }
-}

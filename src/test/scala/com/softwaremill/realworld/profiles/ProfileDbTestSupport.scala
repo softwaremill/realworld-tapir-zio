@@ -3,7 +3,7 @@ package com.softwaremill.realworld.profiles
 import com.softwaremill.realworld.users.{UserRegisterData, UsersRepository}
 import zio.ZIO
 
-object ProfileDbTestSupport {
+object ProfileDbTestSupport:
 
   private val exampleUser1 = UserRegisterData(
     email = "jake@example.com",
@@ -28,4 +28,3 @@ object ProfileDbTestSupport {
       _ <- profileRepo.follow(user1.userId, user2.userId)
     } yield ()
   }
-}
