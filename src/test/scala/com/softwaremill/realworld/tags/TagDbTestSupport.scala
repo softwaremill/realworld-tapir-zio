@@ -6,7 +6,7 @@ import com.softwaremill.realworld.tags.TagsRepository
 import com.softwaremill.realworld.users.{UserRegisterData, UsersRepository}
 import zio.ZIO
 
-object TagDbTestSupport {
+object TagDbTestSupport:
 
   private val exampleUser1 = UserRegisterData(
     email = "jake@example.com",
@@ -63,4 +63,3 @@ object TagDbTestSupport {
       _ <- prepareTags(articleRepo, article1.articleId, article2.articleId)
     } yield ()
   }
-}

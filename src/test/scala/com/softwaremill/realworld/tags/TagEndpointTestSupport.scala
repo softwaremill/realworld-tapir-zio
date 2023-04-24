@@ -8,7 +8,7 @@ import zio.ZIO
 import zio.test.Assertion.{equalTo, isRight}
 import zio.test.{TestResult, assertZIO}
 
-object TagEndpointTestSupport {
+object TagEndpointTestSupport:
 
   def callGetTags(uri: Uri) =
     ZIO
@@ -39,4 +39,3 @@ object TagEndpointTestSupport {
       isRight(equalTo(TagsList(tags = List("dragons", "training", "dragons", "goats", "training"))))
     )
   }
-}
