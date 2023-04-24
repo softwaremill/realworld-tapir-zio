@@ -14,7 +14,7 @@ import zio.test.{Assertion, TestResult, assertTrue, assertZIO}
 
 import java.time.Instant
 
-object CommentTestSupport {
+object CommentTestSupport:
 
   def callGetCommentsFromArticle(
       authorizationHeaderOpt: Option[Map[String, String]],
@@ -162,4 +162,3 @@ object CommentTestSupport {
       )
     }
   }
-}

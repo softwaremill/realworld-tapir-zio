@@ -7,7 +7,7 @@ import com.softwaremill.realworld.users.UsersRepository
 import com.softwaremill.realworld.utils.DbData.*
 import zio.ZIO
 
-object CommentDbTestSupport {
+object CommentDbTestSupport:
 
   def prepareDataForComments = {
     for {
@@ -38,4 +38,3 @@ object CommentDbTestSupport {
       _ <- articleRepo.addComment(article4.articleId, user4.userId, "Not bad.")
     } yield ()
   }
-}
