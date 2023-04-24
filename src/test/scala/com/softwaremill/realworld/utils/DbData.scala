@@ -2,7 +2,7 @@ package com.softwaremill.realworld.utils
 import com.softwaremill.realworld.articles.model.ArticleCreateData
 import com.softwaremill.realworld.users.UserRegisterData
 
-object DbData {
+object DbData:
 
   val exampleUser1 = UserRegisterData(
     email = "jake@example.com",
@@ -81,4 +81,3 @@ object DbData {
   )
 
   val exampleArticle6Slug = "how-to-train-your-dragon-6"
-}

@@ -6,7 +6,7 @@ import com.softwaremill.realworld.users.UsersRepository
 import com.softwaremill.realworld.utils.DbData.*
 import zio.ZIO
 
-object ArticleDbTestSupport {
+object ArticleDbTestSupport:
 
   private def prepareTags(articleRepo: ArticlesRepository, article1Id: Int, article2Id: Int) = {
     for {
@@ -140,4 +140,3 @@ object ArticleDbTestSupport {
       _ <- articleRepo.add(exampleArticle2, user1.userId)
     } yield ()
   }
-}

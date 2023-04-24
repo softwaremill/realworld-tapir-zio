@@ -17,7 +17,7 @@ import zio.{Cause, RIO, Random, ZIO, ZLayer}
 import java.sql.SQLException
 import java.time.Instant
 
-object ArticleRepositoryTestSupport {
+object ArticleRepositoryTestSupport:
 
   def callListArticles(filters: ArticlesFilters, pagination: Pagination): ZIO[ArticlesRepository, SQLException, List[ArticleData]] = {
     for {
@@ -391,4 +391,3 @@ object ArticleRepositoryTestSupport {
       )
     }
   }
-}

@@ -17,7 +17,7 @@ import zio.test.{Assertion, TestResult, assertTrue, assertZIO}
 import java.time.Instant
 import scala.collection.immutable.Map
 
-object ArticleEndpointTestSupport {
+object ArticleEndpointTestSupport:
 
   def callGetListArticles(
       authorizationHeaderOpt: Option[Map[String, String]],
@@ -533,4 +533,3 @@ object ArticleEndpointTestSupport {
       )
     )
   }
-}
