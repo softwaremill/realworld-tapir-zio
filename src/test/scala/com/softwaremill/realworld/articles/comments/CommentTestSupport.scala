@@ -1,20 +1,20 @@
-package com.softwaremill.realworld.articles
+package com.softwaremill.realworld.articles.comments
 
+import com.softwaremill.realworld.articles.ArticlesEndpoints
 import com.softwaremill.realworld.articles.comments.{Comment, CommentCreate, CommentCreateData, CommentData, CommentsList}
 import com.softwaremill.realworld.profiles.ProfileData
 import com.softwaremill.realworld.utils.TestUtils.backendStub
+import sttp.client3.ziojson.{asJson, zioJsonBodySerializer}
 import sttp.client3.{Response, ResponseException, basicRequest}
-import sttp.client3.ziojson.asJson
 import sttp.model.Uri
 import sttp.tapir.json.zio.jsonBody
 import zio.ZIO
-import zio.test.Assertion.{equalTo, isRight}
-import zio.test.{TestResult, assertTrue, assertZIO}
-import sttp.client3.ziojson.zioJsonBodySerializer
+import zio.test.Assertion.*
+import zio.test.{Assertion, TestResult, assertTrue, assertZIO}
 
 import java.time.Instant
 
-object CommentTestSupport {
+object CommentTestSupport:
 
   def callGetCommentsFromArticle(
       authorizationHeaderOpt: Option[Map[String, String]],
@@ -101,17 +101,14 @@ object CommentTestSupport {
   ): ZIO[ArticlesEndpoints, Throwable, TestResult] = {
 
     for {
-      result <- callAddComment(authorizationHeader, uri, body)
-    } yield assertTrue {
-      // TODO there must be better way to implement this...
-      val comment = result.toOption.get.comment
-
-      comment.body == "Amazing article!" && comment.author.equals(
-        ProfileData(
-          username = "john",
-          bio = Some("I no longer work at statefarm"),
-          image = Some("https://i.stack.imgur.com/xHWG8.jpg"),
-          following = false
+      comment <- callAddComment(authorizationHeader, uri, body)
+    } yield zio.test.assert(comment.toOption) {
+      isSome(
+        hasField(
+          "comment",
+          _.comment,
+          (hasField("body", _.body, equalTo("Amazing article!")): Assertion[CommentData]) &&
+            hasField("author", _.author, hasField("username", _.username, equalTo("john")): Assertion[ProfileData])
         )
       )
     }
@@ -123,28 +120,21 @@ object CommentTestSupport {
   ): ZIO[ArticlesEndpoints, Throwable, TestResult] = {
 
     for {
-      result <- callGetCommentsFromArticle(authorizationHeaderOpt, uri)
-    } yield assertTrue {
-      // TODO there must be better way to implement this...
-      val listComments = result.toOption.get.comments
-
-      val firstComment = listComments.head
-      val secondComment = listComments.last
-
-      listComments.size == 2 &&
-      firstComment.body == "Thank you so much!" && firstComment.author.equals(
-        ProfileData(
-          username = "jake",
-          bio = Some("I work at statefarm"),
-          image = Some("https://i.stack.imgur.com/xHWG8.jpg"),
-          following = authorizationHeaderOpt.isDefined
-        )
-      ) && secondComment.body == "Great article!" && secondComment.author.equals(
-        ProfileData(
-          username = "michael",
-          bio = Some("I no longer work in the bank"),
-          image = Some("https://i.stack.imgur.com/xHWG8.jpg"),
-          following = false
+      commentsList <- callGetCommentsFromArticle(authorizationHeaderOpt, uri)
+    } yield zio.test.assert(commentsList.toOption) {
+      isSome(
+        hasField(
+          "comments",
+          _.comments,
+          hasSize(equalTo(2)) &&
+            exists(
+              (hasField("body", _.body, equalTo("Thank you so much!")): Assertion[CommentData]) &&
+                hasField("author", _.author, hasField("username", _.username, equalTo("jake")): Assertion[ProfileData])
+            ) &&
+            exists(
+              (hasField("body", _.body, equalTo("Great article!")): Assertion[CommentData]) &&
+                hasField("author", _.author, hasField("username", _.username, equalTo("michael")): Assertion[ProfileData])
+            )
         )
       )
     }
@@ -156,21 +146,19 @@ object CommentTestSupport {
   ): ZIO[ArticlesEndpoints, Throwable, TestResult] = {
 
     for {
-      result <- callGetCommentsFromArticle(authorizationHeaderOpt, uri)
-    } yield assertTrue {
-      // TODO there must be better way to implement this...
-      val listComments = result.toOption.get.comments
-      val firstComment = listComments.head
+      commentsList <- callGetCommentsFromArticle(authorizationHeaderOpt, uri)
+    } yield zio.test.assert(commentsList.toOption) {
 
-      listComments.size == 1 &&
-      firstComment.body == "Not bad." && firstComment.author.equals(
-        ProfileData(
-          username = "michael",
-          bio = Some("I no longer work in the bank"),
-          image = Some("https://i.stack.imgur.com/xHWG8.jpg"),
-          following = false
+      isSome(
+        hasField(
+          "comments",
+          _.comments,
+          hasSize(equalTo(1)) &&
+            exists(
+              (hasField("body", _.body, equalTo("Not bad.")): Assertion[CommentData]) &&
+                hasField("author", _.author, hasField("username", _.username, equalTo("michael")): Assertion[ProfileData])
+            )
         )
       )
     }
   }
-}

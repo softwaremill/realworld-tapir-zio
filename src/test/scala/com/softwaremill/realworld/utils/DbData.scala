@@ -1,4 +1,5 @@
 package com.softwaremill.realworld.utils
+
 import com.softwaremill.realworld.articles.model.ArticleCreateData
 import com.softwaremill.realworld.users.UserRegisterData
 
