@@ -1,14 +1,16 @@
-package com.softwaremill.realworld.articles
+package com.softwaremill.realworld.articles.comments
 
-import com.softwaremill.realworld.articles.CommentsEndpointsSpec.suite
-import com.softwaremill.realworld.articles.CommentTestSupport.*
 import com.softwaremill.realworld.articles.comments.CommentCreateData
+import com.softwaremill.realworld.articles.comments.CommentDbTestSupport.*
+import com.softwaremill.realworld.articles.comments.CommentTestSupport.*
+import com.softwaremill.realworld.articles.comments.CommentsEndpointsSpec.suite
+import com.softwaremill.realworld.articles.{ArticlesEndpoints, ArticlesRepository, ArticlesService}
 import com.softwaremill.realworld.auth.AuthService
 import com.softwaremill.realworld.common.{BaseEndpoints, Configuration}
 import com.softwaremill.realworld.profiles.{ProfilesRepository, ProfilesService}
 import com.softwaremill.realworld.tags.TagsRepository
 import com.softwaremill.realworld.users.UsersRepository
-import com.softwaremill.realworld.utils.TestUtils.{getValidAuthorizationHeader, testDbLayerWithFixture}
+import com.softwaremill.realworld.utils.TestUtils.*
 import sttp.client3.UriContext
 import zio.test.TestServices.test
 import zio.test.ZIOSpecDefault
@@ -20,6 +22,7 @@ object CommentsEndpointsSpec extends ZIOSpecDefault:
       suite("with auth data only")(
         test("return empty list if there are no comments for article") {
           for {
+            _ <- prepareDataForComments
             authHeader <- getValidAuthorizationHeader()
             result <- checkIfCommentsListIsEmpty(
               authorizationHeaderOpt = Some(authHeader),
@@ -29,6 +32,7 @@ object CommentsEndpointsSpec extends ZIOSpecDefault:
         },
         test("return non empty comment list") {
           for {
+            _ <- prepareDataForComments
             authHeader <- getValidAuthorizationHeader(email = "john@example.com")
             result <- checkCommentsList(
               authorizationHeaderOpt = Some(authHeader),
@@ -38,6 +42,7 @@ object CommentsEndpointsSpec extends ZIOSpecDefault:
         },
         test("remove comment and check if comment list has one element") {
           for {
+            _ <- prepareDataForComments
             authHeader <- getValidAuthorizationHeader(email = "bill@example.com")
             _ <- deleteCommentRequest(
               authorizationHeader = authHeader,
@@ -51,6 +56,7 @@ object CommentsEndpointsSpec extends ZIOSpecDefault:
         },
         test("positive comment creation") {
           for {
+            _ <- prepareDataForComments
             authHeader <- getValidAuthorizationHeader(email = "john@example.com")
             result <- createAndCheckComment(
               authorizationHeader = authHeader,
@@ -64,6 +70,7 @@ object CommentsEndpointsSpec extends ZIOSpecDefault:
     suite("with no header")(
       test("return empty list if there are no comments for article") {
         for {
+          _ <- prepareDataForComments
           result <- checkIfCommentsListIsEmpty(
             authorizationHeaderOpt = None,
             uri = uri"http://test.com/api/articles/how-to-train-your-dragon-2/comments"
@@ -72,6 +79,7 @@ object CommentsEndpointsSpec extends ZIOSpecDefault:
       },
       test("return non empty comment list") {
         for {
+          _ <- prepareDataForComments
           result <- checkCommentsList(
             authorizationHeaderOpt = None,
             uri = uri"http://test.com/api/articles/how-to-train-your-dragon-3/comments"
@@ -90,5 +98,5 @@ object CommentsEndpointsSpec extends ZIOSpecDefault:
     ProfilesService.live,
     ProfilesRepository.live,
     TagsRepository.live,
-    testDbLayerWithFixture("fixtures/articles/comment-data.sql")
+    testDbLayerWithEmptyDb
   )
