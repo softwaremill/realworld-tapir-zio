@@ -11,7 +11,7 @@ import zio.test.Assertion.*
 import zio.test.{Assertion, TestAspect, TestRandom, TestResult, ZIOSpecDefault, assertTrue, assertZIO}
 import zio.{RIO, Random, ZIO, ZLayer}
 
-object UserRepositoryTestSupport {
+object UserRepositoryTestSupport:
 
   def callFindByEmail(email: String): ZIO[UsersRepository, Exception, Option[UserRow]] = {
     for {
@@ -93,4 +93,3 @@ object UserRepositoryTestSupport {
       result <- callUserAdd(userRegisterData)
     } yield zio.test.assert(result)(isUnit) // TODO check DB?
   }
-}

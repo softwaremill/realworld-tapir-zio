@@ -12,7 +12,7 @@ import zio.test.Assertion.*
 import zio.test.{Assertion, TestResult, assertTrue, assertZIO}
 import zio.{RIO, Random, ZIO, ZLayer}
 
-object UserEndpointTestSupport {
+object UserEndpointTestSupport:
 
   def callGetCurrentUser(
       authorizationHeader: Map[String, String],
@@ -149,4 +149,3 @@ object UserEndpointTestSupport {
         )
       )
     }
-}
