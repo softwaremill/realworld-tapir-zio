@@ -7,6 +7,7 @@ import com.softwaremill.realworld.articles.model.{ArticleAuthor, ArticleCreateDa
 import com.softwaremill.realworld.common.Pagination
 import com.softwaremill.realworld.profiles.ProfilesRepository
 import com.softwaremill.realworld.users.UsersRepository
+import com.softwaremill.realworld.utils.DbData.exampleUser1
 import com.softwaremill.realworld.utils.TestUtils.*
 import sttp.client3.UriContext
 import zio.test.*

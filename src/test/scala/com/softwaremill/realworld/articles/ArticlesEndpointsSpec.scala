@@ -8,6 +8,7 @@ import com.softwaremill.realworld.common.{BaseEndpoints, Configuration}
 import com.softwaremill.realworld.profiles.{ProfilesRepository, ProfilesService}
 import com.softwaremill.realworld.tags.TagsRepository
 import com.softwaremill.realworld.users.{UserRegisterData, UsersRepository}
+import com.softwaremill.realworld.utils.DbData.exampleArticle2
 import com.softwaremill.realworld.utils.TestUtils.*
 import sttp.client3.UriContext
 import sttp.model.Uri
