@@ -49,18 +49,29 @@ class UsersRepository(quill: Quill.Sqlite[SnakeCase]):
   ).unit
     .pipe(mapUniqueConstraintViolationError)
 
-  def updateByEmail(updateData: UserUpdateData, email: String): Task[UserUpdateData] = run(
-    queryUser
+  def updateByEmail(updateData: UserUpdateData, email: String): IO[Throwable, Option[UserData]] = {
+    val update = queryUser.dynamic
       .filter(_.email == lift(email))
       .update(
-        record => record.email -> lift(updateData.email.orNull),
-        record => record.username -> lift(updateData.username.orNull),
-        record => record.password -> lift(updateData.password.orNull),
-        record => record.bio -> lift(updateData.bio),
-        record => record.image -> lift(updateData.image)
+        setOpt[UserRow, String](_.email, updateData.email),
+        setOpt[UserRow, String](_.username, updateData.username),
+        setOpt[UserRow, String](_.password, updateData.password),
+        setOpt[UserRow, String](_.bio.orNull, updateData.bio),
+        setOpt[UserRow, String](_.image.orNull, updateData.image)
       )
-  ).map(_ => updateData)
-    .pipe(mapUniqueConstraintViolationError)
+
+    val read = quote(
+      queryUser
+        .filter(_.email == lift(updateData.email.getOrElse(email)))
+        .value
+    )
+
+    transaction {
+      run(update)
+        .flatMap(_ => run(read))
+        .map(_.map(toUserData))
+    }
+  }
 
   private def mapUniqueConstraintViolationError[R, A](task: RIO[R, A]): RIO[R, A] = task.mapError {
     case e: SQLiteException if e.getResultCode == SQLITE_CONSTRAINT_UNIQUE =>

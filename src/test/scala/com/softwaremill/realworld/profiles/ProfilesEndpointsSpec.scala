@@ -2,140 +2,49 @@ package com.softwaremill.realworld.profiles
 
 import com.softwaremill.realworld.auth.AuthService
 import com.softwaremill.realworld.common.{BaseEndpoints, Configuration}
+import com.softwaremill.realworld.profiles.ProfileDbTestSupport.*
+import com.softwaremill.realworld.profiles.ProfileEndpointTestSupport.*
 import com.softwaremill.realworld.users.UsersRepository
 import com.softwaremill.realworld.utils.TestUtils.*
 import sttp.client3.*
-import sttp.client3.ziojson.*
 import sttp.model.StatusCode
-import zio.*
 import zio.test.*
-import zio.test.Assertion.*
 
 object ProfilesEndpointsSpec extends ZIOSpecDefault:
 
-  override def spec = suite("Profile endpoints")(
-    suite("as anonymous user")(
+  override def spec = suite("profile endpoints tests")(
+    suite("with no header")(
       test("get profile") {
-        assertZIO(
-          ZIO
-            .service[ProfilesEndpoints]
-            .map(_.getProfile)
-            .flatMap { endpoint =>
-              basicRequest
-                .get(uri"http://test.com/api/profiles/jake")
-                .response(asJson[Profile])
-                .send(backendStub(endpoint))
-                .map(_.body)
-            }
-        )(isLeft(isSubtype[HttpError[_]](hasField("statusCode", _.statusCode, equalTo(StatusCode.Unauthorized)))))
+        checkIfUnauthorizedErrorOccurInGet(authorizationHeaderOpt = None, uri = uri"http://test.com/api/profiles/jake")
       },
       test("follow profile") {
-        assertZIO(
-          ZIO
-            .service[ProfilesEndpoints]
-            .map(_.followUser)
-            .flatMap { endpoint =>
-              basicRequest
-                .post(uri"http://test.com/api/profiles/jake/follow")
-                .response(asJson[Profile])
-                .send(backendStub(endpoint))
-                .map(_.body)
-            }
-        )(isLeft(isSubtype[HttpError[_]](hasField("statusCode", _.statusCode, equalTo(StatusCode.Unauthorized)))))
+        checkIfUnauthorizedErrorOccurInFollow(authorizationHeaderOpt = None, uri = uri"http://test.com/api/profiles/jake/follow")
       },
       test("unfollow profile") {
-        assertZIO(
-          ZIO
-            .service[ProfilesEndpoints]
-            .map(_.unfollowUser)
-            .flatMap { endpoint =>
-              basicRequest
-                .delete(uri"http://test.com/api/profiles/john/follow")
-                .response(asJson[Profile])
-                .send(backendStub(endpoint))
-                .map(_.body)
-            }
-        )(isLeft(isSubtype[HttpError[_]](hasField("statusCode", _.statusCode, equalTo(StatusCode.Unauthorized)))))
+        checkIfUnauthorizedErrorOccurInUnfollow(authorizationHeaderOpt = None, uri = uri"http://test.com/api/profiles/john/follow")
       }
     ),
-    suite("as authenticated user")(
+    suite("with auth header")(
       test("get profile") {
-        assertZIO(
-          for {
-            profilesEndpoints <- ZIO.service[ProfilesEndpoints]
-            endpoint = profilesEndpoints.getProfile
-            authHeader <- getValidAuthorizationHeader("john@example.com")
-            response <- basicRequest
-              .get(uri"http://test.com/api/profiles/jake")
-              .response(asJson[Profile])
-              .headers(authHeader)
-              .send(backendStub(endpoint))
-            body = response.body
-          } yield body
-        )(
-          isRight(
-            hasField(
-              "profile",
-              _.profile,
-              (hasField("username", _.username, equalTo("jake")): Assertion[ProfileData])
-                && hasField("bio", _.bio, isSome)
-                && hasField("image", _.image, isSome)
-                && hasField("following", _.following, isTrue)
-            )
-          )
-        )
+        for {
+          _ <- prepareBasicProfileData
+          authHeader <- getValidAuthorizationHeader("john@example.com")
+          result <- checkGetProfile(authorizationHeaderOpt = Some(authHeader), uri = uri"http://test.com/api/profiles/jake")
+        } yield result
       },
       test("follow profile") {
-        assertZIO(
-          for {
-            profilesEndpoints <- ZIO.service[ProfilesEndpoints]
-            endpoint = profilesEndpoints.followUser
-            authHeader <- getValidAuthorizationHeader()
-            response <- basicRequest
-              .post(uri"http://test.com/api/profiles/john/follow")
-              .response(asJson[Profile])
-              .headers(authHeader)
-              .send(backendStub(endpoint))
-            body = response.body
-          } yield body
-        )(
-          isRight(
-            hasField(
-              "profile",
-              _.profile,
-              (hasField("username", _.username, equalTo("john")): Assertion[ProfileData])
-                && hasField("bio", _.bio, isSome)
-                && hasField("image", _.image, isSome)
-                && hasField("following", _.following, isTrue)
-            )
-          )
-        )
+        for {
+          _ <- prepareBasicProfileData
+          authHeader <- getValidAuthorizationHeader()
+          result <- checkFollowUser(authorizationHeaderOpt = Some(authHeader), uri = uri"http://test.com/api/profiles/john/follow")
+        } yield result
       },
       test("unfollow profile") {
-        assertZIO(
-          for {
-            profilesEndpoints <- ZIO.service[ProfilesEndpoints]
-            endpoint = profilesEndpoints.unfollowUser
-            authHeader <- getValidAuthorizationHeader("john@example.com")
-            response <- basicRequest
-              .delete(uri"http://test.com/api/profiles/john/follow")
-              .response(asJson[Profile])
-              .headers(authHeader)
-              .send(backendStub(endpoint))
-            body = response.body
-          } yield body
-        )(
-          isRight(
-            hasField(
-              "profile",
-              _.profile,
-              (hasField("username", _.username, equalTo("john")): Assertion[ProfileData])
-                && hasField("bio", _.bio, isSome)
-                && hasField("image", _.image, isSome)
-                && hasField("following", _.following, isFalse)
-            )
-          )
-        )
+        for {
+          _ <- prepareBasicProfileData
+          authHeader <- getValidAuthorizationHeader("john@example.com")
+          result <- checkUnfollowUser(authorizationHeaderOpt = Some(authHeader), uri = uri"http://test.com/api/profiles/jake/follow")
+        } yield result
       }
     )
   ).provide(
@@ -146,5 +55,5 @@ object ProfilesEndpointsSpec extends ZIOSpecDefault:
     ProfilesRepository.live,
     ProfilesService.live,
     UsersRepository.live,
-    testDbLayerWithFixture("fixtures/articles/basic-data.sql")
+    testDbLayerWithEmptyDb
   )

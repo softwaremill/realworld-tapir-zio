@@ -25,6 +25,10 @@ object ArticleAuthEndpointParameters:
     endpoint = ZIO.service[ArticlesEndpoints].map(endpoints => endpoints.listArticles),
     request = basicRequest.get(uri"http://test.com/api/articles")
   )
+  def feedArticles: ArticleAuthEndpointParameters = ArticleAuthEndpointParameters(
+    endpoint = ZIO.service[ArticlesEndpoints].map(endpoints => endpoints.feedArticles),
+    request = basicRequest.get(uri"http://test.com/api/articles/feed")
+  )
   def get(slug: String): ArticleAuthEndpointParameters = ArticleAuthEndpointParameters(
     endpoint = ZIO.service[ArticlesEndpoints].map(endpoints => endpoints.get),
     request = basicRequest.get(uri"http://test.com/api/articles/$slug")
@@ -32,6 +36,10 @@ object ArticleAuthEndpointParameters:
   def create: ArticleAuthEndpointParameters = ArticleAuthEndpointParameters(
     endpoint = ZIO.service[ArticlesEndpoints].map(endpoints => endpoints.create),
     request = basicRequest.post(uri"http://test.com/api/articles")
+  )
+  def delete(slug: String): ArticleAuthEndpointParameters = ArticleAuthEndpointParameters(
+    endpoint = ZIO.service[ArticlesEndpoints].map(endpoints => endpoints.delete),
+    request = basicRequest.delete(uri"http://test.com/api/articles/$slug")
   )
   def update(slug: String): ArticleAuthEndpointParameters = ArticleAuthEndpointParameters(
     endpoint = ZIO.service[ArticlesEndpoints].map(endpoints => endpoints.update),
@@ -52,4 +60,8 @@ object ArticleAuthEndpointParameters:
   def deleteComment(slug: String, commentId: Int): ArticleAuthEndpointParameters = ArticleAuthEndpointParameters(
     endpoint = ZIO.service[ArticlesEndpoints].map(endpoints => endpoints.deleteComment),
     request = basicRequest.delete(uri"http://test.com/api/articles/$slug/comments/$commentId")
+  )
+  def getCommentsFromArticle(slug: String): ArticleAuthEndpointParameters = ArticleAuthEndpointParameters(
+    endpoint = ZIO.service[ArticlesEndpoints].map(endpoints => endpoints.getCommentsFromArticle),
+    request = basicRequest.get(uri"http://test.com/api/articles/$slug/comments")
   )

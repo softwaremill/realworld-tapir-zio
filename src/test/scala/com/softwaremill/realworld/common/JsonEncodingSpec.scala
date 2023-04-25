@@ -1,6 +1,5 @@
 package com.softwaremill.realworld.common
 import com.softwaremill.realworld.articles.ArticlesEndpointsSpec.{suite, test}
-import com.softwaremill.realworld.articles.model.{Article, ArticleAuthor, ArticleData}
 import com.softwaremill.realworld.articles.model
 import com.softwaremill.realworld.users
 import com.softwaremill.realworld.users.model.{User, UserData}
@@ -13,9 +12,9 @@ import java.time.Instant
 object JsonEncodingSpec extends ZIOSpecDefault {
 
   override def spec = suite("JSON encoding for data objects") {
-    suite("User related objects")(
-      test("User fields with None value are present in rendered json as null values") {
-        val user: User = users.model.User(
+    suite("user related objects")(
+      test("user fields with None value are present in rendered json as null values") {
+        val user: User = User(
           UserData(
             email = "email@domain.com",
             token = None,
@@ -28,7 +27,7 @@ object JsonEncodingSpec extends ZIOSpecDefault {
           equalTo("""{"user":{"email":"email@domain.com","token":null,"username":"username","bio":null,"image":null}}""")
         )
       },
-      test("Article fields with None value are present in rendered json as null values") {
+      test("article fields with None value are present in rendered json as null values") {
         val article: Article = Article(
           ArticleData(
             "how-to-train-your-dragon-2",
