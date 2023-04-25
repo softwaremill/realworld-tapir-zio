@@ -1,7 +1,7 @@
 package com.softwaremill.realworld.users
 
 import com.softwaremill.realworld.common.Exceptions
-import com.softwaremill.realworld.users.model.{UserRegisterData, UserRow, UserUpdateData, UserWithPassword}
+import com.softwaremill.realworld.users.model.*
 import io.getquill.*
 import io.getquill.jdbczio.*
 import org.sqlite.SQLiteErrorCode.SQLITE_CONSTRAINT_UNIQUE
@@ -69,7 +69,7 @@ class UsersRepository(quill: Quill.Sqlite[SnakeCase]):
     transaction {
       run(update)
         .flatMap(_ => run(read))
-        .map(_.map(toUserData))
+        .map(_.map(UserData.fromRow))
     }
   }
 

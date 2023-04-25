@@ -4,7 +4,8 @@ import com.softwaremill.diffx.{Diff, compare}
 import com.softwaremill.realworld.articles.model.{ArticleAuthor, ArticleCreateData, ArticleData}
 import com.softwaremill.realworld.common.Exceptions.AlreadyInUse
 import com.softwaremill.realworld.common.Pagination
-import com.softwaremill.realworld.users.{UserRow, UsersRepository}
+import com.softwaremill.realworld.users.model.UserRow
+import com.softwaremill.realworld.users.UsersRepository
 import sttp.client3.testing.SttpBackendStub
 import sttp.client3.{HttpError, Response, ResponseException, UriContext, basicRequest}
 import sttp.tapir.EndpointOutput.StatusCode

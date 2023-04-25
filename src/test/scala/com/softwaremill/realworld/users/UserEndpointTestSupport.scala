@@ -2,6 +2,7 @@ package com.softwaremill.realworld.users
 
 import com.softwaremill.diffx.{Diff, compare}
 import com.softwaremill.realworld.users
+import com.softwaremill.realworld.users.model.*
 import com.softwaremill.realworld.utils.TestUtils.backendStub
 import sttp.client3.testing.SttpBackendStub
 import sttp.client3.ziojson.*

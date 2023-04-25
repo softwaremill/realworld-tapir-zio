@@ -23,9 +23,6 @@ import zio.test.Assertion.*
 import zio.test.{Spec, TestAspect, TestRandom, ZIOSpecDefault, assertZIO}
 import zio.{RIO, Random, ZIO, ZLayer}
 
-import java.time.{Instant, ZonedDateTime}
-import javax.sql.DataSource
-
 object AuthorizationSpec extends ZIOSpecDefault:
 
   val userTestParameters: List[UserAuthTestParameters] = List(

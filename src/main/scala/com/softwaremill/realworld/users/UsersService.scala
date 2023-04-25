@@ -63,7 +63,7 @@ class UsersService(authService: AuthService, usersRepository: UsersRepository):
         .getOrElse(ZIO.succeed(oldUser.hashedPassword))
       updatedUser <- usersRepository
         .updateByEmail(
-          toUserUpdateDataWithFallback(updateData, oldUser.copy(hashedPassword = password)),
+          updateData.update(oldUser.copy(hashedPassword = password)),
           email
         )
         .someOrFail(NotFound("User doesn't exist."))

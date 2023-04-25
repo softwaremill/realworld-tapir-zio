@@ -17,7 +17,6 @@ import zio.{RIO, Random, Scope, ZIO, ZLayer}
 
 import java.nio.file.{Files, Path, Paths}
 import java.sql.{Connection, Statement}
-import java.time.{Duration, Instant}
 import java.util.UUID
 import javax.sql.DataSource
 import scala.io.Source

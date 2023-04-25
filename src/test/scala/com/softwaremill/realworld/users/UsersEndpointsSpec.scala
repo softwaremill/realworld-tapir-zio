@@ -3,8 +3,9 @@ package com.softwaremill.realworld.users
 import com.softwaremill.realworld.auth.AuthService
 import com.softwaremill.realworld.common.{BaseEndpoints, Configuration}
 import com.softwaremill.realworld.db.{Db, DbConfig, DbMigrator}
+import com.softwaremill.realworld.users.UserDbTestSupport.*
 import com.softwaremill.realworld.users.UserEndpointTestSupport.*
-import com.softwaremill.realworld.users.model.{User, UserData, UserLogin, UserLoginData, UserRegister, UserRegisterData}
+import com.softwaremill.realworld.users.model.*
 import com.softwaremill.realworld.utils.TestUtils.*
 import sttp.client3.UriContext
 import zio.test.ZIOSpecDefault
