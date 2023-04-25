@@ -34,6 +34,13 @@ object UserRepositoryTestSupport:
     } yield result
   }
 
+  def callUpdateByEmail(userUpdateData: UserUpdateData, email: String): ZIO[UsersRepository, Throwable, Option[UserData]] = {
+    for {
+      repo <- ZIO.service[UsersRepository]
+      result <- repo.updateByEmail(userUpdateData, email)
+    } yield result
+  }
+
   def checkUserNotFound(email: String): ZIO[UsersRepository, Exception, TestResult] = {
     for {
       result <- callFindByEmail(email)
@@ -99,5 +106,67 @@ object UserRepositoryTestSupport:
           hasField("bio", _.bio, isNone) &&
           hasField("image", _.image, isNone)
       )
+    }
+  }
+
+  def checkUpdateUserByBio(
+      userRegisterData: UserRegisterData,
+      userUpdateData: UserUpdateData
+  ): ZIO[UsersRepository, Throwable, TestResult] = {
+    for {
+      _ <- callUserAdd(userRegisterData)
+      userRowOpt <- callUpdateByEmail(userUpdateData, userRegisterData.email)
+    } yield zio.test.assert(userRowOpt) {
+      isSome {
+        hasField[UserData, Option[String]](
+          "bio",
+          _.bio, {
+            isSome {
+              equalTo("Updated test bio")
+            }
+          }
+        ) && hasField[UserData, String](
+          "email",
+          _.email, {
+            equalTo("test@test.com")
+          }
+        ) && hasField[UserData, String](
+          "username",
+          _.username, {
+            equalTo("tested")
+          }
+        )
+      }
+    }
+  }
+
+  def checkUpdateUserByBioAndEmail(
+      userRegisterData: UserRegisterData,
+      userUpdateData: UserUpdateData
+  ): ZIO[UsersRepository, Throwable, TestResult] = {
+    for {
+      _ <- callUserAdd(userRegisterData)
+      userRowOpt <- callUpdateByEmail(userUpdateData, userRegisterData.email)
+    } yield zio.test.assert(userRowOpt) {
+      isSome {
+        hasField[UserData, Option[String]](
+          "bio",
+          _.bio, {
+            isSome {
+              equalTo("Updated test bio")
+            }
+          }
+        ) && hasField[UserData, String](
+          "email",
+          _.email, {
+            equalTo("updated@test.com")
+          }
+        ) && hasField[UserData, String](
+          "username",
+          _.username, {
+            equalTo("tested")
+          }
+        )
+      }
     }
   }

@@ -50,59 +50,19 @@ object UsersRepositorySpec extends ZIOSpecDefault:
     suite("update user")(
       test("update user bio") {
         for {
-          repo <- ZIO.service[UsersRepository]
-          _ <- repo.add(UserRegisterData(email = "test@test.com", username = "tested", password = "tested"))
-          user <- repo.updateByEmail(UserUpdateData(None, None, None, Some("Updated test bio"), None), "test@test.com")
-        } yield zio.test.assert(user) {
-          Assertion.isSome {
-            Assertion.hasField[UserData, Option[String]](
-              "bio",
-              _.bio, {
-                Assertion.isSome {
-                  Assertion.equalTo("Updated test bio")
-                }
-              }
-            ) && Assertion.hasField[UserData, String](
-              "email",
-              _.email, {
-                Assertion.equalTo("test@test.com")
-              }
-            ) && Assertion.hasField[UserData, String](
-              "username",
-              _.username, {
-                Assertion.equalTo("tested")
-              }
-            )
-          }
-        }
+          result <- checkUpdateUserByBio(
+            userRegisterData = UserRegisterData(email = "test@test.com", username = "tested", password = "tested"),
+            userUpdateData = UserUpdateData(None, None, None, Some("Updated test bio"), None)
+          )
+        } yield result
       },
       test("update user bio and email") {
         for {
-          repo <- ZIO.service[UsersRepository]
-          _ <- repo.add(UserRegisterData(email = "test@test.com", username = "tested", password = "tested"))
-          user <- repo.updateByEmail(UserUpdateData(Some("updated@test.com"), None, None, Some("Updated test bio"), None), "test@test.com")
-        } yield zio.test.assert(user) {
-          Assertion.isSome {
-            Assertion.hasField[UserData, Option[String]](
-              "bio",
-              _.bio, {
-                Assertion.isSome {
-                  Assertion.equalTo("Updated test bio")
-                }
-              }
-            ) && Assertion.hasField[UserData, String](
-              "email",
-              _.email, {
-                Assertion.equalTo("updated@test.com")
-              }
-            ) && Assertion.hasField[UserData, String](
-              "username",
-              _.username, {
-                Assertion.equalTo("tested")
-              }
-            )
-          }
-        }
+          result <- checkUpdateUserByBioAndEmail(
+            userRegisterData = UserRegisterData(email = "test@test.com", username = "tested", password = "tested"),
+            userUpdateData = UserUpdateData(Some("updated@test.com"), None, None, Some("Updated test bio"), None)
+          )
+        } yield result
       }
     )
   ).provide(
