@@ -46,6 +46,24 @@ object UsersRepositorySpec extends ZIOSpecDefault:
           result <- checkUserAdd(UserRegisterData(email = "test@test.com", username = "tested", password = "tested"))
         } yield result
       }
+    ),
+    suite("update user")(
+      test("update user bio") {
+        for {
+          result <- checkUpdateUserByBio(
+            userRegisterData = UserRegisterData(email = "test@test.com", username = "tested", password = "tested"),
+            userUpdateData = UserUpdateData(None, None, None, Some("Updated test bio"), None)
+          )
+        } yield result
+      },
+      test("update user bio and email") {
+        for {
+          result <- checkUpdateUserByBioAndEmail(
+            userRegisterData = UserRegisterData(email = "test@test.com", username = "tested", password = "tested"),
+            userUpdateData = UserUpdateData(Some("updated@test.com"), None, None, Some("Updated test bio"), None)
+          )
+        } yield result
+      }
     )
   ).provide(
     UsersRepository.live,
