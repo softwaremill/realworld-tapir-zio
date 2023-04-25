@@ -1,7 +1,6 @@
 package com.softwaremill.realworld.articles.model
 
-import com.softwaremill.realworld.articles.model.ArticleData
-import com.softwaremill.realworld.articles.model.ArticleAuthor
+import com.softwaremill.realworld.articles.model.{ArticleAuthor, ArticleData}
 import zio.json.{DeriveJsonDecoder, DeriveJsonEncoder, JsonDecoder, JsonEncoder}
 
 import java.time.Instant

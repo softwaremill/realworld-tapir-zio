@@ -1,7 +1,7 @@
 package com.softwaremill.realworld.users
 
 import com.softwaremill.realworld.common.Exceptions
-import com.softwaremill.realworld.users.UserMapper.{toUserData, toUserDataWithPassword}
+import com.softwaremill.realworld.users.model.*
 import io.getquill.*
 import io.getquill.jdbczio.*
 import org.sqlite.SQLiteErrorCode.SQLITE_CONSTRAINT_UNIQUE
@@ -37,7 +37,7 @@ class UsersRepository(quill: Quill.Sqlite[SnakeCase]):
     } yield ur
   )
     .map(_.headOption)
-    .map(_.map(toUserDataWithPassword))
+    .map(_.map(UserWithPassword.fromRow))
 
   def add(user: UserRegisterData): Task[Unit] = run(
     queryUser
@@ -69,7 +69,7 @@ class UsersRepository(quill: Quill.Sqlite[SnakeCase]):
     transaction {
       run(update)
         .flatMap(_ => run(read))
-        .map(_.map(toUserData))
+        .map(_.map(UserData.fromRow))
     }
   }
 

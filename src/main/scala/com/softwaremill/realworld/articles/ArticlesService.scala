@@ -4,10 +4,10 @@ import com.softwaremill.realworld.articles.comments.{CommentData, CommentRow}
 import com.softwaremill.realworld.articles.model.*
 import com.softwaremill.realworld.common.Exceptions.{BadRequest, NotFound, Unauthorized}
 import com.softwaremill.realworld.common.{Exceptions, Pagination}
-import com.softwaremill.realworld.profiles.{Followers, ProfileData, ProfileRow, ProfilesService}
+import com.softwaremill.realworld.profiles.{ProfileRow, ProfilesService}
 import com.softwaremill.realworld.tags.TagsRepository
-import com.softwaremill.realworld.users.UserMapper.toUserData
-import com.softwaremill.realworld.users.*
+import com.softwaremill.realworld.users.UsersRepository
+import com.softwaremill.realworld.users.model.{UserRow, UserSession}
 import zio.{Console, IO, Task, ZIO, ZLayer}
 
 import java.sql.SQLException

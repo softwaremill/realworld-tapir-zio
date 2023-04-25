@@ -3,7 +3,7 @@ package com.softwaremill.realworld.users
 import com.softwaremill.realworld.auth.AuthService
 import com.softwaremill.realworld.common.Exceptions.{NotFound, Unauthorized}
 import com.softwaremill.realworld.common.{Exceptions, Pagination}
-import com.softwaremill.realworld.users.UserMapper.{toUserData, toUserUpdateDataWithFallback}
+import com.softwaremill.realworld.users.model.*
 import zio.{Console, IO, ZIO, ZLayer}
 
 import java.sql.SQLException
@@ -14,7 +14,7 @@ class UsersService(authService: AuthService, usersRepository: UsersRepository):
   def get(email: String): IO[Exception, UserData] = usersRepository
     .findByEmail(email)
     .flatMap {
-      case Some(a) => ZIO.succeed(toUserData(a))
+      case Some(a) => ZIO.succeed(UserData.fromRow(a))
       case None    => ZIO.fail(Exceptions.NotFound("User doesn't exist."))
     }
 
@@ -36,7 +36,7 @@ class UsersService(authService: AuthService, usersRepository: UsersRepository):
           hashedPassword <- authService.encryptPassword(passwordClean)
           jwt <- authService.generateJwt(emailClean)
           _ <- usersRepository.add(UserRegisterData(emailClean, usernameClean, hashedPassword))
-        } yield User(userWithToken(emailClean, usernameClean, jwt))
+        } yield model.User(userWithToken(emailClean, usernameClean, jwt))
       }
     } yield user
   }
@@ -63,7 +63,7 @@ class UsersService(authService: AuthService, usersRepository: UsersRepository):
         .getOrElse(ZIO.succeed(oldUser.hashedPassword))
       updatedUser <- usersRepository
         .updateByEmail(
-          toUserUpdateDataWithFallback(updateData, oldUser.copy(hashedPassword = password)),
+          updateData.update(oldUser.copy(hashedPassword = password)),
           email
         )
         .someOrFail(NotFound("User doesn't exist."))

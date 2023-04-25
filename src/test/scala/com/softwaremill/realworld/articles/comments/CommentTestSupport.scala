@@ -12,8 +12,6 @@ import zio.ZIO
 import zio.test.Assertion.*
 import zio.test.{Assertion, TestResult, assertTrue, assertZIO}
 
-import java.time.Instant
-
 object CommentTestSupport:
 
   def callGetCommentsFromArticle(

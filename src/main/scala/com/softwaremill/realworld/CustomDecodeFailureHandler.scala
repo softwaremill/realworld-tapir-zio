@@ -5,8 +5,8 @@ import sttp.model.{Header, StatusCode}
 import sttp.tapir.generic.auto.*
 import sttp.tapir.json.zio.jsonBody
 import sttp.tapir.server.interceptor.DecodeFailureContext
-import sttp.tapir.server.interceptor.decodefailure.{DecodeFailureHandler, DefaultDecodeFailureHandler}
 import sttp.tapir.server.interceptor.decodefailure.DefaultDecodeFailureHandler.FailureMessages
+import sttp.tapir.server.interceptor.decodefailure.{DecodeFailureHandler, DefaultDecodeFailureHandler}
 import sttp.tapir.server.model.ValuedEndpointOutput
 import sttp.tapir.{EndpointIO, EndpointInput, headers, statusCode, stringBody}
 import zio.json.{DeriveJsonDecoder, DeriveJsonEncoder}

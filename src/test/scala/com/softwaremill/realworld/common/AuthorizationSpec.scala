@@ -9,7 +9,8 @@ import com.softwaremill.realworld.db.{Db, DbConfig, DbMigrator}
 import com.softwaremill.realworld.profiles.{Profile, ProfilesEndpoints, ProfilesRepository, ProfilesService}
 import com.softwaremill.realworld.tags.TagsRepository
 import com.softwaremill.realworld.users.UsersEndpointsSpec.test
-import com.softwaremill.realworld.users.{User, UsersEndpoints, UsersRepository, UsersService}
+import com.softwaremill.realworld.users.model.User
+import com.softwaremill.realworld.users.{UsersEndpoints, UsersRepository, UsersService}
 import com.softwaremill.realworld.utils.TestUtils.*
 import sttp.client3.testing.SttpBackendStub
 import sttp.client3.ziojson.*
@@ -21,9 +22,6 @@ import sttp.tapir.ztapir.{RIOMonadError, ZServerEndpoint}
 import zio.test.Assertion.*
 import zio.test.{Spec, TestAspect, TestRandom, ZIOSpecDefault, assertZIO}
 import zio.{RIO, Random, ZIO, ZLayer}
-
-import java.time.{Instant, ZonedDateTime}
-import javax.sql.DataSource
 
 object AuthorizationSpec extends ZIOSpecDefault:
 

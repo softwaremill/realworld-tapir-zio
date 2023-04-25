@@ -1,6 +1,7 @@
 package com.softwaremill.realworld.users
 
 import com.softwaremill.diffx.{Diff, compare}
+import com.softwaremill.realworld.users.model.*
 import sttp.client3.testing.SttpBackendStub
 import sttp.client3.ziojson.*
 import sttp.client3.{HttpError, Response, ResponseException, UriContext, basicRequest}
