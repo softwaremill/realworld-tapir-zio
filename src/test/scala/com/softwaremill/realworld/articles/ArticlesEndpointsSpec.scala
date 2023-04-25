@@ -18,20 +18,7 @@ import zio.test.ZIOSpecDefault
 
 object ArticlesEndpointsSpec extends ZIOSpecDefault:
 
-  val base: ZLayer[Any, ReadError[String], AuthService & BaseEndpoints] =
-    Configuration.live >+> AuthService.live >+> BaseEndpoints.live
-
-  val repositories: ZLayer[TestDbLayer, Nothing, UsersRepository & ArticlesRepository & ProfilesRepository & TagsRepository] =
-    UsersRepository.live ++ ArticlesRepository.live ++ ProfilesRepository.live ++ TagsRepository.live
-
-  val testArticlesLayer: ZLayer[
-    TestDbLayer,
-    ReadError[String],
-    AuthService & ArticlesRepository & UsersRepository & TagsRepository & ProfilesRepository & ArticlesEndpoints
-  ] =
-    (base ++ repositories) >+> ProfilesService.live >+> ArticlesService.live >+> ArticlesEndpoints.live
-
-  def spec = suite("check articles endpoints")(
+  def spec = suite("article endpoints tests")(
     suite("check articles list")(
       suite("with auth header")(
         test("return empty list") {
@@ -170,7 +157,7 @@ object ArticlesEndpointsSpec extends ZIOSpecDefault:
       }
     ),
     suite("check articles get")(
-      test("return error when requesting article doesn't exist") {
+      test("article not exists") {
         for {
           authHeader <- getValidAuthorizationHeader()
           result <- checkIfNonExistentArticleErrorOccur(
@@ -194,7 +181,7 @@ object ArticlesEndpointsSpec extends ZIOSpecDefault:
       test("positive article creation") {
         for {
           _ <- prepareDataForArticleCreation
-          authHeader <- getValidAuthorizationHeader(email = "jake@example.com")
+          authHeader <- getValidAuthorizationHeader()
           result <- createAndCheckArticle(
             authorizationHeader = authHeader,
             uri = uri"http://test.com/api/articles",
@@ -205,7 +192,7 @@ object ArticlesEndpointsSpec extends ZIOSpecDefault:
       test("article creation - check conflict") {
         for {
           _ <- prepareDataForCreatingNameConflict
-          authHeader <- getValidAuthorizationHeader(email = "jake@example.com")
+          authHeader <- getValidAuthorizationHeader()
           result <- createAndCheckIfInvalidNameErrorOccur(
             authorizationHeader = authHeader,
             uri = uri"http://test.com/api/articles",
@@ -215,10 +202,10 @@ object ArticlesEndpointsSpec extends ZIOSpecDefault:
       }
     ),
     suite("check article deletion")(
-      test("positive remove article and check if article list has two elements")(
+      test("positive article deletion")(
         for {
           _ <- prepareDataForArticleDeletion
-          authHeader <- getValidAuthorizationHeader(email = "jake@example.com")
+          authHeader <- getValidAuthorizationHeader()
           _ <- callDeleteArticle(
             authorizationHeader = authHeader,
             uri = uri"http://test.com/api/articles/how-to-train-your-dragon-3"
@@ -234,7 +221,7 @@ object ArticlesEndpointsSpec extends ZIOSpecDefault:
       test("positive article update") {
         for {
           _ <- prepareDataForArticleUpdating
-          authHeader <- getValidAuthorizationHeader(email = "jake@example.com")
+          authHeader <- getValidAuthorizationHeader()
           result <- updateAndCheckArticle(
             authorizationHeader = authHeader,
             uri = uri"http://test.com/api/articles/how-to-train-your-dragon",
@@ -251,7 +238,7 @@ object ArticlesEndpointsSpec extends ZIOSpecDefault:
       test("article update - check conflict") {
         for {
           _ <- prepareDataForUpdatingNameConflict
-          authHeader <- getValidAuthorizationHeader(email = "jake@example.com")
+          authHeader <- getValidAuthorizationHeader()
           result <- updateAndCheckIfInvalidNameErrorOccur(
             authorizationHeader = authHeader,
             uri = uri"http://test.com/api/articles/how-to-train-your-dragon",
@@ -267,6 +254,15 @@ object ArticlesEndpointsSpec extends ZIOSpecDefault:
       }
     )
   ).provide(
-    testArticlesLayer,
+    Configuration.live,
+    AuthService.live,
+    BaseEndpoints.live,
+    UsersRepository.live,
+    ArticlesRepository.live,
+    ProfilesRepository.live,
+    TagsRepository.live,
+    ProfilesService.live,
+    ArticlesService.live,
+    ArticlesEndpoints.live,
     testDbLayerWithEmptyDb
   )

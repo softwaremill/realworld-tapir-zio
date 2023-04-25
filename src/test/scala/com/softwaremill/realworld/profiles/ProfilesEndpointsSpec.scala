@@ -12,7 +12,7 @@ import zio.test.*
 
 object ProfilesEndpointsSpec extends ZIOSpecDefault:
 
-  override def spec = suite("profile endpoints")(
+  override def spec = suite("profile endpoints tests")(
     suite("with no header")(
       test("get profile") {
         checkIfUnauthorizedErrorOccurInGet(authorizationHeaderOpt = None, uri = uri"http://test.com/api/profiles/jake")
@@ -35,7 +35,7 @@ object ProfilesEndpointsSpec extends ZIOSpecDefault:
       test("follow profile") {
         for {
           _ <- prepareBasicProfileData
-          authHeader <- getValidAuthorizationHeader("jake@example.com")
+          authHeader <- getValidAuthorizationHeader()
           result <- checkFollowUser(authorizationHeaderOpt = Some(authHeader), uri = uri"http://test.com/api/profiles/john/follow")
         } yield result
       },

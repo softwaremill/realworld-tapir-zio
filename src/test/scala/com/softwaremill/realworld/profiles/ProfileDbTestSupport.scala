@@ -1,21 +1,10 @@
 package com.softwaremill.realworld.profiles
 
-import com.softwaremill.realworld.users.{UserRegisterData, UsersRepository}
+import com.softwaremill.realworld.users.UsersRepository
+import com.softwaremill.realworld.utils.DbData.*
 import zio.ZIO
 
 object ProfileDbTestSupport:
-
-  private val exampleUser1 = UserRegisterData(
-    email = "jake@example.com",
-    username = "jake",
-    password = "secret password"
-  )
-
-  private val exampleUser2 = UserRegisterData(
-    email = "john@example.com",
-    username = "john",
-    password = "secret password"
-  )
 
   def prepareBasicProfileData = {
     for {

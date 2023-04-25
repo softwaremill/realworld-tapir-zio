@@ -108,7 +108,7 @@ object CommentTestSupport:
           "comment",
           _.comment,
           (hasField("body", _.body, equalTo("Amazing article!")): Assertion[CommentData]) &&
-            hasField("author", _.author, hasField("username", _.username, equalTo("john")): Assertion[ProfileData])
+            hasField("author", _.author, hasField("username", _.username, equalTo("michael")): Assertion[ProfileData])
         )
       )
     }
