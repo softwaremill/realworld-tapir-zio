@@ -6,8 +6,8 @@ import sttp.client3.{HttpError, Request, ResponseException, basicRequest}
 import sttp.model.{StatusCode, Uri}
 import sttp.tapir.ztapir.ZServerEndpoint
 import zio.ZIO
-import zio.test.Assertion.*
 import zio.test.*
+import zio.test.Assertion.*
 
 object ProfileEndpointTestSupport:
 

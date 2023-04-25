@@ -4,6 +4,7 @@ import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm
 import com.softwaremill.realworld.auth.AuthService
 import com.softwaremill.realworld.db.{Db, DbConfig, DbMigrator}
+import com.softwaremill.realworld.utils.DbData.exampleUser1
 import com.softwaremill.realworld.{CustomDecodeFailureHandler, DefectHandler}
 import io.getquill.*
 import io.getquill.jdbczio.*
@@ -39,27 +40,11 @@ object TestUtils:
 
   type TestDbLayer = DbConfig with DataSource with DbMigrator with Quill.Sqlite[SnakeCase]
 
-  def getValidAuthorizationHeader(email: String = "admin@example.com"): RIO[AuthService, Map[String, String]] =
+  def getValidAuthorizationHeader(email: String = exampleUser1.email): RIO[AuthService, Map[String, String]] =
     for {
       authService <- ZIO.service[AuthService]
       jwt <- authService.generateJwt(email)
     } yield Map("Authorization" -> s"Token $jwt")
-
-  private def loadFixture(fixturePath: String): RIO[DataSource, Unit] = ZIO.scoped {
-    for {
-      dataSource <- ZIO.service[DataSource]
-      fixture <- ZIO.fromAutoCloseable(ZIO.attemptBlocking(Source.fromResource(fixturePath)))
-      connection <- ZIO.fromAutoCloseable(ZIO.attempt(dataSource.getConnection))
-      statement <- ZIO.fromAutoCloseable(ZIO.attempt(connection.createStatement()))
-    } yield {
-      val queries = fixture.mkString
-        .split(";")
-        .map(_.strip())
-        .filter(_.nonEmpty)
-
-      queries.foreach(statement.execute)
-    }
-  }
 
   private def clearDb(cfg: DbConfig): RIO[Any, Unit] = for {
     dbPath <- ZIO.succeed(
@@ -75,16 +60,6 @@ object TestUtils:
     _ <- migrator.migrate()
   } yield ()
 
-  private val withEmptyDb: RIO[DataSource with DbMigrator, Unit] = for {
-    _ <- initializeDb
-    _ <- loadFixture("fixtures/articles/admin.sql")
-  } yield ()
-
-  private def withFixture(fixturePath: String): RIO[DataSource with DbMigrator, Unit] = for {
-    _ <- withEmptyDb
-    _ <- loadFixture(fixturePath)
-  } yield ()
-
   private val createTestDbConfig: ZIO[Any, Nothing, DbConfig] = for {
     uuid <- Random.RandomLive.nextUUID
   } yield DbConfig(s"jdbc:sqlite:/tmp/realworld-test-$uuid.sqlite")
@@ -98,7 +73,4 @@ object TestUtils:
     testDbConfigLive >+> Db.dataSourceLive >+> Db.quillLive >+> DbMigrator.live
 
   val testDbLayerWithEmptyDb: ZLayer[Any, Nothing, TestDbLayer] =
-    testDbLayer >+> ZLayer.fromZIO(withEmptyDb.orDie)
-
-  def testDbLayerWithFixture(fixturePath: String): ZLayer[Any, Nothing, TestDbLayer] =
-    testDbLayer >+> ZLayer.fromZIO(withFixture(fixturePath).orDie)
+    testDbLayer >+> ZLayer.fromZIO(initializeDb.orDie)

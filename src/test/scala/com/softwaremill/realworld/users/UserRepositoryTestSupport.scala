@@ -49,12 +49,11 @@ object UserRepositoryTestSupport:
       userRowOpt <- callFindByEmail(email)
     } yield zio.test.assert(userRowOpt)(
       isSome(
-        (hasField("userId", _.userId, equalTo(1)): Assertion[UserRow]) &&
-          hasField("email", _.email, equalTo("admin@example.com")) &&
-          hasField("username", _.username, equalTo("admin")) &&
+        (hasField("email", _.email, equalTo("jake@example.com")): Assertion[UserRow]) &&
+          hasField("username", _.username, equalTo("jake")) &&
           hasField("password", _.password, isNonEmptyString) &&
-          hasField("bio", _.bio, equalTo(Some("I dont work"))) &&
-          hasField("image", _.image, equalTo(Some("")))
+          hasField("bio", _.bio, isNone) &&
+          hasField("image", _.image, isNone)
       )
     )
   }
@@ -67,11 +66,11 @@ object UserRepositoryTestSupport:
         (hasField(
           "user",
           _.user,
-          (hasField("email", _.email, equalTo("admin@example.com")): Assertion[UserData]) &&
+          (hasField("email", _.email, equalTo("jake@example.com")): Assertion[UserData]) &&
             hasField("token", _.token, isNone) &&
-            hasField("username", _.username, equalTo("admin")) &&
-            hasField("bio", _.bio, equalTo(Some("I dont work"))) &&
-            hasField("image", _.image, equalTo(Some("")))
+            hasField("username", _.username, equalTo("jake")) &&
+            hasField("bio", _.bio, isNone) &&
+            hasField("image", _.image, isNone)
         ): Assertion[UserWithPassword]) &&
           hasField("hashedPassword", _.hashedPassword, isNonEmptyString)
       )
@@ -90,6 +89,15 @@ object UserRepositoryTestSupport:
 
   def checkUserAdd(userRegisterData: UserRegisterData): ZIO[UsersRepository, Throwable, TestResult] = {
     for {
-      result <- callUserAdd(userRegisterData)
-    } yield zio.test.assert(result)(isUnit) // TODO check DB?
+      _ <- callUserAdd(userRegisterData)
+      userRowOpt <- callFindByEmail(userRegisterData.email)
+    } yield zio.test.assert(userRowOpt) {
+      isSome(
+        (hasField("email", _.email, equalTo("test@test.com")): Assertion[UserRow]) &&
+          hasField("username", _.username, equalTo("tested")) &&
+          hasField("password", _.password, isNonEmptyString) &&
+          hasField("bio", _.bio, isNone) &&
+          hasField("image", _.image, isNone)
+      )
+    }
   }

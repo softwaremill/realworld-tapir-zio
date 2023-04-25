@@ -12,7 +12,7 @@ import zio.test.ZIOSpecDefault
 
 object TagsEndpointsSpec extends ZIOSpecDefault:
 
-  def spec = suite("tag endpoint tests")(
+  def spec = suite("tag endpoints tests")(
     test("return empty list") {
       for {
         result <- checkIfTagsListIsEmpty(

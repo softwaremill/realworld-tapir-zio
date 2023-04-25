@@ -14,10 +14,10 @@ import zio.test.*
 
 object ArticlesRepositorySpec extends ZIOSpecDefault:
 
-  override def spec = suite("check list features")(
+  override def spec = suite("article repository tests")(
     suite("list articles")(
       suite("with empty db")(
-        test("no filters") {
+        test("with no filters") {
           checkIfArticleListIsEmpty(ArticlesFilters.empty, Pagination(20, 0))
         },
         test("with filters") {

@@ -29,7 +29,10 @@ object ArticleEndpointTestSupport:
 
     executeRequest(authorizationHeaderOpt, uri, listArticleEndpoint)
 
-  def callGetFeedArticles(authorizationHeaderOpt: Option[Map[String, String]], uri: Uri) =
+  def callGetFeedArticles(
+      authorizationHeaderOpt: Option[Map[String, String]],
+      uri: Uri
+  ): ZIO[ArticlesEndpoints, Throwable, Either[ResponseException[String, String], ArticlesList]] =
     val feedArticleEndpoint = ZIO
       .service[ArticlesEndpoints]
       .map(_.feedArticles)

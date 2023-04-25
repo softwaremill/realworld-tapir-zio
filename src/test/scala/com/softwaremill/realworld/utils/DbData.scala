@@ -8,25 +8,29 @@ object DbData:
   val exampleUser1 = UserRegisterData(
     email = "jake@example.com",
     username = "jake",
-    password = "secret password"
+    password =
+      "$argon2id$v=19$m=12,t=20,p=2$LGVt7F82NPRc6pTfwwvOQBgMrPMcW/JVamGdmKvc8fich+qrr9lF6J/TQiBGnjavunldHYhA8B01yrajDzu/Og$aImjH6G1kWWBMI0Ysn+vyNaOpVDvEBg7BU7tp7cKjIo"
   )
 
   val exampleUser2 = UserRegisterData(
     email = "john@example.com",
     username = "john",
-    password = "secret password"
+    password =
+      "$argon2id$v=19$m=12,t=20,p=2$LGVt7F82NPRc6pTfwwvOQBgMrPMcW/JVamGdmKvc8fich+qrr9lF6J/TQiBGnjavunldHYhA8B01yrajDzu/Og$aImjH6G1kWWBMI0Ysn+vyNaOpVDvEBg7BU7tp7cKjIo"
   )
 
   val exampleUser3 = UserRegisterData(
     email = "bill@example.com",
     username = "bill",
-    password = "secret password"
+    password =
+      "$argon2id$v=19$m=12,t=20,p=2$LGVt7F82NPRc6pTfwwvOQBgMrPMcW/JVamGdmKvc8fich+qrr9lF6J/TQiBGnjavunldHYhA8B01yrajDzu/Og$aImjH6G1kWWBMI0Ysn+vyNaOpVDvEBg7BU7tp7cKjIo"
   )
 
   val exampleUser4 = UserRegisterData(
     email = "michael@example.com",
     username = "michael",
-    password = "secret password"
+    password =
+      "$argon2id$v=19$m=12,t=20,p=2$LGVt7F82NPRc6pTfwwvOQBgMrPMcW/JVamGdmKvc8fich+qrr9lF6J/TQiBGnjavunldHYhA8B01yrajDzu/Og$aImjH6G1kWWBMI0Ysn+vyNaOpVDvEBg7BU7tp7cKjIo"
   )
 
   val exampleArticle1 = ArticleCreateData(

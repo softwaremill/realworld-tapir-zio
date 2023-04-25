@@ -94,16 +94,14 @@ object UserEndpointTestSupport:
       callGetCurrentUser(authorizationHeader, uri)
     )(
       isRight(
-        equalTo(
-          User(
-            UserData(
-              "admin@example.com",
-              None,
-              "admin",
-              Some("I dont work"),
-              Some("")
-            )
-          )
+        hasField(
+          "user",
+          _.user,
+          (hasField("email", _.email, equalTo("jake@example.com")): Assertion[UserData]) &&
+            hasField("token", _.token, isNone) &&
+            hasField("username", _.username, equalTo("jake")) &&
+            hasField("bio", _.bio, isNone) &&
+            hasField("image", _.image, isNone)
         )
       )
     )
@@ -141,11 +139,11 @@ object UserEndpointTestSupport:
         hasField(
           "user",
           _.user,
-          (hasField("email", _.email, equalTo("admin@example.com")): Assertion[UserData]) &&
+          (hasField("email", _.email, equalTo("jake@example.com")): Assertion[UserData]) &&
             hasField("token", _.token, isSome) &&
-            hasField("username", _.username, equalTo("admin")) &&
-            hasField("bio", _.bio, equalTo(Some("I dont work"))) &&
-            hasField("image", _.image, equalTo(Some("")))
+            hasField("username", _.username, equalTo("jake")) &&
+            hasField("bio", _.bio, isNone) &&
+            hasField("image", _.image, isNone)
         )
       )
     }
