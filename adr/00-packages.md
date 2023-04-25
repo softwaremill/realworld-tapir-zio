@@ -4,25 +4,27 @@
 
 We need to specify structure for the application. 
 It will involve choosing how we will divide code into packages and modules. 
-In its current state, application resembles an MVC based architecture. 
 We would like to make a clear decision, what application structure should be going forward.
 
 ## Decision
 
-We will divide application into layers represented by packages.
+We will divide application by functionalities into packages.
 
-We decided on the following layers:
-* app
-* api
-* infrastructure
+We decided on the following packages:
+* common
+* auth
+* articles
+* comments
+* users
 
-The app layer will contain domain models and service interfaces. The api layer will contain endpoint descriptions, without logic.
-Infrastructure layer will house concrete implementations of infrastructure-specific elements. 
-These include database queries based on concrete DB and access library (Quill), and, in the future, possible other technical components like external services, cache, etc. 
-For example, User model, UserRepository interface and UserService interface would be placed in the app layer.
-Postgres based implementation of UserRepository would be placed in the infrastructure layer.  
+The common package will contain auxiliary structures that will be used in the project.
+The auth package will contain the tools needed to authorize the user.
+
+Packages of articles, comments and users will have a similar structure. 
+Each of them will contain specific endpoints, will service them using services and will communicate with the database using repositories.
+In these packages will be clearly separated api layer that will contain "the contract", i.e. the endpoint descriptions, without logic.
   
-Example with one implementation per service(no separate app and infrastructure package):
+Example with one implementation per service:
 
 ```
 common
@@ -85,19 +87,19 @@ users
 
 ## Rationale
 
-* Layered structure will allow to separate interfaces from implementations. This separation, in turn, should allow for easier evolution of the application.
+* Dividing the code by functionality will help organize it better.
 * Separate pure description of the api can better showcase tapirs strengths. For example, it can be used to generate client for the api.
 * Pure api description, can be easily put into a separate module. This allows other projects to use it as a dependency.
-* New structure would simplify changing underlying infrastructure(database, cache, etc.) in the future.
+* Pure api description allow browse pure endpoint declarations as a documentation of the API.
 
 ## Consequences
 
-* Maintaining layered structure requires discipline
-* Conforming to new structure will require refactoring the application
-* Separation into layers requires more work upfront, when writing new code
+* Maintaining such a structure requires discipline.
+* Conforming to new structure will require refactoring the application.
+* New structure requires more work upfront, when writing new code.
 
 ## Conclusion
 
-We decided that, from now on, application will have a layered structure. 
-Such layered design requires to invest additional effort, but benefits outweigh the costs.
+We decided that, from now on, application will have a new structure. 
+Such design requires to invest additional effort, but benefits outweigh the costs.
 New app structure will allow for easier changes in the future, and will better showcase tapirs potential.
