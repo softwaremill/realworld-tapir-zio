@@ -12,6 +12,7 @@ We will divide application by functionalities into packages.
 
 We decided on the following packages:
 * `common`
+* `db`
 * `auth`
 * `articles`
 * `comments`
