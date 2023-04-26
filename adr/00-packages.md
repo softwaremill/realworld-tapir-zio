@@ -19,8 +19,9 @@ We decided on the following packages:
 * `users`
 
 The `common` package will contain auxiliary structures that will be used in the project.
-The `auth` package will have the tools needed to authorize the user. 
-The `db` package will contain the necessary data to operate the database.
+The `db` package will have the necessary data to operate the database.
+The `auth` package will contain the tools needed to authorize the user. 
+
 
 Packages of `articles`, `comments` and `users` will have a similar structure. 
 Each of them will contain specific endpoints, will service them using services and will communicate with the database using repositories.
