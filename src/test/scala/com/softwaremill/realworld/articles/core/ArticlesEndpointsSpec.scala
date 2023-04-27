@@ -3,8 +3,8 @@ package com.softwaremill.realworld.articles.core
 import com.softwaremill.realworld.articles.comments.CommentsRepository
 import com.softwaremill.realworld.articles.core.ArticleDbTestSupport.*
 import com.softwaremill.realworld.articles.core.ArticleEndpointTestSupport.*
-import com.softwaremill.realworld.articles.core.api.{ArticleUpdateData, ArticleUpdateRequest}
-import com.softwaremill.realworld.articles.core.{ArticlesEndpoints, ArticlesRepository, ArticlesService}
+import com.softwaremill.realworld.articles.core.api.{ArticleUpdateData, ArticleUpdateRequest, ArticlesEndpoints}
+import com.softwaremill.realworld.articles.core.{ArticlesRepository, ArticlesServerEndpoints, ArticlesService}
 import com.softwaremill.realworld.articles.tags.TagsRepository
 import com.softwaremill.realworld.auth.AuthService
 import com.softwaremill.realworld.common.{BaseEndpoints, Configuration}
@@ -266,5 +266,6 @@ object ArticlesEndpointsSpec extends ZIOSpecDefault:
     TagsRepository.live,
     ArticlesService.live,
     ArticlesEndpoints.live,
+    ArticlesServerEndpoints.live,
     testDbLayerWithEmptyDb
   )

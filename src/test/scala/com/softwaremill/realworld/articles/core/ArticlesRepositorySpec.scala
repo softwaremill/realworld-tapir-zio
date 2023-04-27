@@ -2,7 +2,7 @@ package com.softwaremill.realworld.articles.core
 
 import com.softwaremill.realworld.articles.core.ArticleDbTestSupport.*
 import com.softwaremill.realworld.articles.core.ArticleRepositoryTestSupport.*
-import com.softwaremill.realworld.articles.core.ArticlesEndpoints.{*, given}
+import com.softwaremill.realworld.articles.core.ArticlesServerEndpoints.{*, given}
 import com.softwaremill.realworld.articles.core.api.ArticleCreateData
 import com.softwaremill.realworld.articles.core.{ArticlesFilters, ArticlesRepository}
 import com.softwaremill.realworld.common.Pagination

@@ -2,7 +2,8 @@ package com.softwaremill.realworld
 
 import com.softwaremill.realworld.articles.comments.api.CommentsEndpoints
 import com.softwaremill.realworld.articles.comments.{CommentsRepository, CommentsServerEndpoints, CommentsService}
-import com.softwaremill.realworld.articles.core.{ArticlesEndpoints, ArticlesRepository, ArticlesService}
+import com.softwaremill.realworld.articles.core.api.ArticlesEndpoints
+import com.softwaremill.realworld.articles.core.{ArticlesRepository, ArticlesServerEndpoints, ArticlesService}
 import com.softwaremill.realworld.articles.tags.api.TagsEndpoints
 import com.softwaremill.realworld.articles.tags.{TagsRepository, TagsServerEndpoints, TagsService}
 import com.softwaremill.realworld.auth.AuthService
@@ -61,6 +62,7 @@ object Main extends ZIOAppDefault:
         UsersService.live,
         UsersRepository.live,
         ArticlesEndpoints.live,
+        ArticlesServerEndpoints.live,
         ArticlesService.live,
         ArticlesRepository.live,
         CommentsEndpoints.live,

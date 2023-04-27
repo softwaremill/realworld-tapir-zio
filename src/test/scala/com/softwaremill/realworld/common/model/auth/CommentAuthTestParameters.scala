@@ -2,7 +2,7 @@ package com.softwaremill.realworld.common.model.auth
 
 import com.softwaremill.realworld.articles.comments.CommentsServerEndpoints
 import com.softwaremill.realworld.articles.comments.api.CommentsEndpoints
-import com.softwaremill.realworld.articles.core.ArticlesEndpoints
+import com.softwaremill.realworld.articles.core.ArticlesServerEndpoints
 import sttp.client3.{Request, UriContext, basicRequest}
 import sttp.tapir.ztapir.ZServerEndpoint
 import zio.ZIO

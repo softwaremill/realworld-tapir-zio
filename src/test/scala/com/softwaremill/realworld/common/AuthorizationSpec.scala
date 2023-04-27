@@ -2,8 +2,8 @@ package com.softwaremill.realworld.common
 
 import com.softwaremill.realworld.articles.comments.api.{CommentResponse, CommentsEndpoints}
 import com.softwaremill.realworld.articles.comments.{CommentsRepository, CommentsServerEndpoints, CommentsService}
-import com.softwaremill.realworld.articles.core.api.{ArticleResponse, ArticlesListResponse}
-import com.softwaremill.realworld.articles.core.{Article, ArticlesEndpoints, ArticlesRepository, ArticlesService}
+import com.softwaremill.realworld.articles.core.api.{ArticleResponse, ArticlesEndpoints, ArticlesListResponse}
+import com.softwaremill.realworld.articles.core.{Article, ArticlesRepository, ArticlesServerEndpoints, ArticlesService}
 import com.softwaremill.realworld.articles.tags.TagsRepository
 import com.softwaremill.realworld.auth.AuthService
 import com.softwaremill.realworld.common.model.auth.*
@@ -193,7 +193,7 @@ object AuthorizationSpec extends ZIOSpecDefault:
     }
   }
 
-  def articleEndpointsAuthorizationTest(testParameters: ArticleAuthTestParameters): Spec[ArticlesEndpoints, Throwable] = {
+  def articleEndpointsAuthorizationTest(testParameters: ArticleAuthTestParameters): Spec[ArticlesServerEndpoints, Throwable] = {
     test(s"Article endpoints negative authorization test [expected: ${testParameters.expectedError}]") {
       assertZIO(
         testParameters.endpoint
@@ -243,6 +243,7 @@ object AuthorizationSpec extends ZIOSpecDefault:
     ArticlesRepository.live,
     ArticlesService.live,
     ArticlesEndpoints.live,
+    ArticlesServerEndpoints.live,
     CommentsRepository.live,
     CommentsService.live,
     CommentsEndpoints.live,

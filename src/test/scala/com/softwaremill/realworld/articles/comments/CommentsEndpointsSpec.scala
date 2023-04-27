@@ -3,7 +3,7 @@ package com.softwaremill.realworld.articles.comments
 import com.softwaremill.realworld.articles.comments.CommentDbTestSupport.*
 import com.softwaremill.realworld.articles.comments.CommentTestSupport.*
 import com.softwaremill.realworld.articles.comments.api.{CommentCreateData, CommentsEndpoints}
-import com.softwaremill.realworld.articles.core.{ArticlesEndpoints, ArticlesRepository, ArticlesService}
+import com.softwaremill.realworld.articles.core.{ArticlesRepository, ArticlesServerEndpoints, ArticlesService}
 import com.softwaremill.realworld.articles.tags.TagsRepository
 import com.softwaremill.realworld.auth.AuthService
 import com.softwaremill.realworld.common.{BaseEndpoints, Configuration}

@@ -2,7 +2,7 @@ package com.softwaremill.realworld.articles.comments
 
 import com.softwaremill.realworld.articles.comments.CommentAuthor
 import com.softwaremill.realworld.articles.comments.api.*
-import com.softwaremill.realworld.articles.core.ArticlesEndpoints
+import com.softwaremill.realworld.articles.core.ArticlesServerEndpoints
 import com.softwaremill.realworld.utils.TestUtils.backendStub
 import sttp.client3.ziojson.{asJson, zioJsonBodySerializer}
 import sttp.client3.{Response, ResponseException, basicRequest}

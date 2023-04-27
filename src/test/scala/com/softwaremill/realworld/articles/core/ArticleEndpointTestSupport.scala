@@ -2,7 +2,7 @@ package com.softwaremill.realworld.articles.core
 
 import com.softwaremill.diffx.{Diff, compare}
 import com.softwaremill.realworld.articles.core.api.*
-import com.softwaremill.realworld.articles.core.{Article, ArticleAuthor, ArticlesEndpoints}
+import com.softwaremill.realworld.articles.core.{Article, ArticleAuthor, ArticlesServerEndpoints}
 import com.softwaremill.realworld.articles.tags.TagsRepository
 import com.softwaremill.realworld.users.api.UserRegisterData
 import com.softwaremill.realworld.users.{Profile, UsersRepository}
@@ -22,28 +22,28 @@ object ArticleEndpointTestSupport:
   def callGetListArticles(
       authorizationHeaderOpt: Option[Map[String, String]],
       uri: Uri
-  ): ZIO[ArticlesEndpoints, Throwable, Either[ResponseException[String, String], ArticlesListResponse]] =
+  ): ZIO[ArticlesServerEndpoints, Throwable, Either[ResponseException[String, String], ArticlesListResponse]] =
     val listArticleEndpoint = ZIO
-      .service[ArticlesEndpoints]
-      .map(_.listArticles)
+      .service[ArticlesServerEndpoints]
+      .map(_.listArticlesServerEndpoint)
 
     executeRequest(authorizationHeaderOpt, uri, listArticleEndpoint)
 
   def callGetFeedArticles(
       authorizationHeaderOpt: Option[Map[String, String]],
       uri: Uri
-  ): ZIO[ArticlesEndpoints, Throwable, Either[ResponseException[String, String], ArticlesListResponse]] =
+  ): ZIO[ArticlesServerEndpoints, Throwable, Either[ResponseException[String, String], ArticlesListResponse]] =
     val feedArticleEndpoint = ZIO
-      .service[ArticlesEndpoints]
-      .map(_.feedArticles)
+      .service[ArticlesServerEndpoints]
+      .map(_.feedArticlesServerEndpoint)
 
     executeRequest(authorizationHeaderOpt, uri, feedArticleEndpoint)
 
   private def executeRequest(
       authorizationHeaderOpt: Option[Map[String, String]],
       uri: Uri,
-      endpoint: ZIO[ArticlesEndpoints, Nothing, ZServerEndpoint[Any, Any]]
-  ): ZIO[ArticlesEndpoints, Throwable, Either[ResponseException[String, String], ArticlesListResponse]] = {
+      endpoint: ZIO[ArticlesServerEndpoints, Nothing, ZServerEndpoint[Any, Any]]
+  ): ZIO[ArticlesServerEndpoints, Throwable, Either[ResponseException[String, String], ArticlesListResponse]] = {
 
     endpoint
       .flatMap { endpoint =>
@@ -64,10 +64,10 @@ object ArticleEndpointTestSupport:
   def callGetArticle(
       authorizationHeader: Map[String, String],
       uri: Uri
-  ): ZIO[ArticlesEndpoints, Throwable, Either[ResponseException[String, String], ArticleResponse]] =
+  ): ZIO[ArticlesServerEndpoints, Throwable, Either[ResponseException[String, String], ArticleResponse]] =
     ZIO
-      .service[ArticlesEndpoints]
-      .map(_.get)
+      .service[ArticlesServerEndpoints]
+      .map(_.getServerEndpoint)
       .flatMap { endpoint =>
         basicRequest
           .get(uri)
@@ -80,11 +80,11 @@ object ArticleEndpointTestSupport:
   def callDeleteArticle(
       authorizationHeader: Map[String, String],
       uri: Uri
-  ): ZIO[ArticlesEndpoints, Throwable, Response[Either[String, String]]] = {
+  ): ZIO[ArticlesServerEndpoints, Throwable, Response[Either[String, String]]] = {
 
     ZIO
-      .service[ArticlesEndpoints]
-      .map(_.delete)
+      .service[ArticlesServerEndpoints]
+      .map(_.deleteServerEndpoint)
       .flatMap { endpoint =>
         basicRequest
           .delete(uri)
@@ -97,10 +97,10 @@ object ArticleEndpointTestSupport:
       authorizationHeader: Map[String, String],
       uri: Uri,
       createData: ArticleCreateData
-  ): ZIO[ArticlesEndpoints, Throwable, Either[ResponseException[String, String], ArticleResponse]] = {
+  ): ZIO[ArticlesServerEndpoints, Throwable, Either[ResponseException[String, String], ArticleResponse]] = {
     ZIO
-      .service[ArticlesEndpoints]
-      .map(_.create)
+      .service[ArticlesServerEndpoints]
+      .map(_.createServerEndpoint)
       .flatMap { endpoint =>
         basicRequest
           .post(uri)
@@ -116,10 +116,10 @@ object ArticleEndpointTestSupport:
       authorizationHeader: Map[String, String],
       uri: Uri,
       updateData: ArticleUpdateRequest
-  ): ZIO[ArticlesEndpoints, Throwable, Either[ResponseException[String, String], ArticleResponse]] = {
+  ): ZIO[ArticlesServerEndpoints, Throwable, Either[ResponseException[String, String], ArticleResponse]] = {
     ZIO
-      .service[ArticlesEndpoints]
-      .map(_.update)
+      .service[ArticlesServerEndpoints]
+      .map(_.updateServerEndpoint)
       .flatMap { endpoint =>
         basicRequest
           .put(uri)
@@ -134,7 +134,7 @@ object ArticleEndpointTestSupport:
   def checkIfFilterErrorOccur(
       authorizationHeaderOpt: Option[Map[String, String]],
       uri: Uri
-  ): ZIO[ArticlesEndpoints, Throwable, TestResult] = {
+  ): ZIO[ArticlesServerEndpoints, Throwable, TestResult] = {
 
     assertZIO(
       callGetListArticles(authorizationHeaderOpt, uri)
@@ -153,7 +153,7 @@ object ArticleEndpointTestSupport:
   def checkIfPaginationErrorOccur(
       authorizationHeaderOpt: Option[Map[String, String]],
       uri: Uri
-  ): ZIO[ArticlesEndpoints, Throwable, TestResult] = {
+  ): ZIO[ArticlesServerEndpoints, Throwable, TestResult] = {
 
     assertZIO(
       callGetListArticles(authorizationHeaderOpt, uri)
@@ -172,7 +172,7 @@ object ArticleEndpointTestSupport:
   def checkIfPaginationErrorOccurInFeed(
       authorizationHeaderOpt: Option[Map[String, String]],
       uri: Uri
-  ): ZIO[ArticlesEndpoints, Throwable, TestResult] = {
+  ): ZIO[ArticlesServerEndpoints, Throwable, TestResult] = {
 
     assertZIO(
       callGetFeedArticles(authorizationHeaderOpt, uri)
@@ -192,7 +192,7 @@ object ArticleEndpointTestSupport:
       authorizationHeader: Map[String, String],
       uri: Uri,
       updateData: ArticleUpdateRequest
-  ): ZIO[ArticlesEndpoints, Throwable, TestResult] = {
+  ): ZIO[ArticlesServerEndpoints, Throwable, TestResult] = {
 
     assertZIO(
       callUpdateArticle(authorizationHeader, uri, updateData)
@@ -212,7 +212,7 @@ object ArticleEndpointTestSupport:
       authorizationHeader: Map[String, String],
       uri: Uri,
       createData: ArticleCreateData
-  ): ZIO[ArticlesEndpoints, Throwable, TestResult] = {
+  ): ZIO[ArticlesServerEndpoints, Throwable, TestResult] = {
 
     assertZIO(
       callCreateArticle(authorizationHeader, uri, createData)
@@ -231,7 +231,7 @@ object ArticleEndpointTestSupport:
   def checkIfNonExistentArticleErrorOccur(
       authorizationHeader: Map[String, String],
       uri: Uri
-  ): ZIO[ArticlesEndpoints, Throwable, TestResult] = {
+  ): ZIO[ArticlesServerEndpoints, Throwable, TestResult] = {
 
     assertZIO(callGetArticle(authorizationHeader, uri))(
       isLeft(
@@ -245,7 +245,7 @@ object ArticleEndpointTestSupport:
   def checkIfArticleListIsEmpty(
       authorizationHeaderOpt: Option[Map[String, String]],
       uri: Uri
-  ): ZIO[ArticlesEndpoints, Throwable, TestResult] = {
+  ): ZIO[ArticlesServerEndpoints, Throwable, TestResult] = {
 
     assertZIO(
       callGetListArticles(authorizationHeaderOpt, uri)
@@ -264,7 +264,7 @@ object ArticleEndpointTestSupport:
   def checkPagination(
       authorizationHeaderOpt: Option[Map[String, String]],
       uri: Uri
-  ): ZIO[ArticlesEndpoints, Throwable, TestResult] = {
+  ): ZIO[ArticlesServerEndpoints, Throwable, TestResult] = {
 
     for {
       articlesListOrError <- callGetListArticles(authorizationHeaderOpt, uri)
@@ -292,7 +292,7 @@ object ArticleEndpointTestSupport:
   def checkFeedPagination(
       authorizationHeaderOpt: Option[Map[String, String]],
       uri: Uri
-  ): ZIO[ArticlesEndpoints, Throwable, TestResult] = {
+  ): ZIO[ArticlesServerEndpoints, Throwable, TestResult] = {
 
     for {
       articlesFeedOrError <- callGetFeedArticles(authorizationHeaderOpt, uri)
@@ -320,7 +320,7 @@ object ArticleEndpointTestSupport:
   def checkFilters(
       authorizationHeaderOpt: Option[Map[String, String]],
       uri: Uri
-  ): ZIO[ArticlesEndpoints, Throwable, TestResult] = {
+  ): ZIO[ArticlesServerEndpoints, Throwable, TestResult] = {
 
     for {
       articlesListOrError <- callGetListArticles(authorizationHeaderOpt, uri)
@@ -348,7 +348,7 @@ object ArticleEndpointTestSupport:
   def listAvailableArticles(
       authorizationHeaderOpt: Option[Map[String, String]],
       uri: Uri
-  ): ZIO[ArticlesEndpoints, Throwable, TestResult] = {
+  ): ZIO[ArticlesServerEndpoints, Throwable, TestResult] = {
 
     for {
       articlesListOrError <- callGetListArticles(authorizationHeaderOpt, uri)
@@ -396,7 +396,7 @@ object ArticleEndpointTestSupport:
   def listFeedAvailableArticles(
       authorizationHeaderOpt: Option[Map[String, String]],
       uri: Uri
-  ): ZIO[ArticlesEndpoints, Throwable, TestResult] = {
+  ): ZIO[ArticlesServerEndpoints, Throwable, TestResult] = {
 
     for {
       articlesFeedOrError <- callGetFeedArticles(authorizationHeaderOpt, uri)
@@ -444,7 +444,7 @@ object ArticleEndpointTestSupport:
   def checkArticlesListAfterDeletion(
       authorizationHeaderOpt: Option[Map[String, String]],
       uri: Uri
-  ): ZIO[ArticlesEndpoints, Throwable, TestResult] = {
+  ): ZIO[ArticlesServerEndpoints, Throwable, TestResult] = {
 
     for {
       articlesListOrError <- callGetListArticles(authorizationHeaderOpt, uri)
@@ -463,7 +463,7 @@ object ArticleEndpointTestSupport:
   def getAndCheckExistingArticle(
       authorizationHeader: Map[String, String],
       uri: Uri
-  ): ZIO[ArticlesEndpoints, Throwable, TestResult] = {
+  ): ZIO[ArticlesServerEndpoints, Throwable, TestResult] = {
 
     assertZIO(
       callGetArticle(authorizationHeader, uri)
@@ -489,7 +489,7 @@ object ArticleEndpointTestSupport:
       authorizationHeader: Map[String, String],
       uri: Uri,
       createData: ArticleCreateData
-  ): ZIO[ArticlesEndpoints, Throwable, TestResult] = {
+  ): ZIO[ArticlesServerEndpoints, Throwable, TestResult] = {
 
     assertZIO(
       callCreateArticle(authorizationHeader, uri, createData)
@@ -515,7 +515,7 @@ object ArticleEndpointTestSupport:
       authorizationHeader: Map[String, String],
       uri: Uri,
       updateData: ArticleUpdateRequest
-  ): ZIO[ArticlesEndpoints, Throwable, TestResult] = {
+  ): ZIO[ArticlesServerEndpoints, Throwable, TestResult] = {
 
     assertZIO(
       callUpdateArticle(authorizationHeader, uri, updateData)
