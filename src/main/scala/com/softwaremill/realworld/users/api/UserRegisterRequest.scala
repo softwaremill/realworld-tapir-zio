@@ -3,7 +3,7 @@ package com.softwaremill.realworld.users.api
 import zio.json.{DeriveJsonDecoder, DeriveJsonEncoder}
 
 case class UserRegisterRequest(
-                                user: UserRegisterData
+    user: UserRegisterData
 )
 
 object UserRegisterRequest:

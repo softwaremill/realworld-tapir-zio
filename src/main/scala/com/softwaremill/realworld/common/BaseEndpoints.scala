@@ -1,6 +1,6 @@
 package com.softwaremill.realworld.common
 
-import com.softwaremill.realworld.articles.{ArticlesEndpoints, ArticlesService}
+import com.softwaremill.realworld.articles.core.{ArticlesEndpoints, ArticlesService}
 import com.softwaremill.realworld.auth.AuthService
 import com.softwaremill.realworld.common.*
 import com.softwaremill.realworld.common.BaseEndpoints.defaultErrorOutputs

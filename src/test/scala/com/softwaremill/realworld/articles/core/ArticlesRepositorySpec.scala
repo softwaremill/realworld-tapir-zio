@@ -1,9 +1,10 @@
-package com.softwaremill.realworld.articles
+package com.softwaremill.realworld.articles.core
 
-import com.softwaremill.realworld.articles.ArticleDbTestSupport.*
-import com.softwaremill.realworld.articles.ArticleRepositoryTestSupport.*
-import com.softwaremill.realworld.articles.ArticlesEndpoints.{*, given}
-import com.softwaremill.realworld.articles.model.{ArticleAuthor, ArticleCreateData, ArticleData}
+import com.softwaremill.realworld.articles.core.ArticleDbTestSupport.*
+import com.softwaremill.realworld.articles.core.ArticleRepositoryTestSupport.*
+import com.softwaremill.realworld.articles.core.ArticlesEndpoints.{*, given}
+import com.softwaremill.realworld.articles.core.api.ArticleCreateData
+import com.softwaremill.realworld.articles.core.{ArticlesFilters, ArticlesRepository}
 import com.softwaremill.realworld.common.Pagination
 import com.softwaremill.realworld.users.UsersRepository
 import com.softwaremill.realworld.utils.DbData.exampleUser1

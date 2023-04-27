@@ -1,4 +1,4 @@
-package com.softwaremill.realworld.tags
+package com.softwaremill.realworld.articles.tags
 
 import zio.json.{DeriveJsonDecoder, DeriveJsonEncoder, JsonDecoder, JsonEncoder}
 

@@ -1,7 +1,7 @@
 package com.softwaremill.realworld.articles.comments
 
-import com.softwaremill.realworld.articles.ArticlesRepository
-import com.softwaremill.realworld.tags.TagsRepository
+import com.softwaremill.realworld.articles.core.ArticlesRepository
+import com.softwaremill.realworld.articles.tags.TagsRepository
 import com.softwaremill.realworld.users.UsersRepository
 import com.softwaremill.realworld.utils.DbData.*
 import zio.ZIO

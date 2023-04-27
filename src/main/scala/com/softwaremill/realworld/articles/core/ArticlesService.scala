@@ -1,11 +1,12 @@
-package com.softwaremill.realworld.articles
+package com.softwaremill.realworld.articles.core
 
 import com.softwaremill.realworld.articles.comments.{CommentData, CommentRow}
-import com.softwaremill.realworld.articles.model.*
+import com.softwaremill.realworld.articles.core.api.{ArticleCreateData, ArticleUpdateData}
+import com.softwaremill.realworld.articles.core.{Article, ArticlesFilters, ArticlesRepository}
+import com.softwaremill.realworld.articles.tags.TagsRepository
 import com.softwaremill.realworld.common.Exceptions.{BadRequest, NotFound, Unauthorized}
 import com.softwaremill.realworld.common.db.UserRow
 import com.softwaremill.realworld.common.{Exceptions, Pagination}
-import com.softwaremill.realworld.tags.TagsRepository
 import com.softwaremill.realworld.users.{UsersRepository, UsersService}
 import zio.{Console, IO, Task, ZIO, ZLayer}
 
@@ -23,28 +24,28 @@ class ArticlesService(
   private val ArticleNotFoundMessage = (slug: String) => s"Article with slug $slug doesn't exist."
   private val CommentNotFoundMessage = (commentId: Int) => s"Comment with ID=$commentId doesn't exist"
 
-  def list(filters: ArticlesFilters, pagination: Pagination): IO[SQLException, List[ArticleData]] = articlesRepository
+  def list(filters: ArticlesFilters, pagination: Pagination): IO[SQLException, List[Article]] = articlesRepository
     .list(filters, pagination)
 
   def listArticlesByFollowedUsers(
       pagination: Pagination,
       email: String
-  ): Task[List[ArticleData]] =
+  ): Task[List[Article]] =
     for {
       userId <- usersService.getProfileByEmail(email).map(_.userId)
       foundArticles <- articlesRepository
         .listArticlesByFollowedUsers(pagination, userId)
     } yield foundArticles
 
-  def findBySlugAsSeenBy(slug: String, email: String): Task[ArticleData] = articlesRepository
+  def findBySlugAsSeenBy(slug: String, email: String): Task[Article] = articlesRepository
     .findBySlugAsSeenBy(slug, email)
     .someOrFail(Exceptions.NotFound(ArticleNotFoundMessage(slug)))
 
-  def findBySlugAsSeenBy(articleId: Int, email: String): Task[ArticleData] = articlesRepository
+  def findBySlugAsSeenBy(articleId: Int, email: String): Task[Article] = articlesRepository
     .findBySlugAsSeenBy(articleId, email)
     .someOrFail(Exceptions.NotFound(s"Article doesn't exist."))
 
-  def create(createData: ArticleCreateData, userEmail: String): Task[ArticleData] =
+  def create(createData: ArticleCreateData, userEmail: String): Task[Article] =
     for {
       user <- userByEmail(userEmail)
       articleId <- articlesRepository.add(createData, user.userId)
@@ -64,7 +65,7 @@ class ArticlesService(
     _ <- articlesRepository.deleteArticle(article.articleId)
   } yield ()
 
-  def update(articleUpdateData: ArticleUpdateData, slug: String, email: String): Task[ArticleData] =
+  def update(articleUpdateData: ArticleUpdateData, slug: String, email: String): Task[Article] =
     for {
       user <- userByEmail(email)
       oldArticle <- articlesRepository
@@ -78,21 +79,7 @@ class ArticlesService(
       _ <- articlesRepository.updateById(updatedArticle, articleId)
     } yield updatedArticle
 
-  private def updateArticleData(articleData: ArticleData, updatedData: ArticleUpdateData): ArticleData = {
-    articleData.copy(
-      slug = updatedData.title
-        .map(_.toLowerCase)
-        .map(_.trim)
-        .map(title => title.replace(" ", "-"))
-        .getOrElse(articleData.slug),
-      title = updatedData.title.map(_.trim).getOrElse(articleData.title),
-      description = updatedData.description.getOrElse(articleData.description),
-      body = updatedData.body.getOrElse(articleData.body),
-      updatedAt = Instant.now()
-    )
-  }
-
-  def makeFavorite(slug: String, email: String): Task[ArticleData] = for {
+  def makeFavorite(slug: String, email: String): Task[Article] = for {
     user <- userByEmail(email)
     articleId <- articlesRepository
       .findArticleIdBySlug(slug)
@@ -101,7 +88,7 @@ class ArticlesService(
     articleData <- findBySlugAsSeenBy(slug, email)
   } yield articleData
 
-  def removeFavorite(slug: String, email: String): Task[ArticleData] = for {
+  def removeFavorite(slug: String, email: String): Task[Article] = for {
     user <- userByEmail(email)
     articleId <- articlesRepository
       .findArticleIdBySlug(slug)
@@ -109,9 +96,6 @@ class ArticlesService(
     _ <- articlesRepository.removeFavorite(articleId, user.userId)
     articleData <- findBySlugAsSeenBy(slug, email)
   } yield articleData
-
-  private def userByEmail(email: String): Task[UserRow] =
-    usersRepository.findByEmail(email).someOrFail(NotFound("User doesn't exist, re-login may be needed!"))
 
   def addComment(slug: String, email: String, comment: String): Task[CommentData] = for {
     user <- userByEmail(email)
@@ -157,6 +141,23 @@ class ArticlesService(
         )
       )
     } yield commentDataList
+
+  private def updateArticleData(articleData: Article, updatedData: ArticleUpdateData): Article = {
+    articleData.copy(
+      slug = updatedData.title
+        .map(_.toLowerCase)
+        .map(_.trim)
+        .map(title => title.replace(" ", "-"))
+        .getOrElse(articleData.slug),
+      title = updatedData.title.map(_.trim).getOrElse(articleData.title),
+      description = updatedData.description.getOrElse(articleData.description),
+      body = updatedData.body.getOrElse(articleData.body),
+      updatedAt = Instant.now()
+    )
+  }
+
+  private def userByEmail(email: String): Task[UserRow] =
+    usersRepository.findByEmail(email).someOrFail(NotFound("User doesn't exist, re-login may be needed!"))
 
   private def handleProcessingResult[T](
       option: Option[T],

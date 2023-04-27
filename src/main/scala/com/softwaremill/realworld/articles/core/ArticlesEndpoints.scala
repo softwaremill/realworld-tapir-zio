@@ -1,8 +1,7 @@
-package com.softwaremill.realworld.articles
+package com.softwaremill.realworld.articles.core
 
-import com.softwaremill.realworld.articles.*
 import com.softwaremill.realworld.articles.comments.*
-import com.softwaremill.realworld.articles.model.*
+import com.softwaremill.realworld.articles.core.api.{ArticleCreateRequest, ArticleResponse, ArticleUpdateRequest, ArticlesListResponse}
 import com.softwaremill.realworld.common.*
 import com.softwaremill.realworld.common.db.{Db, DbConfig}
 import com.softwaremill.realworld.http.ErrorMapper.defaultErrorsMappings
@@ -48,12 +47,12 @@ class ArticlesEndpoints(articlesService: ArticlesService, base: BaseEndpoints):
     .in("api" / "articles")
     .in(articlesFilters)
     .in(articlesPagination)
-    .out(jsonBody[ArticlesList])
+    .out(jsonBody[ArticlesListResponse])
     .serverLogic(session =>
       (filters, pagination) =>
         articlesService
           .list(filters, pagination)
-          .map(articles => ArticlesList(articles = articles, articlesCount = articles.size))
+          .map(articles => ArticlesListResponse(articles = articles, articlesCount = articles.size))
           .logError
           .pipe(defaultErrorsMappings)
     )
@@ -61,39 +60,39 @@ class ArticlesEndpoints(articlesService: ArticlesService, base: BaseEndpoints):
   val feedArticles: ZServerEndpoint[Any, Any] = base.secureEndpoint.get
     .in("api" / "articles" / "feed")
     .in(articlesPagination)
-    .out(jsonBody[ArticlesList])
+    .out(jsonBody[ArticlesListResponse])
     .serverLogic(session =>
       pagination =>
         articlesService
           .listArticlesByFollowedUsers(pagination, session.email)
-          .map(articles => ArticlesList(articles = articles, articlesCount = articles.size))
+          .map(articles => ArticlesListResponse(articles = articles, articlesCount = articles.size))
           .logError
           .pipe(defaultErrorsMappings)
     )
 
   val get: ZServerEndpoint[Any, Any] = base.secureEndpoint.get
     .in("api" / "articles" / path[String]("slug")) // TODO Input Validation
-    .out(jsonBody[Article])
+    .out(jsonBody[ArticleResponse])
     .serverLogic(session =>
       slug =>
         articlesService
           .findBySlugAsSeenBy(slug, session.email)
           .logError
           .pipe(defaultErrorsMappings)
-          .map(Article.apply)
+          .map(ArticleResponse.apply)
     )
 
   val create: ZServerEndpoint[Any, Any] = base.secureEndpoint.post
     .in("api" / "articles")
-    .in(jsonBody[ArticleCreate]) // TODO Input Validation
-    .out(jsonBody[Article])
+    .in(jsonBody[ArticleCreateRequest]) // TODO Input Validation
+    .out(jsonBody[ArticleResponse])
     .serverLogic(session =>
       data =>
         articlesService
           .create(data.article, session.email)
           .logError
           .pipe(defaultErrorsMappings)
-          .map(Article.apply)
+          .map(ArticleResponse.apply)
     )
 
   val delete: ZServerEndpoint[Any, Any] = base.secureEndpoint.delete
@@ -108,37 +107,37 @@ class ArticlesEndpoints(articlesService: ArticlesService, base: BaseEndpoints):
 
   val update: ZServerEndpoint[Any, Any] = base.secureEndpoint.put
     .in("api" / "articles" / path[String]("slug"))
-    .in(jsonBody[ArticleUpdate]) // TODO Input Validation
-    .out(jsonBody[Article])
+    .in(jsonBody[ArticleUpdateRequest]) // TODO Input Validation
+    .out(jsonBody[ArticleResponse])
     .serverLogic(session =>
       data =>
         articlesService
           .update(articleUpdateData = data._2.article, slug = data._1, email = session.email)
           .logError
           .pipe(defaultErrorsMappings)
-          .map(Article.apply)
+          .map(ArticleResponse.apply)
     )
 
   val makeFavorite: ZServerEndpoint[Any, Any] = base.secureEndpoint.post
     .in("api" / "articles" / path[String]("slug") / "favorite")
-    .out(jsonBody[Article])
+    .out(jsonBody[ArticleResponse])
     .serverLogic(session =>
       slug =>
         articlesService
           .makeFavorite(slug, session.email)
           .pipe(defaultErrorsMappings)
-          .map(Article.apply)
+          .map(ArticleResponse.apply)
     )
 
   val removeFavorite: ZServerEndpoint[Any, Any] = base.secureEndpoint.delete
     .in("api" / "articles" / path[String]("slug") / "favorite")
-    .out(jsonBody[Article])
+    .out(jsonBody[ArticleResponse])
     .serverLogic(session =>
       slug =>
         articlesService
           .removeFavorite(slug, session.email)
           .pipe(defaultErrorsMappings)
-          .map(Article.apply)
+          .map(ArticleResponse.apply)
     )
 
   val addComment: ZServerEndpoint[Any, Any] = base.secureEndpoint.post

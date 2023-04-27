@@ -1,10 +1,10 @@
 package com.softwaremill.realworld
 
-import com.softwaremill.realworld.articles.{ArticlesEndpoints, ArticlesRepository, ArticlesService}
+import com.softwaremill.realworld.articles.core.{ArticlesEndpoints, ArticlesRepository, ArticlesService}
+import com.softwaremill.realworld.articles.tags.{TagsEndpoints, TagsRepository, TagsService}
 import com.softwaremill.realworld.auth.AuthService
 import com.softwaremill.realworld.common.db.{Db, DbConfig, DbMigrator}
 import com.softwaremill.realworld.common.{AppConfig, BaseEndpoints, Configuration, Exceptions}
-import com.softwaremill.realworld.tags.{TagsEndpoints, TagsRepository, TagsService}
 import com.softwaremill.realworld.users.api.UsersEndpoints
 import com.softwaremill.realworld.users.{UsersRepository, UsersServerEndpoints, UsersService}
 import sttp.model.StatusCode

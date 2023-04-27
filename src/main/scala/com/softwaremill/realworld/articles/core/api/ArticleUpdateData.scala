@@ -1,6 +1,5 @@
-package com.softwaremill.realworld.articles.model
+package com.softwaremill.realworld.articles.core.api
 
-import com.softwaremill.realworld.articles.model.ArticleUpdateData
 import com.softwaremill.realworld.common.NoneAsNullOptionEncoder.*
 import zio.json.{DeriveJsonDecoder, DeriveJsonEncoder, JsonDecoder, JsonEncoder}
 

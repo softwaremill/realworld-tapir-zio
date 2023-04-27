@@ -1,10 +1,11 @@
-package com.softwaremill.realworld.articles
+package com.softwaremill.realworld.articles.core
 
 import com.softwaremill.diffx.{Diff, compare}
-import com.softwaremill.realworld.articles.model.*
-import com.softwaremill.realworld.tags.TagsRepository
-import com.softwaremill.realworld.users.UsersRepository
+import com.softwaremill.realworld.articles.core.api.*
+import com.softwaremill.realworld.articles.core.{Article, ArticleAuthor, ArticlesEndpoints}
+import com.softwaremill.realworld.articles.tags.TagsRepository
 import com.softwaremill.realworld.users.api.UserRegisterData
+import com.softwaremill.realworld.users.{Profile, UsersRepository}
 import com.softwaremill.realworld.utils.TestUtils.backendStub
 import sttp.client3.ziojson.{asJson, zioJsonBodySerializer}
 import sttp.client3.{HttpError, Response, ResponseException, basicRequest}
@@ -21,7 +22,7 @@ object ArticleEndpointTestSupport:
   def callGetListArticles(
       authorizationHeaderOpt: Option[Map[String, String]],
       uri: Uri
-  ): ZIO[ArticlesEndpoints, Throwable, Either[ResponseException[String, String], ArticlesList]] =
+  ): ZIO[ArticlesEndpoints, Throwable, Either[ResponseException[String, String], ArticlesListResponse]] =
     val listArticleEndpoint = ZIO
       .service[ArticlesEndpoints]
       .map(_.listArticles)
@@ -31,7 +32,7 @@ object ArticleEndpointTestSupport:
   def callGetFeedArticles(
       authorizationHeaderOpt: Option[Map[String, String]],
       uri: Uri
-  ): ZIO[ArticlesEndpoints, Throwable, Either[ResponseException[String, String], ArticlesList]] =
+  ): ZIO[ArticlesEndpoints, Throwable, Either[ResponseException[String, String], ArticlesListResponse]] =
     val feedArticleEndpoint = ZIO
       .service[ArticlesEndpoints]
       .map(_.feedArticles)
@@ -42,7 +43,7 @@ object ArticleEndpointTestSupport:
       authorizationHeaderOpt: Option[Map[String, String]],
       uri: Uri,
       endpoint: ZIO[ArticlesEndpoints, Nothing, ZServerEndpoint[Any, Any]]
-  ): ZIO[ArticlesEndpoints, Throwable, Either[ResponseException[String, String], ArticlesList]] = {
+  ): ZIO[ArticlesEndpoints, Throwable, Either[ResponseException[String, String], ArticlesListResponse]] = {
 
     endpoint
       .flatMap { endpoint =>
@@ -54,7 +55,7 @@ object ArticleEndpointTestSupport:
           case None                      => requestWithUri
 
         requestAfterAuthorization
-          .response(asJson[ArticlesList])
+          .response(asJson[ArticlesListResponse])
           .send(backendStub(endpoint))
           .map(_.body)
       }
@@ -63,7 +64,7 @@ object ArticleEndpointTestSupport:
   def callGetArticle(
       authorizationHeader: Map[String, String],
       uri: Uri
-  ): ZIO[ArticlesEndpoints, Throwable, Either[ResponseException[String, String], Article]] =
+  ): ZIO[ArticlesEndpoints, Throwable, Either[ResponseException[String, String], ArticleResponse]] =
     ZIO
       .service[ArticlesEndpoints]
       .map(_.get)
@@ -71,7 +72,7 @@ object ArticleEndpointTestSupport:
         basicRequest
           .get(uri)
           .headers(authorizationHeader)
-          .response(asJson[Article])
+          .response(asJson[ArticleResponse])
           .send(backendStub(endpoint))
           .map(_.body)
       }
@@ -96,16 +97,16 @@ object ArticleEndpointTestSupport:
       authorizationHeader: Map[String, String],
       uri: Uri,
       createData: ArticleCreateData
-  ): ZIO[ArticlesEndpoints, Throwable, Either[ResponseException[String, String], Article]] = {
+  ): ZIO[ArticlesEndpoints, Throwable, Either[ResponseException[String, String], ArticleResponse]] = {
     ZIO
       .service[ArticlesEndpoints]
       .map(_.create)
       .flatMap { endpoint =>
         basicRequest
           .post(uri)
-          .body(ArticleCreate(createData))
+          .body(ArticleCreateRequest(createData))
           .headers(authorizationHeader)
-          .response(asJson[Article])
+          .response(asJson[ArticleResponse])
           .send(backendStub(endpoint))
           .map(_.body)
       }
@@ -114,8 +115,8 @@ object ArticleEndpointTestSupport:
   def callUpdateArticle(
       authorizationHeader: Map[String, String],
       uri: Uri,
-      updateData: ArticleUpdate
-  ): ZIO[ArticlesEndpoints, Throwable, Either[ResponseException[String, String], Article]] = {
+      updateData: ArticleUpdateRequest
+  ): ZIO[ArticlesEndpoints, Throwable, Either[ResponseException[String, String], ArticleResponse]] = {
     ZIO
       .service[ArticlesEndpoints]
       .map(_.update)
@@ -124,7 +125,7 @@ object ArticleEndpointTestSupport:
           .put(uri)
           .body(updateData)
           .headers(authorizationHeader)
-          .response(asJson[Article])
+          .response(asJson[ArticleResponse])
           .send(backendStub(endpoint))
           .map(_.body)
       }
@@ -190,7 +191,7 @@ object ArticleEndpointTestSupport:
   def updateAndCheckIfInvalidNameErrorOccur(
       authorizationHeader: Map[String, String],
       uri: Uri,
-      updateData: ArticleUpdate
+      updateData: ArticleUpdateRequest
   ): ZIO[ArticlesEndpoints, Throwable, TestResult] = {
 
     assertZIO(
@@ -251,8 +252,8 @@ object ArticleEndpointTestSupport:
     )(
       isRight(
         equalTo(
-          ArticlesList(
-            articles = List.empty[ArticleData],
+          ArticlesListResponse(
+            articles = List.empty[Article],
             articlesCount = 0
           )
         )
@@ -269,12 +270,12 @@ object ArticleEndpointTestSupport:
       articlesListOrError <- callGetListArticles(authorizationHeaderOpt, uri)
     } yield zio.test.assert(articlesListOrError.toOption) {
       isSome(
-        (hasField("articlesCount", _.articlesCount, equalTo(1)): Assertion[ArticlesList]) &&
+        (hasField("articlesCount", _.articlesCount, equalTo(1)): Assertion[ArticlesListResponse]) &&
           hasField(
             "articles",
             _.articles,
             exists(
-              (hasField("slug", _.slug, equalTo("how-to-train-your-dragon-2")): Assertion[ArticleData])
+              (hasField("slug", _.slug, equalTo("how-to-train-your-dragon-2")): Assertion[Article])
                 && hasField("title", _.title, equalTo("How to train your dragon 2"))
                 && hasField("description", _.description, equalTo("So toothless"))
                 && hasField("body", _.body, equalTo("Its a dragon"))
@@ -297,12 +298,12 @@ object ArticleEndpointTestSupport:
       articlesFeedOrError <- callGetFeedArticles(authorizationHeaderOpt, uri)
     } yield zio.test.assert(articlesFeedOrError.toOption) {
       isSome(
-        (hasField("articlesCount", _.articlesCount, equalTo(1)): Assertion[ArticlesList]) &&
+        (hasField("articlesCount", _.articlesCount, equalTo(1)): Assertion[ArticlesListResponse]) &&
           hasField(
             "articles",
             _.articles,
             exists(
-              (hasField("slug", _.slug, equalTo("how-to-train-your-dragon-2")): Assertion[ArticleData])
+              (hasField("slug", _.slug, equalTo("how-to-train-your-dragon-2")): Assertion[Article])
                 && hasField("title", _.title, equalTo("How to train your dragon 2"))
                 && hasField("description", _.description, equalTo("So toothless"))
                 && hasField("body", _.body, equalTo("Its a dragon"))
@@ -325,12 +326,12 @@ object ArticleEndpointTestSupport:
       articlesListOrError <- callGetListArticles(authorizationHeaderOpt, uri)
     } yield zio.test.assert(articlesListOrError.toOption) {
       isSome(
-        (hasField("articlesCount", _.articlesCount, equalTo(1)): Assertion[ArticlesList]) &&
+        (hasField("articlesCount", _.articlesCount, equalTo(1)): Assertion[ArticlesListResponse]) &&
           hasField(
             "articles",
             _.articles,
             exists(
-              (hasField("slug", _.slug, equalTo("how-to-train-your-dragon-2")): Assertion[ArticleData])
+              (hasField("slug", _.slug, equalTo("how-to-train-your-dragon-2")): Assertion[Article])
                 && hasField("title", _.title, equalTo("How to train your dragon 2"))
                 && hasField("description", _.description, equalTo("So toothless"))
                 && hasField("body", _.body, equalTo("Its a dragon"))
@@ -353,12 +354,12 @@ object ArticleEndpointTestSupport:
       articlesListOrError <- callGetListArticles(authorizationHeaderOpt, uri)
     } yield zio.test.assert(articlesListOrError.toOption) {
       isSome(
-        (hasField("articlesCount", _.articlesCount, equalTo(3)): Assertion[ArticlesList]) &&
+        (hasField("articlesCount", _.articlesCount, equalTo(3)): Assertion[ArticlesListResponse]) &&
           hasField(
             "articles",
             _.articles,
             exists(
-              (hasField("slug", _.slug, equalTo("how-to-train-your-dragon")): Assertion[ArticleData])
+              (hasField("slug", _.slug, equalTo("how-to-train-your-dragon")): Assertion[Article])
                 && hasField("title", _.title, equalTo("How to train your dragon"))
                 && hasField("description", _.description, equalTo("Ever wonder how?"))
                 && hasField("body", _.body, equalTo("It takes a Jacobian"))
@@ -368,7 +369,7 @@ object ArticleEndpointTestSupport:
                 && hasField("author", _.author, hasField("username", _.username, equalTo("jake")): Assertion[ArticleAuthor])
             ) &&
               exists(
-                (hasField("slug", _.slug, equalTo("how-to-train-your-dragon-2")): Assertion[ArticleData])
+                (hasField("slug", _.slug, equalTo("how-to-train-your-dragon-2")): Assertion[Article])
                   && hasField("title", _.title, equalTo("How to train your dragon 2"))
                   && hasField("description", _.description, equalTo("So toothless"))
                   && hasField("body", _.body, equalTo("Its a dragon"))
@@ -378,7 +379,7 @@ object ArticleEndpointTestSupport:
                   && hasField("author", _.author, hasField("username", _.username, equalTo("jake")): Assertion[ArticleAuthor])
               ) &&
               exists(
-                (hasField("slug", _.slug, equalTo("how-to-train-your-dragon-3")): Assertion[ArticleData])
+                (hasField("slug", _.slug, equalTo("how-to-train-your-dragon-3")): Assertion[Article])
                   && hasField("title", _.title, equalTo("How to train your dragon 3"))
                   && hasField("description", _.description, equalTo("The tagless one"))
                   && hasField("body", _.body, equalTo("Its not a dragon"))
@@ -401,12 +402,12 @@ object ArticleEndpointTestSupport:
       articlesFeedOrError <- callGetFeedArticles(authorizationHeaderOpt, uri)
     } yield zio.test.assert(articlesFeedOrError.toOption) {
       isSome(
-        (hasField("articlesCount", _.articlesCount, equalTo(3)): Assertion[ArticlesList]) &&
+        (hasField("articlesCount", _.articlesCount, equalTo(3)): Assertion[ArticlesListResponse]) &&
           hasField(
             "articles",
             _.articles,
             exists(
-              (hasField("slug", _.slug, equalTo("how-to-train-your-dragon")): Assertion[ArticleData])
+              (hasField("slug", _.slug, equalTo("how-to-train-your-dragon")): Assertion[Article])
                 && hasField("title", _.title, equalTo("How to train your dragon"))
                 && hasField("description", _.description, equalTo("Ever wonder how?"))
                 && hasField("body", _.body, equalTo("It takes a Jacobian"))
@@ -416,7 +417,7 @@ object ArticleEndpointTestSupport:
                 && hasField("author", _.author, hasField("username", _.username, equalTo("jake")): Assertion[ArticleAuthor])
             ) &&
               exists(
-                (hasField("slug", _.slug, equalTo("how-to-train-your-dragon-2")): Assertion[ArticleData])
+                (hasField("slug", _.slug, equalTo("how-to-train-your-dragon-2")): Assertion[Article])
                   && hasField("title", _.title, equalTo("How to train your dragon 2"))
                   && hasField("description", _.description, equalTo("So toothless"))
                   && hasField("body", _.body, equalTo("Its a dragon"))
@@ -426,7 +427,7 @@ object ArticleEndpointTestSupport:
                   && hasField("author", _.author, hasField("username", _.username, equalTo("jake")): Assertion[ArticleAuthor])
               ) &&
               exists(
-                (hasField("slug", _.slug, equalTo("how-to-train-your-dragon-5")): Assertion[ArticleData])
+                (hasField("slug", _.slug, equalTo("how-to-train-your-dragon-5")): Assertion[Article])
                   && hasField("title", _.title, equalTo("How to train your dragon 5"))
                   && hasField("description", _.description, equalTo("The tagfull one"))
                   && hasField("body", _.body, equalTo("Its a blue dragon"))
@@ -449,11 +450,11 @@ object ArticleEndpointTestSupport:
       articlesListOrError <- callGetListArticles(authorizationHeaderOpt, uri)
     } yield zio.test.assert(articlesListOrError.toOption) {
       isSome(
-        (hasField("articlesCount", _.articlesCount, equalTo(2)): Assertion[ArticlesList]) &&
+        (hasField("articlesCount", _.articlesCount, equalTo(2)): Assertion[ArticlesListResponse]) &&
           hasField(
             "articles",
             _.articles,
-            !exists(hasField("slug", _.slug, equalTo("how-to-train-your-dragon-3")): Assertion[ArticleData])
+            !exists(hasField("slug", _.slug, equalTo("how-to-train-your-dragon-3")): Assertion[Article])
           )
       )
     }
@@ -471,7 +472,7 @@ object ArticleEndpointTestSupport:
         hasField(
           "article",
           _.article,
-          (hasField("slug", _.slug, equalTo("how-to-train-your-dragon-2")): Assertion[ArticleData])
+          (hasField("slug", _.slug, equalTo("how-to-train-your-dragon-2")): Assertion[Article])
             && hasField("title", _.title, equalTo("How to train your dragon 2"))
             && hasField("description", _.description, equalTo("So toothless"))
             && hasField("body", _.body, equalTo("Its a dragon"))
@@ -497,7 +498,7 @@ object ArticleEndpointTestSupport:
         hasField(
           "article",
           _.article,
-          (hasField("slug", _.slug, equalTo("how-to-train-your-dragon-2")): Assertion[ArticleData])
+          (hasField("slug", _.slug, equalTo("how-to-train-your-dragon-2")): Assertion[Article])
             && hasField("title", _.title, equalTo("How to train your dragon 2"))
             && hasField("description", _.description, equalTo("So toothless"))
             && hasField("body", _.body, equalTo("Its a dragon"))
@@ -513,7 +514,7 @@ object ArticleEndpointTestSupport:
   def updateAndCheckArticle(
       authorizationHeader: Map[String, String],
       uri: Uri,
-      updateData: ArticleUpdate
+      updateData: ArticleUpdateRequest
   ): ZIO[ArticlesEndpoints, Throwable, TestResult] = {
 
     assertZIO(
@@ -523,7 +524,7 @@ object ArticleEndpointTestSupport:
         hasField(
           "article",
           _.article,
-          (hasField("slug", _.slug, equalTo("updated-slug")): Assertion[ArticleData])
+          (hasField("slug", _.slug, equalTo("updated-slug")): Assertion[Article])
             && hasField("title", _.title, equalTo("Updated slug"))
             && hasField("description", _.description, equalTo("updated description"))
             && hasField("body", _.body, equalTo("updated body"))

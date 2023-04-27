@@ -1,11 +1,12 @@
-package com.softwaremill.realworld.articles
+package com.softwaremill.realworld.articles.core
 
 import com.softwaremill.diffx.{Diff, compare}
-import com.softwaremill.realworld.articles.model.{ArticleAuthor, ArticleCreateData, ArticleData}
+import com.softwaremill.realworld.articles.core.api.ArticleCreateData
+import com.softwaremill.realworld.articles.core.{Article, ArticleAuthor, ArticlesFilters, ArticlesRepository}
 import com.softwaremill.realworld.common.Exceptions.AlreadyInUse
 import com.softwaremill.realworld.common.Pagination
 import com.softwaremill.realworld.common.db.UserRow
-import com.softwaremill.realworld.users.UsersRepository
+import com.softwaremill.realworld.users.{Profile, UsersRepository}
 import sttp.client3.testing.SttpBackendStub
 import sttp.client3.{HttpError, Response, ResponseException, UriContext, basicRequest}
 import sttp.tapir.EndpointOutput.StatusCode
@@ -20,21 +21,21 @@ import java.time.Instant
 
 object ArticleRepositoryTestSupport:
 
-  def callListArticles(filters: ArticlesFilters, pagination: Pagination): ZIO[ArticlesRepository, SQLException, List[ArticleData]] = {
+  def callListArticles(filters: ArticlesFilters, pagination: Pagination): ZIO[ArticlesRepository, SQLException, List[Article]] = {
     for {
       repo <- ZIO.service[ArticlesRepository]
       result <- repo.list(filters, pagination)
     } yield result
   }
 
-  def callFindBySlug(slug: String): ZIO[ArticlesRepository, SQLException, Option[ArticleData]] = {
+  def callFindBySlug(slug: String): ZIO[ArticlesRepository, SQLException, Option[Article]] = {
     for {
       repo <- ZIO.service[ArticlesRepository]
       result <- repo.findBySlug(slug)
     } yield result
   }
 
-  def callFindBySlugAsSeenBy(slug: String, viewerEmail: String): ZIO[ArticlesRepository, SQLException, Option[ArticleData]] = {
+  def callFindBySlugAsSeenBy(slug: String, viewerEmail: String): ZIO[ArticlesRepository, SQLException, Option[Article]] = {
     for {
       repo <- ZIO.service[ArticlesRepository]
       result <- repo.findBySlugAsSeenBy(slug, viewerEmail)
@@ -69,7 +70,7 @@ object ArticleRepositoryTestSupport:
     } yield result
   }
 
-  def callUpdateArticle(articleUpdateData: ArticleData, articleId: Int): ZIO[ArticlesRepository, Throwable, Unit] = {
+  def callUpdateArticle(articleUpdateData: Article, articleId: Int): ZIO[ArticlesRepository, Throwable, Unit] = {
     for {
       repo <- ZIO.service[ArticlesRepository]
       result <- repo.updateById(articleUpdateData, articleId)
@@ -114,7 +115,7 @@ object ArticleRepositoryTestSupport:
 
     assertZIO((for {
       articleId <- callFindArticleIdBySlug(existingSlug).someOrFail(s"Article $existingSlug doesn't exist")
-      articleUpdateData = ArticleData(
+      articleUpdateData = Article(
         slug = updatedSlug,
         title = updatedTitle,
         description = updatedDescription,
@@ -144,7 +145,7 @@ object ArticleRepositoryTestSupport:
     } yield zio.test.assert(articlesList)(
       hasSize(equalTo(1)) &&
         exists(
-          (hasField("slug", _.slug, equalTo("how-to-train-your-dragon-2")): Assertion[ArticleData])
+          (hasField("slug", _.slug, equalTo("how-to-train-your-dragon-2")): Assertion[Article])
             && hasField("title", _.title, equalTo("How to train your dragon 2"))
             && hasField("description", _.description, equalTo("So toothless"))
             && hasField("body", _.body, equalTo("Its a dragon"))
@@ -162,7 +163,7 @@ object ArticleRepositoryTestSupport:
     } yield zio.test.assert(articlesList)(
       hasSize(equalTo(3)) &&
         exists(
-          (hasField("slug", _.slug, equalTo("how-to-train-your-dragon")): Assertion[ArticleData])
+          (hasField("slug", _.slug, equalTo("how-to-train-your-dragon")): Assertion[Article])
             && hasField("title", _.title, equalTo("How to train your dragon"))
             && hasField("description", _.description, equalTo("Ever wonder how?"))
             && hasField("body", _.body, equalTo("It takes a Jacobian"))
@@ -172,7 +173,7 @@ object ArticleRepositoryTestSupport:
             && hasField("author", _.author, hasField("username", _.username, equalTo("jake")): Assertion[ArticleAuthor])
         ) &&
         exists(
-          (hasField("slug", _.slug, equalTo("how-to-train-your-dragon-2")): Assertion[ArticleData])
+          (hasField("slug", _.slug, equalTo("how-to-train-your-dragon-2")): Assertion[Article])
             && hasField("title", _.title, equalTo("How to train your dragon 2"))
             && hasField("description", _.description, equalTo("So toothless"))
             && hasField("body", _.body, equalTo("Its a dragon"))
@@ -182,7 +183,7 @@ object ArticleRepositoryTestSupport:
             && hasField("author", _.author, hasField("username", _.username, equalTo("jake")): Assertion[ArticleAuthor])
         ) &&
         exists(
-          (hasField("slug", _.slug, equalTo("how-to-train-your-dragon-3")): Assertion[ArticleData])
+          (hasField("slug", _.slug, equalTo("how-to-train-your-dragon-3")): Assertion[Article])
             && hasField("title", _.title, equalTo("How to train your dragon 3"))
             && hasField("description", _.description, equalTo("The tagless one"))
             && hasField("body", _.body, equalTo("Its not a dragon"))
@@ -203,7 +204,7 @@ object ArticleRepositoryTestSupport:
     } yield zio.test.assert(articlesList)(
       hasSize(equalTo(2)) &&
         exists(
-          (hasField("slug", _.slug, equalTo("how-to-train-your-dragon")): Assertion[ArticleData])
+          (hasField("slug", _.slug, equalTo("how-to-train-your-dragon")): Assertion[Article])
             && hasField("title", _.title, equalTo("How to train your dragon"))
             && hasField("description", _.description, equalTo("Ever wonder how?"))
             && hasField("body", _.body, equalTo("It takes a Jacobian"))
@@ -213,7 +214,7 @@ object ArticleRepositoryTestSupport:
             && hasField("author", _.author, hasField("username", _.username, equalTo("jake")): Assertion[ArticleAuthor])
         ) &&
         exists(
-          (hasField("slug", _.slug, equalTo("how-to-train-your-dragon-2")): Assertion[ArticleData])
+          (hasField("slug", _.slug, equalTo("how-to-train-your-dragon-2")): Assertion[Article])
             && hasField("title", _.title, equalTo("How to train your dragon 2"))
             && hasField("description", _.description, equalTo("So toothless"))
             && hasField("body", _.body, equalTo("Its a dragon"))
@@ -234,7 +235,7 @@ object ArticleRepositoryTestSupport:
     } yield zio.test.assert(articlesList)(
       hasSize(equalTo(1)) &&
         exists(
-          (hasField("slug", _.slug, equalTo("how-to-train-your-dragon")): Assertion[ArticleData])
+          (hasField("slug", _.slug, equalTo("how-to-train-your-dragon")): Assertion[Article])
             && hasField("title", _.title, equalTo("How to train your dragon"))
             && hasField("description", _.description, equalTo("Ever wonder how?"))
             && hasField("body", _.body, equalTo("It takes a Jacobian"))
@@ -255,7 +256,7 @@ object ArticleRepositoryTestSupport:
     } yield zio.test.assert(articlesList)(
       hasSize(equalTo(1)) &&
         exists(
-          (hasField("slug", _.slug, equalTo("how-to-train-your-dragon-3")): Assertion[ArticleData])
+          (hasField("slug", _.slug, equalTo("how-to-train-your-dragon-3")): Assertion[Article])
             && hasField("title", _.title, equalTo("How to train your dragon 3"))
             && hasField("description", _.description, equalTo("The tagless one"))
             && hasField("body", _.body, equalTo("Its not a dragon"))
@@ -275,7 +276,7 @@ object ArticleRepositoryTestSupport:
       callFindBySlug(slug)
     )(
       isSome(
-        (hasField("slug", _.slug, equalTo("how-to-train-your-dragon")): Assertion[ArticleData])
+        (hasField("slug", _.slug, equalTo("how-to-train-your-dragon")): Assertion[Article])
           && hasField("title", _.title, equalTo("How to train your dragon"))
           && hasField("description", _.description, equalTo("Ever wonder how?"))
           && hasField("body", _.body, equalTo("It takes a Jacobian"))
@@ -296,7 +297,7 @@ object ArticleRepositoryTestSupport:
       callFindBySlugAsSeenBy(slug, viewerEmail)
     )(
       isSome(
-        (hasField("slug", _.slug, equalTo("how-to-train-your-dragon-2")): Assertion[ArticleData])
+        (hasField("slug", _.slug, equalTo("how-to-train-your-dragon-2")): Assertion[Article])
           && hasField("title", _.title, equalTo("How to train your dragon 2"))
           && hasField("description", _.description, equalTo("So toothless"))
           && hasField("body", _.body, equalTo("Its a dragon"))
@@ -347,7 +348,7 @@ object ArticleRepositoryTestSupport:
       article <- callFindBySlug(slug)
     } yield zio.test.assert(article) {
       isSome(
-        (hasField("slug", _.slug, equalTo("new-article-under-test")): Assertion[ArticleData])
+        (hasField("slug", _.slug, equalTo("new-article-under-test")): Assertion[Article])
           && hasField("title", _.title, equalTo("New-article-under-test"))
           && hasField("description", _.description, equalTo("What a nice day!"))
           && hasField("body", _.body, equalTo("Writing scala code is quite challenging pleasure"))
@@ -369,7 +370,7 @@ object ArticleRepositoryTestSupport:
 
     for {
       articleId <- callFindArticleIdBySlug(existingSlug).someOrFail(s"Article $existingSlug doesn't exist")
-      articleUpdateData = ArticleData(
+      articleUpdateData = Article(
         slug = updatedSlug,
         title = updatedTitle,
         description = updatedDescription,
@@ -385,7 +386,7 @@ object ArticleRepositoryTestSupport:
       article <- callFindBySlug(articleUpdateData.slug)
     } yield zio.test.assert(article) {
       isSome(
-        (hasField("slug", _.slug, equalTo("updated-article-under-test")): Assertion[ArticleData])
+        (hasField("slug", _.slug, equalTo("updated-article-under-test")): Assertion[Article])
           && hasField("title", _.title, equalTo("Updated article under test"))
           && hasField("description", _.description, equalTo("What a nice updated day!"))
           && hasField("body", _.body, equalTo("Updating scala code is quite challenging pleasure"))

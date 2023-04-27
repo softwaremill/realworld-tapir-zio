@@ -1,6 +1,5 @@
-package com.softwaremill.realworld.articles.model
+package com.softwaremill.realworld.articles.core.api
 
-import com.softwaremill.realworld.articles.model.ArticleCreateData
 import zio.json.{DeriveJsonDecoder, DeriveJsonEncoder, JsonDecoder, JsonEncoder}
 
 case class ArticleCreateData(

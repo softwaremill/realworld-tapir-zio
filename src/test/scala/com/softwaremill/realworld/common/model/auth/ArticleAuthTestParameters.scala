@@ -1,6 +1,6 @@
 package com.softwaremill.realworld.common.model.auth
 
-import com.softwaremill.realworld.articles.ArticlesEndpoints
+import com.softwaremill.realworld.articles.core.ArticlesEndpoints
 import sttp.client3.{Request, UriContext, basicRequest}
 import sttp.tapir.ztapir.ZServerEndpoint
 import zio.ZIO

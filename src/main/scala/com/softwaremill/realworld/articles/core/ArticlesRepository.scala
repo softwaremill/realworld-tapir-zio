@@ -1,10 +1,12 @@
-package com.softwaremill.realworld.articles
+package com.softwaremill.realworld.articles.core
 
-import com.softwaremill.realworld.articles.ArticlesTags.{explodeTags, tagsConcat}
+import com.softwaremill.realworld.articles.*
 import com.softwaremill.realworld.articles.comments.CommentRow
-import com.softwaremill.realworld.articles.model.*
+import com.softwaremill.realworld.articles.core.api.ArticleCreateData
+import com.softwaremill.realworld.articles.core.{Article, ArticleAuthor, ArticlesFilters}
 import com.softwaremill.realworld.common.db.UserRow
 import com.softwaremill.realworld.common.{Exceptions, Pagination}
+import com.softwaremill.realworld.users.Profile
 import io.getquill.*
 import io.getquill.jdbczio.*
 import org.sqlite.SQLiteErrorCode.SQLITE_CONSTRAINT_UNIQUE
@@ -18,6 +20,20 @@ import scala.collection.immutable
 import scala.util.chaining.*
 
 case class ProfileRow(userId: Int, username: String, bio: String, image: String)
+case class ArticleFavoriteRow(profileId: Int, articleId: Int)
+
+case class ArticleRow(
+    articleId: Int,
+    slug: String,
+    title: String,
+    description: String,
+    body: String,
+    createdAt: Instant,
+    updatedAt: Instant,
+    authorId: Int
+)
+
+case class ArticleTagRow(tag: String, articleId: Int)
 
 class ArticlesRepository(quill: Quill.Sqlite[SnakeCase]):
   import quill.*
@@ -28,8 +44,11 @@ class ArticlesRepository(quill: Quill.Sqlite[SnakeCase]):
   private inline def queryProfile = quote(querySchema[ProfileRow](entity = "users"))
   private inline def queryUser = quote(querySchema[UserRow](entity = "users"))
   private inline def queryCommentArticle = quote(querySchema[CommentRow](entity = "comments_articles"))
+  private inline def tagsConcat: Quoted[String => String] = quote { (str: String) =>
+    sql"GROUP_CONCAT(($str), '|')".pure.as[String]
+  }
 
-  def list(filters: ArticlesFilters, pagination: Pagination): IO[SQLException, List[ArticleData]] = {
+  def list(filters: ArticlesFilters, pagination: Pagination): IO[SQLException, List[Article]] = {
     val tagFilter = filters.tag.getOrElse("")
     val authorFilter = filters.author.getOrElse("")
     val favoritedFilter = filters.favorited.getOrElse("")
@@ -65,7 +84,7 @@ class ArticlesRepository(quill: Quill.Sqlite[SnakeCase]):
   def listArticlesByFollowedUsers(
       pagination: Pagination,
       followerId: Int
-  ): IO[SQLException, List[ArticleData]] = {
+  ): IO[SQLException, List[Article]] = {
 
     run(for {
       ar <- sql"""
@@ -88,7 +107,7 @@ class ArticlesRepository(quill: Quill.Sqlite[SnakeCase]):
       .map(_.map(article))
   }
 
-  def findBySlug(slug: String): IO[SQLException, Option[ArticleData]] =
+  def findBySlug(slug: String): IO[SQLException, Option[Article]] =
     run(for {
       ar <- queryArticle if ar.slug == lift(slug)
       tr <- queryTagArticle
@@ -117,7 +136,7 @@ class ArticlesRepository(quill: Quill.Sqlite[SnakeCase]):
     )
       .map(_.headOption)
 
-  def findBySlugAsSeenBy(slug: String, viewerEmail: String): IO[SQLException, Option[ArticleData]] =
+  def findBySlugAsSeenBy(slug: String, viewerEmail: String): IO[SQLException, Option[Article]] =
     run(for {
       ar <- queryArticle if ar.slug == lift(slug)
       tr <- queryTagArticle
@@ -136,7 +155,7 @@ class ArticlesRepository(quill: Quill.Sqlite[SnakeCase]):
       .map(_.headOption)
       .map(_.map(mapToArticleData))
 
-  def findBySlugAsSeenBy(articleId: Int, viewerEmail: String): IO[SQLException, Option[ArticleData]] =
+  def findBySlugAsSeenBy(articleId: Int, viewerEmail: String): IO[SQLException, Option[Article]] =
     run(for {
       ar <- queryArticle if ar.articleId == lift(articleId)
       tr <- queryTagArticle
@@ -190,7 +209,7 @@ class ArticlesRepository(quill: Quill.Sqlite[SnakeCase]):
   def deleteFavoritesByArticleId(articleId: Int): Task[Long] =
     run(queryFavoriteArticle.filter(_.articleId == lift(articleId)).delete)
 
-  def updateById(updateData: ArticleData, articleId: Int): Task[Unit] = run(
+  def updateById(updateData: Article, articleId: Int): Task[Unit] = run(
     queryArticle
       .filter(_.articleId == lift(articleId))
       .update(
@@ -236,9 +255,11 @@ class ArticlesRepository(quill: Quill.Sqlite[SnakeCase]):
   def findComments(articleId: Int): Task[List[CommentRow]] =
     run(queryCommentArticle.filter(_.articleId == lift(articleId)))
 
-  private def article(tuple: (ArticleRow, ProfileRow, Option[String], Option[Int])): ArticleData = {
+  private def explodeTags(tags: String): List[String] = tags.split("\\|").toList
+
+  private def article(tuple: (ArticleRow, ProfileRow, Option[String], Option[Int])): Article = {
     val (ar, pr, tags, favorites) = tuple
-    ArticleData(
+    Article(
       ar.slug,
       ar.title,
       ar.description,
@@ -254,9 +275,9 @@ class ArticlesRepository(quill: Quill.Sqlite[SnakeCase]):
     )
   }
 
-  private val mapToArticleData: ((ArticleRow, ProfileRow, Option[String], Option[Int], Boolean)) => ArticleData = {
+  private val mapToArticleData: ((ArticleRow, ProfileRow, Option[String], Option[Int], Boolean)) => Article = {
     case (ar, pr, tags, favorites, isFavorite) =>
-      ArticleData(
+      Article(
         ar.slug,
         ar.title,
         ar.description,

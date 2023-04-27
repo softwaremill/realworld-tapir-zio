@@ -1,12 +1,12 @@
 package com.softwaremill.realworld.common
 
-import com.softwaremill.realworld.articles.model.{Article, ArticleAuthor, ArticleData, ArticlesList}
-import com.softwaremill.realworld.articles.{ArticlesEndpoints, ArticlesRepository, ArticlesService}
+import com.softwaremill.realworld.articles.core.api.{ArticleResponse, ArticlesListResponse}
+import com.softwaremill.realworld.articles.core.{Article, ArticlesEndpoints, ArticlesRepository, ArticlesService}
+import com.softwaremill.realworld.articles.tags.TagsRepository
 import com.softwaremill.realworld.auth.AuthService
 import com.softwaremill.realworld.common.db.{Db, DbConfig, DbMigrator}
 import com.softwaremill.realworld.common.model.auth.*
 import com.softwaremill.realworld.common.{BaseEndpoints, Configuration}
-import com.softwaremill.realworld.tags.TagsRepository
 import com.softwaremill.realworld.users.UsersEndpointsSpec.test
 import com.softwaremill.realworld.users.api.{ProfileResponse, UserResponse, UsersEndpoints}
 import com.softwaremill.realworld.users.{UsersRepository, UsersServerEndpoints, UsersService}
@@ -196,7 +196,7 @@ object AuthorizationSpec extends ZIOSpecDefault:
           .flatMap { endpoint =>
             testParameters.request
               .headers(testParameters.headers)
-              .response(asJson[Article])
+              .response(asJson[ArticleResponse])
               .send(backendStub(endpoint))
               .map(_.body)
           }

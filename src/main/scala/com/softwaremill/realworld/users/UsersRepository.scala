@@ -76,15 +76,15 @@ class UsersRepository(quill: Quill.Sqlite[SnakeCase]):
     }
   }
 
-  def follow(followedId: Int, followerId: Int) = run {
+  def follow(followedId: Int, followerId: Int): ZIO[Any, SQLException, Long] = run {
     query[Followers].insert(_.userId -> lift(followedId), _.followerId -> lift(followerId)).onConflictIgnore
   }
 
-  def unfollow(followedId: Int, followerId: Int) = run {
+  def unfollow(followedId: Int, followerId: Int): ZIO[Any, SQLException, Long] = run {
     query[Followers].filter(f => (f.userId == lift(followedId)) && (f.followerId == lift(followerId))).delete
   }
 
-  def isFollowing(followedId: Int, followerId: Int) = run {
+  def isFollowing(followedId: Int, followerId: Int): ZIO[Any, SQLException, Boolean] = run {
     query[Followers].filter(_.userId == lift(followedId)).filter(_.followerId == lift(followerId)).map(_ => 1).nonEmpty
   }
 

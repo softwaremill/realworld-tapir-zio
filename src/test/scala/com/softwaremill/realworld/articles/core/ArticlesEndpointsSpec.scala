@@ -1,11 +1,12 @@
-package com.softwaremill.realworld.articles
+package com.softwaremill.realworld.articles.core
 
-import com.softwaremill.realworld.articles.ArticleDbTestSupport.*
-import com.softwaremill.realworld.articles.ArticleEndpointTestSupport.*
-import com.softwaremill.realworld.articles.model.*
+import com.softwaremill.realworld.articles.core.ArticleDbTestSupport.*
+import com.softwaremill.realworld.articles.core.ArticleEndpointTestSupport.*
+import com.softwaremill.realworld.articles.core.api.{ArticleUpdateData, ArticleUpdateRequest}
+import com.softwaremill.realworld.articles.core.{ArticlesEndpoints, ArticlesRepository, ArticlesService}
+import com.softwaremill.realworld.articles.tags.TagsRepository
 import com.softwaremill.realworld.auth.AuthService
 import com.softwaremill.realworld.common.{BaseEndpoints, Configuration}
-import com.softwaremill.realworld.tags.TagsRepository
 import com.softwaremill.realworld.users.api.UserRegisterData
 import com.softwaremill.realworld.users.{UsersRepository, UsersService}
 import com.softwaremill.realworld.utils.DbData.exampleArticle2
@@ -225,7 +226,7 @@ object ArticlesEndpointsSpec extends ZIOSpecDefault:
           result <- updateAndCheckArticle(
             authorizationHeader = authHeader,
             uri = uri"http://test.com/api/articles/how-to-train-your-dragon",
-            updateData = ArticleUpdate(
+            updateData = ArticleUpdateRequest(
               ArticleUpdateData(
                 title = Option("Updated slug"),
                 description = Option("updated description"),
@@ -242,7 +243,7 @@ object ArticlesEndpointsSpec extends ZIOSpecDefault:
           result <- updateAndCheckIfInvalidNameErrorOccur(
             authorizationHeader = authHeader,
             uri = uri"http://test.com/api/articles/how-to-train-your-dragon",
-            updateData = ArticleUpdate(
+            updateData = ArticleUpdateRequest(
               ArticleUpdateData(
                 title = Option("How to train your dragon 2"),
                 description = Option("updated description"),

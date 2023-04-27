@@ -1,4 +1,4 @@
-package com.softwaremill.realworld.tags
+package com.softwaremill.realworld.articles.tags
 
 case class TagRow(
     articleId: Int,

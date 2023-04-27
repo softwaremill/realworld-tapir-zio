@@ -1,4 +1,4 @@
-package com.softwaremill.realworld.tags
+package com.softwaremill.realworld.articles.tags
 
 import com.softwaremill.realworld.common.BaseEndpoints
 import com.softwaremill.realworld.http.ErrorMapper.defaultErrorsMappings

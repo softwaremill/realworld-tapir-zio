@@ -1,6 +1,6 @@
 package com.softwaremill.realworld.articles.comments
 
-import com.softwaremill.realworld.articles.ArticlesEndpoints
+import com.softwaremill.realworld.articles.core.ArticlesEndpoints
 import com.softwaremill.realworld.users.Profile
 import com.softwaremill.realworld.utils.TestUtils.backendStub
 import sttp.client3.ziojson.{asJson, zioJsonBodySerializer}

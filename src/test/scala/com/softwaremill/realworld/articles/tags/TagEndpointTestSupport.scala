@@ -1,5 +1,6 @@
-package com.softwaremill.realworld.tags
+package com.softwaremill.realworld.articles.tags
 
+import com.softwaremill.realworld.articles.tags.{TagsEndpoints, TagsList}
 import com.softwaremill.realworld.utils.TestUtils.backendStub
 import sttp.client3.basicRequest
 import sttp.client3.ziojson.asJson
