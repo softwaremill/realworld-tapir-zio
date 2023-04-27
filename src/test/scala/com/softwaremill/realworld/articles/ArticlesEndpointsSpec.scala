@@ -5,10 +5,9 @@ import com.softwaremill.realworld.articles.ArticleEndpointTestSupport.*
 import com.softwaremill.realworld.articles.model.*
 import com.softwaremill.realworld.auth.AuthService
 import com.softwaremill.realworld.common.{BaseEndpoints, Configuration}
-import com.softwaremill.realworld.profiles.{ProfilesRepository, ProfilesService}
 import com.softwaremill.realworld.tags.TagsRepository
-import com.softwaremill.realworld.users.UsersRepository
-import com.softwaremill.realworld.users.model.UserRegisterData
+import com.softwaremill.realworld.users.api.UserRegisterData
+import com.softwaremill.realworld.users.{UsersRepository, UsersService}
 import com.softwaremill.realworld.utils.DbData.exampleArticle2
 import com.softwaremill.realworld.utils.TestUtils.*
 import sttp.client3.UriContext
@@ -259,10 +258,9 @@ object ArticlesEndpointsSpec extends ZIOSpecDefault:
     AuthService.live,
     BaseEndpoints.live,
     UsersRepository.live,
+    UsersService.live,
     ArticlesRepository.live,
-    ProfilesRepository.live,
     TagsRepository.live,
-    ProfilesService.live,
     ArticlesService.live,
     ArticlesEndpoints.live,
     testDbLayerWithEmptyDb

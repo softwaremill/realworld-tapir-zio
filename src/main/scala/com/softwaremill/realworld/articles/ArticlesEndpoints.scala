@@ -4,7 +4,7 @@ import com.softwaremill.realworld.articles.*
 import com.softwaremill.realworld.articles.comments.*
 import com.softwaremill.realworld.articles.model.*
 import com.softwaremill.realworld.common.*
-import com.softwaremill.realworld.db.{Db, DbConfig}
+import com.softwaremill.realworld.common.db.{Db, DbConfig}
 import com.softwaremill.realworld.http.ErrorMapper.defaultErrorsMappings
 import io.getquill.SnakeCase
 import sttp.model.StatusCode
@@ -65,7 +65,7 @@ class ArticlesEndpoints(articlesService: ArticlesService, base: BaseEndpoints):
     .serverLogic(session =>
       pagination =>
         articlesService
-          .listArticlesByFollowedUsers(pagination, session)
+          .listArticlesByFollowedUsers(pagination, session.email)
           .map(articles => ArticlesList(articles = articles, articlesCount = articles.size))
           .logError
           .pipe(defaultErrorsMappings)

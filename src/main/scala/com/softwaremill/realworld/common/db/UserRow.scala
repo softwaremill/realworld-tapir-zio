@@ -1,4 +1,4 @@
-package com.softwaremill.realworld.users.model
+package com.softwaremill.realworld.common.db
 
 case class UserRow(
     userId: Int,

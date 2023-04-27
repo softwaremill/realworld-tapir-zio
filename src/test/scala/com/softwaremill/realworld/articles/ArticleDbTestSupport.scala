@@ -1,6 +1,5 @@
 package com.softwaremill.realworld.articles
 
-import com.softwaremill.realworld.profiles.ProfilesRepository
 import com.softwaremill.realworld.tags.TagsRepository
 import com.softwaremill.realworld.users.UsersRepository
 import com.softwaremill.realworld.utils.DbData.*
@@ -30,12 +29,11 @@ object ArticleDbTestSupport:
     for {
       articleRepo <- ZIO.service[ArticlesRepository]
       userRepo <- ZIO.service[UsersRepository]
-      profileRepo <- ZIO.service[ProfilesRepository]
       _ <- userRepo.add(exampleUser1)
       _ <- userRepo.add(exampleUser2)
       user1 <- userRepo.findByEmail(exampleUser1.email).someOrFail(s"User with email ${exampleUser1.email} doesn't exist.")
       user2 <- userRepo.findByEmail(exampleUser2.email).someOrFail(s"User with email ${exampleUser2.email} doesn't exist.")
-      _ <- profileRepo.follow(user1.userId, user2.userId)
+      _ <- userRepo.follow(user1.userId, user2.userId)
       _ <- articleRepo.add(exampleArticle1, user1.userId)
       _ <- articleRepo.add(exampleArticle2, user1.userId)
       _ <- articleRepo.add(exampleArticle3, user2.userId)
@@ -50,7 +48,6 @@ object ArticleDbTestSupport:
     for {
       articleRepo <- ZIO.service[ArticlesRepository]
       userRepo <- ZIO.service[UsersRepository]
-      profileRepo <- ZIO.service[ProfilesRepository]
       _ <- userRepo.add(exampleUser1)
       _ <- userRepo.add(exampleUser2)
       _ <- userRepo.add(exampleUser3)
@@ -59,8 +56,8 @@ object ArticleDbTestSupport:
       user2 <- userRepo.findByEmail(exampleUser2.email).someOrFail(s"User with email ${exampleUser2.email} doesn't exist.")
       user3 <- userRepo.findByEmail(exampleUser3.email).someOrFail(s"User with email ${exampleUser3.email} doesn't exist.")
       user4 <- userRepo.findByEmail(exampleUser4.email).someOrFail(s"User with email ${exampleUser4.email} doesn't exist.")
-      _ <- profileRepo.follow(user1.userId, user2.userId)
-      _ <- profileRepo.follow(user3.userId, user2.userId)
+      _ <- userRepo.follow(user1.userId, user2.userId)
+      _ <- userRepo.follow(user3.userId, user2.userId)
       _ <- articleRepo.add(exampleArticle1, user1.userId)
       _ <- articleRepo.add(exampleArticle2, user1.userId)
       _ <- articleRepo.add(exampleArticle3, user2.userId)

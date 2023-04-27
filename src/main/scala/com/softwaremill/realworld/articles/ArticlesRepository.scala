@@ -3,9 +3,8 @@ package com.softwaremill.realworld.articles
 import com.softwaremill.realworld.articles.ArticlesTags.{explodeTags, tagsConcat}
 import com.softwaremill.realworld.articles.comments.CommentRow
 import com.softwaremill.realworld.articles.model.*
+import com.softwaremill.realworld.common.db.UserRow
 import com.softwaremill.realworld.common.{Exceptions, Pagination}
-import com.softwaremill.realworld.profiles.ProfileRow
-import com.softwaremill.realworld.users.model.UserRow
 import io.getquill.*
 import io.getquill.jdbczio.*
 import org.sqlite.SQLiteErrorCode.SQLITE_CONSTRAINT_UNIQUE
@@ -17,6 +16,8 @@ import java.time.Instant
 import javax.sql.DataSource
 import scala.collection.immutable
 import scala.util.chaining.*
+
+case class ProfileRow(userId: Int, username: String, bio: String, image: String)
 
 class ArticlesRepository(quill: Quill.Sqlite[SnakeCase]):
   import quill.*

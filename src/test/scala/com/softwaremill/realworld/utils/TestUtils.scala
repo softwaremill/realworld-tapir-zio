@@ -3,7 +3,7 @@ package com.softwaremill.realworld.utils
 import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm
 import com.softwaremill.realworld.auth.AuthService
-import com.softwaremill.realworld.db.{Db, DbConfig, DbMigrator}
+import com.softwaremill.realworld.common.db.{Db, DbConfig, DbMigrator}
 import com.softwaremill.realworld.utils.DbData.exampleUser1
 import com.softwaremill.realworld.{CustomDecodeFailureHandler, DefectHandler}
 import io.getquill.*

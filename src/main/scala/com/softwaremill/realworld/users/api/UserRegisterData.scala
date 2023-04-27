@@ -1,4 +1,4 @@
-package com.softwaremill.realworld.users.model
+package com.softwaremill.realworld.users.api
 
 import zio.json.{DeriveJsonDecoder, DeriveJsonEncoder}
 

@@ -5,7 +5,6 @@ import com.softwaremill.realworld.articles.ArticleRepositoryTestSupport.*
 import com.softwaremill.realworld.articles.ArticlesEndpoints.{*, given}
 import com.softwaremill.realworld.articles.model.{ArticleAuthor, ArticleCreateData, ArticleData}
 import com.softwaremill.realworld.common.Pagination
-import com.softwaremill.realworld.profiles.ProfilesRepository
 import com.softwaremill.realworld.users.UsersRepository
 import com.softwaremill.realworld.utils.DbData.exampleUser1
 import com.softwaremill.realworld.utils.TestUtils.*
@@ -153,6 +152,5 @@ object ArticlesRepositorySpec extends ZIOSpecDefault:
   ).provide(
     ArticlesRepository.live,
     UsersRepository.live,
-    ProfilesRepository.live,
     testDbLayerWithEmptyDb
   )

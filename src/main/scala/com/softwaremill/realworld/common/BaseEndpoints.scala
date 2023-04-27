@@ -4,8 +4,7 @@ import com.softwaremill.realworld.articles.{ArticlesEndpoints, ArticlesService}
 import com.softwaremill.realworld.auth.AuthService
 import com.softwaremill.realworld.common.*
 import com.softwaremill.realworld.common.BaseEndpoints.defaultErrorOutputs
-import com.softwaremill.realworld.db.{Db, DbConfig}
-import com.softwaremill.realworld.users.model.UserSession
+import com.softwaremill.realworld.common.db.{Db, DbConfig}
 import io.getquill.SnakeCase
 import sttp.model.headers.WWWAuthenticateChallenge
 import sttp.model.{HeaderNames, StatusCode}
@@ -16,6 +15,8 @@ import sttp.tapir.ztapir.*
 import sttp.tapir.{Endpoint, EndpointIO, EndpointInput, EndpointOutput, PublicEndpoint, Validator}
 import zio.json.{DeriveJsonDecoder, DeriveJsonEncoder}
 import zio.{Cause, Exit, IO, ZIO, ZLayer}
+
+case class UserSession(email: String)
 
 class BaseEndpoints(authService: AuthService):
 

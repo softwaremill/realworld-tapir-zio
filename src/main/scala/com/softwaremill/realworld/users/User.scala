@@ -1,9 +1,11 @@
-package com.softwaremill.realworld.users.model
+package com.softwaremill.realworld.users
 
 import com.softwaremill.realworld.common.NoneAsNullOptionEncoder.*
+import com.softwaremill.realworld.common.db.UserRow
+import com.softwaremill.realworld.users.api.UserUpdateData
 import zio.json.{DeriveJsonDecoder, DeriveJsonEncoder}
 
-case class UserData(
+case class User(
     email: String,
     token: Option[String],
     username: String,
@@ -11,9 +13,9 @@ case class UserData(
     image: Option[String]
 )
 
-object UserData:
+object User:
 
-  def fromRow(userRow: UserRow): UserData = UserData(
+  def fromRow(userRow: UserRow): User = User(
     userRow.email,
     None,
     userRow.username,
@@ -21,7 +23,7 @@ object UserData:
     userRow.image
   )
 
-  def fromUpdate(userUpdateData: UserUpdateData): UserData = UserData(
+  def fromUpdate(userUpdateData: UserUpdateData): User = User(
     email = userUpdateData.email.orNull,
     token = Option.empty[String],
     username = userUpdateData.username.orNull,
@@ -29,5 +31,5 @@ object UserData:
     image = userUpdateData.image
   )
 
-  given userDataEncoder: zio.json.JsonEncoder[UserData] = DeriveJsonEncoder.gen[UserData]
-  given userDataDecoder: zio.json.JsonDecoder[UserData] = DeriveJsonDecoder.gen[UserData]
+  given userDataEncoder: zio.json.JsonEncoder[User] = DeriveJsonEncoder.gen[User]
+  given userDataDecoder: zio.json.JsonDecoder[User] = DeriveJsonDecoder.gen[User]

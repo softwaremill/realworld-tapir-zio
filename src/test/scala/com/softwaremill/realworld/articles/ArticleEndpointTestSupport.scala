@@ -2,10 +2,9 @@ package com.softwaremill.realworld.articles
 
 import com.softwaremill.diffx.{Diff, compare}
 import com.softwaremill.realworld.articles.model.*
-import com.softwaremill.realworld.profiles.ProfilesRepository
 import com.softwaremill.realworld.tags.TagsRepository
 import com.softwaremill.realworld.users.UsersRepository
-import com.softwaremill.realworld.users.model.UserRegisterData
+import com.softwaremill.realworld.users.api.UserRegisterData
 import com.softwaremill.realworld.utils.TestUtils.backendStub
 import sttp.client3.ziojson.{asJson, zioJsonBodySerializer}
 import sttp.client3.{HttpError, Response, ResponseException, basicRequest}

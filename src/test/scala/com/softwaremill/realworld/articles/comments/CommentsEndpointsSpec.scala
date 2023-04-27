@@ -3,13 +3,11 @@ package com.softwaremill.realworld.articles.comments
 import com.softwaremill.realworld.articles.comments.CommentCreateData
 import com.softwaremill.realworld.articles.comments.CommentDbTestSupport.*
 import com.softwaremill.realworld.articles.comments.CommentTestSupport.*
-import com.softwaremill.realworld.articles.comments.CommentsEndpointsSpec.suite
 import com.softwaremill.realworld.articles.{ArticlesEndpoints, ArticlesRepository, ArticlesService}
 import com.softwaremill.realworld.auth.AuthService
 import com.softwaremill.realworld.common.{BaseEndpoints, Configuration}
-import com.softwaremill.realworld.profiles.{ProfilesRepository, ProfilesService}
 import com.softwaremill.realworld.tags.TagsRepository
-import com.softwaremill.realworld.users.UsersRepository
+import com.softwaremill.realworld.users.{UsersRepository, UsersService}
 import com.softwaremill.realworld.utils.TestUtils.*
 import sttp.client3.UriContext
 import zio.test.TestServices.test
@@ -93,8 +91,7 @@ object CommentsEndpointsSpec extends ZIOSpecDefault:
     ArticlesService.live,
     ArticlesEndpoints.live,
     BaseEndpoints.live,
-    ProfilesService.live,
-    ProfilesRepository.live,
     TagsRepository.live,
+    UsersService.live,
     testDbLayerWithEmptyDb
   )

@@ -3,11 +3,10 @@ package com.softwaremill.realworld.articles
 import com.softwaremill.realworld.articles.comments.{CommentData, CommentRow}
 import com.softwaremill.realworld.articles.model.*
 import com.softwaremill.realworld.common.Exceptions.{BadRequest, NotFound, Unauthorized}
+import com.softwaremill.realworld.common.db.UserRow
 import com.softwaremill.realworld.common.{Exceptions, Pagination}
-import com.softwaremill.realworld.profiles.{ProfileRow, ProfilesService}
 import com.softwaremill.realworld.tags.TagsRepository
-import com.softwaremill.realworld.users.UsersRepository
-import com.softwaremill.realworld.users.model.{UserRow, UserSession}
+import com.softwaremill.realworld.users.{UsersRepository, UsersService}
 import zio.{Console, IO, Task, ZIO, ZLayer}
 
 import java.sql.SQLException
@@ -17,7 +16,7 @@ import javax.sql.DataSource
 class ArticlesService(
     articlesRepository: ArticlesRepository,
     usersRepository: UsersRepository,
-    profilesService: ProfilesService,
+    usersService: UsersService,
     tagsRepository: TagsRepository
 ):
 
@@ -29,10 +28,10 @@ class ArticlesService(
 
   def listArticlesByFollowedUsers(
       pagination: Pagination,
-      session: UserSession
+      email: String
   ): Task[List[ArticleData]] =
     for {
-      userId <- profilesService.getProfileByEmail(session.email).map(_.userId)
+      userId <- usersService.getProfileByEmail(email).map(_.userId)
       foundArticles <- articlesRepository
         .listArticlesByFollowedUsers(pagination, userId)
     } yield foundArticles
@@ -119,7 +118,7 @@ class ArticlesService(
     articleId <- articlesRepository.findArticleIdBySlug(slug).someOrFail(NotFound(ArticleNotFoundMessage(slug)))
     commentId <- articlesRepository.addComment(articleId, user.userId, comment)
     commentRow <- articlesRepository.findComment(commentId).someOrFail(NotFound(CommentNotFoundMessage(commentId)))
-    profile <- profilesService.getProfileData(commentRow.authorId, Some(user.userId))
+    profile <- usersService.getProfileData(commentRow.authorId, Some(user.userId))
   } yield CommentData(commentRow.commentId, commentRow.createdAt, commentRow.updatedAt, commentRow.body, profile)
 
   def deleteComment(slug: String, email: String, commentId: Int): Task[Unit] = for {
@@ -142,10 +141,10 @@ class ArticlesService(
             case Some(userEmail) =>
               for {
                 user <- userByEmail(userEmail)
-                profile <- profilesService.getProfileData(commentRow.authorId, Some(user.userId))
+                profile <- usersService.getProfileData(commentRow.authorId, Some(user.userId))
               } yield profile
 
-            case None => profilesService.getProfileData(commentRow.authorId, None)
+            case None => usersService.getProfileData(commentRow.authorId, None)
           ).map(profile =>
             CommentData(
               id = commentRow.commentId,
@@ -169,5 +168,5 @@ class ArticlesService(
     }
 
 object ArticlesService:
-  val live: ZLayer[ArticlesRepository with UsersRepository with ProfilesService with TagsRepository, Nothing, ArticlesService] =
+  val live: ZLayer[ArticlesRepository with UsersRepository with UsersService with TagsRepository, Nothing, ArticlesService] =
     ZLayer.fromFunction(ArticlesService(_, _, _, _))

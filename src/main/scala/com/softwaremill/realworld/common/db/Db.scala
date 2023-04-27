@@ -1,4 +1,4 @@
-package com.softwaremill.realworld.db
+package com.softwaremill.realworld.common.db
 
 import com.zaxxer.hikari.{HikariConfig, HikariDataSource}
 import io.getquill.*

@@ -1,8 +1,7 @@
 package com.softwaremill.realworld.articles.comments
 
 import com.softwaremill.realworld.articles.ArticlesEndpoints
-import com.softwaremill.realworld.articles.comments.{Comment, CommentCreate, CommentCreateData, CommentData, CommentsList}
-import com.softwaremill.realworld.profiles.ProfileData
+import com.softwaremill.realworld.users.Profile
 import com.softwaremill.realworld.utils.TestUtils.backendStub
 import sttp.client3.ziojson.{asJson, zioJsonBodySerializer}
 import sttp.client3.{Response, ResponseException, basicRequest}
@@ -106,7 +105,7 @@ object CommentTestSupport:
           "comment",
           _.comment,
           (hasField("body", _.body, equalTo("Amazing article!")): Assertion[CommentData]) &&
-            hasField("author", _.author, hasField("username", _.username, equalTo("michael")): Assertion[ProfileData])
+            hasField("author", _.author, hasField("username", _.username, equalTo("michael")): Assertion[Profile])
         )
       )
     }
@@ -127,11 +126,11 @@ object CommentTestSupport:
           hasSize(equalTo(2)) &&
             exists(
               (hasField("body", _.body, equalTo("Thank you so much!")): Assertion[CommentData]) &&
-                hasField("author", _.author, hasField("username", _.username, equalTo("jake")): Assertion[ProfileData])
+                hasField("author", _.author, hasField("username", _.username, equalTo("jake")): Assertion[Profile])
             ) &&
             exists(
               (hasField("body", _.body, equalTo("Great article!")): Assertion[CommentData]) &&
-                hasField("author", _.author, hasField("username", _.username, equalTo("michael")): Assertion[ProfileData])
+                hasField("author", _.author, hasField("username", _.username, equalTo("michael")): Assertion[Profile])
             )
         )
       )
@@ -154,7 +153,7 @@ object CommentTestSupport:
           hasSize(equalTo(1)) &&
             exists(
               (hasField("body", _.body, equalTo("Not bad.")): Assertion[CommentData]) &&
-                hasField("author", _.author, hasField("username", _.username, equalTo("michael")): Assertion[ProfileData])
+                hasField("author", _.author, hasField("username", _.username, equalTo("michael")): Assertion[Profile])
             )
         )
       )

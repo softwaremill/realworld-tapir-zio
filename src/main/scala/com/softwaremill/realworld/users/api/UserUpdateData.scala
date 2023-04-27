@@ -1,6 +1,7 @@
-package com.softwaremill.realworld.users.model
+package com.softwaremill.realworld.users.api
 
 import com.softwaremill.realworld.common.NoneAsNullOptionEncoder.*
+import com.softwaremill.realworld.users.UserWithPassword
 import zio.json.{DeriveJsonDecoder, DeriveJsonEncoder}
 
 case class UserUpdateData(

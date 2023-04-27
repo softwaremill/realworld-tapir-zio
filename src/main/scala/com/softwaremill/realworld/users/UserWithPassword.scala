@@ -1,14 +1,17 @@
-package com.softwaremill.realworld.users.model
+package com.softwaremill.realworld.users
+
+import com.softwaremill.realworld.common.db.UserRow
+import com.softwaremill.realworld.users.User
 
 case class UserWithPassword(
-    user: UserData,
+    user: User,
     hashedPassword: String
 )
 
 object UserWithPassword {
   def fromRow(userRow: UserRow): UserWithPassword = {
     UserWithPassword(
-      UserData.fromRow(userRow),
+      User.fromRow(userRow),
       userRow.password
     )
   }

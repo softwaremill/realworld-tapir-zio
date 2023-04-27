@@ -3,14 +3,13 @@ package com.softwaremill.realworld.common
 import com.softwaremill.realworld.articles.model.{Article, ArticleAuthor, ArticleData, ArticlesList}
 import com.softwaremill.realworld.articles.{ArticlesEndpoints, ArticlesRepository, ArticlesService}
 import com.softwaremill.realworld.auth.AuthService
+import com.softwaremill.realworld.common.db.{Db, DbConfig, DbMigrator}
 import com.softwaremill.realworld.common.model.auth.*
 import com.softwaremill.realworld.common.{BaseEndpoints, Configuration}
-import com.softwaremill.realworld.db.{Db, DbConfig, DbMigrator}
-import com.softwaremill.realworld.profiles.{Profile, ProfilesEndpoints, ProfilesRepository, ProfilesService}
 import com.softwaremill.realworld.tags.TagsRepository
 import com.softwaremill.realworld.users.UsersEndpointsSpec.test
-import com.softwaremill.realworld.users.model.User
-import com.softwaremill.realworld.users.{UsersEndpoints, UsersRepository, UsersService}
+import com.softwaremill.realworld.users.api.{ProfileResponse, UserResponse, UsersEndpoints}
+import com.softwaremill.realworld.users.{UsersRepository, UsersServerEndpoints, UsersService}
 import com.softwaremill.realworld.utils.TestUtils.*
 import sttp.client3.testing.SttpBackendStub
 import sttp.client3.ziojson.*
@@ -43,6 +42,36 @@ object AuthorizationSpec extends ZIOSpecDefault:
     ),
     UserAuthTestParameters(
       endpointParam = UserAuthEndpointParameters.update,
+      headers = Map(),
+      expectedError = "Invalid value for: header Authorization (missing)"
+    ),
+    UserAuthTestParameters(
+      endpointParam = UserAuthEndpointParameters.getProfile("username"),
+      headers = Map("Authorization" -> "Token Invalid JWT"),
+      expectedError = "{\"error\":\"Invalid token!\"}"
+    ),
+    UserAuthTestParameters(
+      endpointParam = UserAuthEndpointParameters.getProfile("username"),
+      headers = Map(),
+      expectedError = "Invalid value for: header Authorization (missing)"
+    ),
+    UserAuthTestParameters(
+      endpointParam = UserAuthEndpointParameters.followUser("username"),
+      headers = Map("Authorization" -> "Token Invalid JWT"),
+      expectedError = "{\"error\":\"Invalid token!\"}"
+    ),
+    UserAuthTestParameters(
+      endpointParam = UserAuthEndpointParameters.followUser("username"),
+      headers = Map(),
+      expectedError = "Invalid value for: header Authorization (missing)"
+    ),
+    UserAuthTestParameters(
+      endpointParam = UserAuthEndpointParameters.unfollowUser("username"),
+      headers = Map("Authorization" -> "Token Invalid JWT"),
+      expectedError = "{\"error\":\"Invalid token!\"}"
+    ),
+    UserAuthTestParameters(
+      endpointParam = UserAuthEndpointParameters.unfollowUser("username"),
       headers = Map(),
       expectedError = "Invalid value for: header Authorization (missing)"
     )
@@ -144,47 +173,15 @@ object AuthorizationSpec extends ZIOSpecDefault:
       expectedError = "{\"error\":\"Invalid token!\"}"
     )
   )
-  val profileTestParameters: List[ProfileAuthTestParameters] = List(
-    ProfileAuthTestParameters(
-      endpointParam = ProfileAuthEndpointParameters.getProfile("username"),
-      headers = Map("Authorization" -> "Token Invalid JWT"),
-      expectedError = "{\"error\":\"Invalid token!\"}"
-    ),
-    ProfileAuthTestParameters(
-      endpointParam = ProfileAuthEndpointParameters.getProfile("username"),
-      headers = Map(),
-      expectedError = "Invalid value for: header Authorization (missing)"
-    ),
-    ProfileAuthTestParameters(
-      endpointParam = ProfileAuthEndpointParameters.followUser("username"),
-      headers = Map("Authorization" -> "Token Invalid JWT"),
-      expectedError = "{\"error\":\"Invalid token!\"}"
-    ),
-    ProfileAuthTestParameters(
-      endpointParam = ProfileAuthEndpointParameters.followUser("username"),
-      headers = Map(),
-      expectedError = "Invalid value for: header Authorization (missing)"
-    ),
-    ProfileAuthTestParameters(
-      endpointParam = ProfileAuthEndpointParameters.unfollowUser("username"),
-      headers = Map("Authorization" -> "Token Invalid JWT"),
-      expectedError = "{\"error\":\"Invalid token!\"}"
-    ),
-    ProfileAuthTestParameters(
-      endpointParam = ProfileAuthEndpointParameters.unfollowUser("username"),
-      headers = Map(),
-      expectedError = "Invalid value for: header Authorization (missing)"
-    )
-  )
 
-  def userEndpointsAuthorizationTest(testParameters: UserAuthTestParameters): Spec[UsersEndpoints, Throwable] = {
+  def userEndpointsAuthorizationTest(testParameters: UserAuthTestParameters): Spec[UsersServerEndpoints, Throwable] = {
     test(s"User endpoints negative authorization test [expected: ${testParameters.expectedError}]") {
       assertZIO(
         testParameters.endpoint
           .flatMap { endpoint =>
             testParameters.request
               .headers(testParameters.headers)
-              .response(asJson[User])
+              .response(asJson[UserResponse])
               .send(backendStub(endpoint))
               .map(_.body)
           }
@@ -207,30 +204,12 @@ object AuthorizationSpec extends ZIOSpecDefault:
     }
   }
 
-  def profileEndpointsAuthorizationTest(testParameters: ProfileAuthTestParameters): Spec[ProfilesEndpoints, Throwable] = {
-    test(s"Profile endpoints negative authorization test [expected: ${testParameters.expectedError}]") {
-      assertZIO(
-        testParameters.endpoint
-          .flatMap { endpoint =>
-            testParameters.request
-              .headers(testParameters.headers)
-              .response(asJson[Profile])
-              .send(backendStub(endpoint))
-              .map(_.body)
-          }
-      )(isLeft(equalTo(HttpError(testParameters.expectedError, sttp.model.StatusCode(401)))))
-    }
-  }
-
   def spec = suite("check authorization")(
     suite("articles endpoints")(
       articleTestParameters.map(articleEndpointsAuthorizationTest): _*
     ),
     suite("user endpoints")(
       userTestParameters.map(userEndpointsAuthorizationTest): _*
-    ),
-    suite("profile endpoints")(
-      profileTestParameters.map(profileEndpointsAuthorizationTest): _*
     )
   ).provide(
     Configuration.live,
@@ -238,13 +217,11 @@ object AuthorizationSpec extends ZIOSpecDefault:
     UsersRepository.live,
     UsersService.live,
     UsersEndpoints.live,
+    UsersServerEndpoints.live,
     ArticlesRepository.live,
     ArticlesService.live,
     ArticlesEndpoints.live,
     BaseEndpoints.live,
-    ProfilesRepository.live,
-    ProfilesEndpoints.live,
-    ProfilesService.live,
     TagsRepository.live,
     testDbLayer
   )

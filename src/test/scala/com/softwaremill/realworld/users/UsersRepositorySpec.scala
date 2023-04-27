@@ -1,9 +1,9 @@
 package com.softwaremill.realworld.users
 
-import com.softwaremill.realworld.db.{Db, DbConfig, DbMigrator}
+import com.softwaremill.realworld.common.db.{Db, DbConfig, DbMigrator}
 import com.softwaremill.realworld.users.UserDbTestSupport.*
 import com.softwaremill.realworld.users.UserRepositoryTestSupport.*
-import com.softwaremill.realworld.users.model.*
+import com.softwaremill.realworld.users.api.{UserRegisterData, UserUpdateData}
 import com.softwaremill.realworld.utils.TestUtils.*
 import zio.test.ZIOSpecDefault
 

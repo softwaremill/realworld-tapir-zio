@@ -1,7 +1,6 @@
 package com.softwaremill.realworld.articles.comments
 
 import com.softwaremill.realworld.articles.ArticlesRepository
-import com.softwaremill.realworld.profiles.ProfilesRepository
 import com.softwaremill.realworld.tags.TagsRepository
 import com.softwaremill.realworld.users.UsersRepository
 import com.softwaremill.realworld.utils.DbData.*
