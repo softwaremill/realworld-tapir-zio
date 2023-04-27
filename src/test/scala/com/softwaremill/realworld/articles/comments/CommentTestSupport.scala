@@ -1,7 +1,8 @@
 package com.softwaremill.realworld.articles.comments
 
+import com.softwaremill.realworld.articles.comments.CommentAuthor
+import com.softwaremill.realworld.articles.comments.api.*
 import com.softwaremill.realworld.articles.core.ArticlesEndpoints
-import com.softwaremill.realworld.users.Profile
 import com.softwaremill.realworld.utils.TestUtils.backendStub
 import sttp.client3.ziojson.{asJson, zioJsonBodySerializer}
 import sttp.client3.{Response, ResponseException, basicRequest}
@@ -16,11 +17,11 @@ object CommentTestSupport:
   def callGetCommentsFromArticle(
       authorizationHeaderOpt: Option[Map[String, String]],
       uri: Uri
-  ): ZIO[ArticlesEndpoints, Throwable, Either[ResponseException[String, String], CommentsList]] = {
+  ): ZIO[CommentsServerEndpoints, Throwable, Either[ResponseException[String, String], CommentsListResponse]] = {
 
     ZIO
-      .service[ArticlesEndpoints]
-      .map(_.getCommentsFromArticle)
+      .service[CommentsServerEndpoints]
+      .map(_.getCommentsFromArticleServerEndpoint)
       .flatMap { endpoint =>
 
         val requestWithUri = basicRequest
@@ -31,7 +32,7 @@ object CommentTestSupport:
           case None                      => requestWithUri
 
         requestAfterAuthorization
-          .response(asJson[CommentsList])
+          .response(asJson[CommentsListResponse])
           .send(backendStub(endpoint))
           .map(_.body)
       }
@@ -41,17 +42,17 @@ object CommentTestSupport:
       authorizationHeader: Map[String, String],
       uri: Uri,
       bodyComment: String
-  ): ZIO[ArticlesEndpoints, Throwable, Either[ResponseException[String, String], Comment]] = {
+  ): ZIO[CommentsServerEndpoints, Throwable, Either[ResponseException[String, String], CommentResponse]] = {
 
     ZIO
-      .service[ArticlesEndpoints]
-      .map(_.addComment)
+      .service[CommentsServerEndpoints]
+      .map(_.addCommentServerEndpoint)
       .flatMap { endpoint =>
         basicRequest
           .post(uri)
-          .body(CommentCreate(comment = CommentCreateData(body = bodyComment)))
+          .body(CommentCreateRequest(comment = CommentCreateData(body = bodyComment)))
           .headers(authorizationHeader)
-          .response(asJson[Comment])
+          .response(asJson[CommentResponse])
           .send(backendStub(endpoint))
           .map(_.body)
       }
@@ -60,11 +61,11 @@ object CommentTestSupport:
   def deleteCommentRequest(
       authorizationHeader: Map[String, String],
       uri: Uri
-  ): ZIO[ArticlesEndpoints, Throwable, Response[Either[String, String]]] = {
+  ): ZIO[CommentsServerEndpoints, Throwable, Response[Either[String, String]]] = {
 
     ZIO
-      .service[ArticlesEndpoints]
-      .map(_.deleteComment)
+      .service[CommentsServerEndpoints]
+      .map(_.deleteCommentServerEndpoint)
       .flatMap { endpoint =>
         basicRequest
           .delete(uri)
@@ -76,15 +77,15 @@ object CommentTestSupport:
   def checkIfCommentsListIsEmpty(
       authorizationHeaderOpt: Option[Map[String, String]],
       uri: Uri
-  ): ZIO[ArticlesEndpoints, Throwable, TestResult] = {
+  ): ZIO[CommentsServerEndpoints, Throwable, TestResult] = {
 
     assertZIO(
       callGetCommentsFromArticle(authorizationHeaderOpt, uri)
     )(
       isRight(
         equalTo(
-          CommentsList(
-            comments = List.empty[CommentData]
+          CommentsListResponse(
+            comments = List.empty[Comment]
           )
         )
       )
@@ -95,7 +96,7 @@ object CommentTestSupport:
       authorizationHeader: Map[String, String],
       uri: Uri,
       body: String
-  ): ZIO[ArticlesEndpoints, Throwable, TestResult] = {
+  ): ZIO[CommentsServerEndpoints, Throwable, TestResult] = {
 
     for {
       comment <- callAddComment(authorizationHeader, uri, body)
@@ -104,8 +105,8 @@ object CommentTestSupport:
         hasField(
           "comment",
           _.comment,
-          (hasField("body", _.body, equalTo("Amazing article!")): Assertion[CommentData]) &&
-            hasField("author", _.author, hasField("username", _.username, equalTo("michael")): Assertion[Profile])
+          (hasField("body", _.body, equalTo("Amazing article!")): Assertion[Comment]) &&
+            hasField("author", _.author, hasField("username", _.username, equalTo("michael")): Assertion[CommentAuthor])
         )
       )
     }
@@ -114,7 +115,7 @@ object CommentTestSupport:
   def checkCommentsList(
       authorizationHeaderOpt: Option[Map[String, String]],
       uri: Uri
-  ): ZIO[ArticlesEndpoints, Throwable, TestResult] = {
+  ): ZIO[CommentsServerEndpoints, Throwable, TestResult] = {
 
     for {
       commentsList <- callGetCommentsFromArticle(authorizationHeaderOpt, uri)
@@ -125,12 +126,12 @@ object CommentTestSupport:
           _.comments,
           hasSize(equalTo(2)) &&
             exists(
-              (hasField("body", _.body, equalTo("Thank you so much!")): Assertion[CommentData]) &&
-                hasField("author", _.author, hasField("username", _.username, equalTo("jake")): Assertion[Profile])
+              (hasField("body", _.body, equalTo("Thank you so much!")): Assertion[Comment]) &&
+                hasField("author", _.author, hasField("username", _.username, equalTo("jake")): Assertion[CommentAuthor])
             ) &&
             exists(
-              (hasField("body", _.body, equalTo("Great article!")): Assertion[CommentData]) &&
-                hasField("author", _.author, hasField("username", _.username, equalTo("michael")): Assertion[Profile])
+              (hasField("body", _.body, equalTo("Great article!")): Assertion[Comment]) &&
+                hasField("author", _.author, hasField("username", _.username, equalTo("michael")): Assertion[CommentAuthor])
             )
         )
       )
@@ -140,7 +141,7 @@ object CommentTestSupport:
   def checkCommentsListAfterDelete(
       authorizationHeaderOpt: Option[Map[String, String]],
       uri: Uri
-  ): ZIO[ArticlesEndpoints, Throwable, TestResult] = {
+  ): ZIO[CommentsServerEndpoints, Throwable, TestResult] = {
 
     for {
       commentsList <- callGetCommentsFromArticle(authorizationHeaderOpt, uri)
@@ -152,8 +153,8 @@ object CommentTestSupport:
           _.comments,
           hasSize(equalTo(1)) &&
             exists(
-              (hasField("body", _.body, equalTo("Not bad.")): Assertion[CommentData]) &&
-                hasField("author", _.author, hasField("username", _.username, equalTo("michael")): Assertion[Profile])
+              (hasField("body", _.body, equalTo("Not bad.")): Assertion[Comment]) &&
+                hasField("author", _.author, hasField("username", _.username, equalTo("michael")): Assertion[CommentAuthor])
             )
         )
       )

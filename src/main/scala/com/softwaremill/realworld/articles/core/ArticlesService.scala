@@ -1,6 +1,6 @@
 package com.softwaremill.realworld.articles.core
 
-import com.softwaremill.realworld.articles.comments.{CommentData, CommentRow}
+import com.softwaremill.realworld.articles.comments.{Comment, CommentsRepository}
 import com.softwaremill.realworld.articles.core.api.{ArticleCreateData, ArticleUpdateData}
 import com.softwaremill.realworld.articles.core.{Article, ArticlesFilters, ArticlesRepository}
 import com.softwaremill.realworld.articles.tags.TagsRepository
@@ -18,11 +18,11 @@ class ArticlesService(
     articlesRepository: ArticlesRepository,
     usersRepository: UsersRepository,
     usersService: UsersService,
-    tagsRepository: TagsRepository
+    tagsRepository: TagsRepository,
+    commentsRepository: CommentsRepository
 ):
 
   private val ArticleNotFoundMessage = (slug: String) => s"Article with slug $slug doesn't exist."
-  private val CommentNotFoundMessage = (commentId: Int) => s"Comment with ID=$commentId doesn't exist"
 
   def list(filters: ArticlesFilters, pagination: Pagination): IO[SQLException, List[Article]] = articlesRepository
     .list(filters, pagination)
@@ -59,7 +59,7 @@ class ArticlesService(
     user <- userByEmail(email)
     article <- articlesRepository.findArticleBySlug(slug).someOrFail(NotFound(ArticleNotFoundMessage(slug)))
     _ <- ZIO.fail(Unauthorized("Can't remove the article you're not an author of")).when(user.userId != article.authorId)
-    _ <- articlesRepository.deleteCommentsByArticleId(article.articleId)
+    _ <- commentsRepository.deleteCommentsByArticleId(article.articleId)
     _ <- articlesRepository.deleteFavoritesByArticleId(article.articleId)
     _ <- tagsRepository.deleteTagsByArticleId(article.articleId)
     _ <- articlesRepository.deleteArticle(article.articleId)
@@ -97,50 +97,17 @@ class ArticlesService(
     articleData <- findBySlugAsSeenBy(slug, email)
   } yield articleData
 
-  def addComment(slug: String, email: String, comment: String): Task[CommentData] = for {
-    user <- userByEmail(email)
-    articleId <- articlesRepository.findArticleIdBySlug(slug).someOrFail(NotFound(ArticleNotFoundMessage(slug)))
-    commentId <- articlesRepository.addComment(articleId, user.userId, comment)
-    commentRow <- articlesRepository.findComment(commentId).someOrFail(NotFound(CommentNotFoundMessage(commentId)))
-    profile <- usersService.getProfileData(commentRow.authorId, Some(user.userId))
-  } yield CommentData(commentRow.commentId, commentRow.createdAt, commentRow.updatedAt, commentRow.body, profile)
+  private def userByEmail(email: String): Task[UserRow] =
+    usersRepository.findByEmail(email).someOrFail(NotFound("User doesn't exist, re-login may be needed!"))
 
-  def deleteComment(slug: String, email: String, commentId: Int): Task[Unit] = for {
-    user <- userByEmail(email)
-    articleId <- articlesRepository.findArticleIdBySlug(slug).someOrFail(NotFound(ArticleNotFoundMessage(slug)))
-    commentRow <- articlesRepository.findComment(commentId).someOrFail(NotFound(CommentNotFoundMessage(commentId)))
-    _ <- ZIO.fail(BadRequest(s"Comment with ID=$commentId is not linked to slug $slug")).when(commentRow.articleId != articleId)
-    _ <- ZIO.fail(Unauthorized("Can't remove the comment you're not an author of")).when(user.userId != commentRow.authorId)
-    _ <- articlesRepository.deleteComment(commentId)
-  } yield ()
-
-  def getCommentsFromArticle(slug: String, userEmailOpt: Option[String]): Task[List[CommentData]] =
-    for {
-      articleIdOpt <- articlesRepository.findArticleIdBySlug(slug)
-      articleId <- handleProcessingResult(articleIdOpt, s"Article with slug $slug doesn't exist.")
-      commentRowList <- articlesRepository.findComments(articleId)
-      commentDataList <- ZIO.collectAllPar(
-        commentRowList.map(commentRow =>
-          (userEmailOpt match
-            case Some(userEmail) =>
-              for {
-                user <- userByEmail(userEmail)
-                profile <- usersService.getProfileData(commentRow.authorId, Some(user.userId))
-              } yield profile
-
-            case None => usersService.getProfileData(commentRow.authorId, None)
-          ).map(profile =>
-            CommentData(
-              id = commentRow.commentId,
-              createdAt = commentRow.createdAt,
-              updatedAt = commentRow.updatedAt,
-              body = commentRow.body,
-              author = profile
-            )
-          )
-        )
-      )
-    } yield commentDataList
+  private def handleProcessingResult[T](
+      option: Option[T],
+      errorMessage: String
+  ): Task[T] =
+    option match {
+      case Some(value) => ZIO.succeed(value)
+      case None        => ZIO.fail(Exceptions.NotFound(errorMessage))
+    }
 
   private def updateArticleData(articleData: Article, updatedData: ArticleUpdateData): Article = {
     articleData.copy(
@@ -156,18 +123,10 @@ class ArticlesService(
     )
   }
 
-  private def userByEmail(email: String): Task[UserRow] =
-    usersRepository.findByEmail(email).someOrFail(NotFound("User doesn't exist, re-login may be needed!"))
-
-  private def handleProcessingResult[T](
-      option: Option[T],
-      errorMessage: String
-  ): Task[T] =
-    option match {
-      case Some(value) => ZIO.succeed(value)
-      case None        => ZIO.fail(Exceptions.NotFound(errorMessage))
-    }
-
 object ArticlesService:
-  val live: ZLayer[ArticlesRepository with UsersRepository with UsersService with TagsRepository, Nothing, ArticlesService] =
-    ZLayer.fromFunction(ArticlesService(_, _, _, _))
+  val live: ZLayer[
+    ArticlesRepository with UsersRepository with UsersService with TagsRepository with CommentsRepository,
+    Nothing,
+    ArticlesService
+  ] =
+    ZLayer.fromFunction(ArticlesService(_, _, _, _, _))

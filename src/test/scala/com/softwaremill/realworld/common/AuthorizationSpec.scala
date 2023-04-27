@@ -1,5 +1,7 @@
 package com.softwaremill.realworld.common
 
+import com.softwaremill.realworld.articles.comments.api.{CommentResponse, CommentsEndpoints}
+import com.softwaremill.realworld.articles.comments.{CommentsRepository, CommentsServerEndpoints, CommentsService}
 import com.softwaremill.realworld.articles.core.api.{ArticleResponse, ArticlesListResponse}
 import com.softwaremill.realworld.articles.core.{Article, ArticlesEndpoints, ArticlesRepository, ArticlesService}
 import com.softwaremill.realworld.articles.tags.TagsRepository
@@ -146,29 +148,31 @@ object AuthorizationSpec extends ZIOSpecDefault:
       endpointParam = ArticleAuthEndpointParameters.removeFavorite("slug"),
       headers = Map(),
       expectedError = "Invalid value for: header Authorization (missing)"
-    ),
-    ArticleAuthTestParameters(
-      endpointParam = ArticleAuthEndpointParameters.addComment("slug"),
+    )
+  )
+  val commentTestParameters: List[CommentAuthTestParameters] = List(
+    CommentAuthTestParameters(
+      endpointParam = CommentAuthEndpointParameters.addComment("slug"),
       headers = Map("Authorization" -> "Token Invalid JWT"),
       expectedError = "{\"error\":\"Invalid token!\"}"
     ),
-    ArticleAuthTestParameters(
-      endpointParam = ArticleAuthEndpointParameters.addComment("slug"),
+    CommentAuthTestParameters(
+      endpointParam = CommentAuthEndpointParameters.addComment("slug"),
       headers = Map(),
       expectedError = "Invalid value for: header Authorization (missing)"
     ),
-    ArticleAuthTestParameters(
-      endpointParam = ArticleAuthEndpointParameters.deleteComment("slug", 1),
+    CommentAuthTestParameters(
+      endpointParam = CommentAuthEndpointParameters.deleteComment("slug", 1),
       headers = Map("Authorization" -> "Token Invalid JWT"),
       expectedError = "{\"error\":\"Invalid token!\"}"
     ),
-    ArticleAuthTestParameters(
-      endpointParam = ArticleAuthEndpointParameters.deleteComment("slug", 1),
+    CommentAuthTestParameters(
+      endpointParam = CommentAuthEndpointParameters.deleteComment("slug", 1),
       headers = Map(),
       expectedError = "Invalid value for: header Authorization (missing)"
     ),
-    ArticleAuthTestParameters(
-      endpointParam = ArticleAuthEndpointParameters.getCommentsFromArticle("slug"),
+    CommentAuthTestParameters(
+      endpointParam = CommentAuthEndpointParameters.getCommentsFromArticle("slug"),
       headers = Map("Authorization" -> "Token Invalid JWT"),
       expectedError = "{\"error\":\"Invalid token!\"}"
     )
@@ -204,12 +208,30 @@ object AuthorizationSpec extends ZIOSpecDefault:
     }
   }
 
+  def commentEndpointsAuthorizationTest(testParameters: CommentAuthTestParameters): Spec[CommentsServerEndpoints, Throwable] = {
+    test(s"Comment endpoints negative authorization test [expected: ${testParameters.expectedError}]") {
+      assertZIO(
+        testParameters.endpoint
+          .flatMap { endpoint =>
+            testParameters.request
+              .headers(testParameters.headers)
+              .response(asJson[CommentResponse])
+              .send(backendStub(endpoint))
+              .map(_.body)
+          }
+      )(isLeft(equalTo(HttpError(testParameters.expectedError, sttp.model.StatusCode(401)))))
+    }
+  }
+
   def spec = suite("check authorization")(
     suite("articles endpoints")(
       articleTestParameters.map(articleEndpointsAuthorizationTest): _*
     ),
     suite("user endpoints")(
       userTestParameters.map(userEndpointsAuthorizationTest): _*
+    ),
+    suite("user endpoints")(
+      commentTestParameters.map(commentEndpointsAuthorizationTest): _*
     )
   ).provide(
     Configuration.live,
@@ -221,6 +243,10 @@ object AuthorizationSpec extends ZIOSpecDefault:
     ArticlesRepository.live,
     ArticlesService.live,
     ArticlesEndpoints.live,
+    CommentsRepository.live,
+    CommentsService.live,
+    CommentsEndpoints.live,
+    CommentsServerEndpoints.live,
     BaseEndpoints.live,
     TagsRepository.live,
     testDbLayer

@@ -1,6 +1,7 @@
 package com.softwaremill.realworld.articles.core
 
 import com.softwaremill.realworld.articles.comments.*
+import com.softwaremill.realworld.articles.comments.api.{CommentCreateRequest, CommentResponse, CommentsListResponse}
 import com.softwaremill.realworld.articles.core.api.{ArticleCreateRequest, ArticleResponse, ArticleUpdateRequest, ArticlesListResponse}
 import com.softwaremill.realworld.common.*
 import com.softwaremill.realworld.common.db.{Db, DbConfig}
@@ -140,34 +141,34 @@ class ArticlesEndpoints(articlesService: ArticlesService, base: BaseEndpoints):
           .map(ArticleResponse.apply)
     )
 
-  val addComment: ZServerEndpoint[Any, Any] = base.secureEndpoint.post
-    .in("api" / "articles" / path[String]("slug") / "comments")
-    .in(jsonBody[CommentCreate])
-    .out(jsonBody[Comment])
-    .serverLogic(session =>
-      case (slug, CommentCreate(comment)) =>
-        articlesService
-          .addComment(slug, session.email, comment.body)
-          .pipe(defaultErrorsMappings)
-          .map(Comment.apply)
-    )
-
-  val deleteComment: ZServerEndpoint[Any, Any] = base.secureEndpoint.delete
-    .in("api" / "articles" / path[String]("slug") / "comments" / path[Int]("id"))
-    .serverLogic(session =>
-      case (slug, commentId) => articlesService.deleteComment(slug, session.email, commentId).pipe(defaultErrorsMappings)
-    )
-
-  val getCommentsFromArticle: ZServerEndpoint[Any, Any] = base.optionallySecureEndpoint.get
-    .in("api" / "articles" / path[String]("slug") / "comments")
-    .out(jsonBody[CommentsList])
-    .serverLogic(sessionOpt =>
-      slug =>
-        articlesService
-          .getCommentsFromArticle(slug, sessionOpt.map(_.email))
-          .map(foundComments => CommentsList(comments = foundComments))
-          .pipe(defaultErrorsMappings)
-    )
+//  val addComment: ZServerEndpoint[Any, Any] = base.secureEndpoint.post
+//    .in("api" / "articles" / path[String]("slug") / "comments")
+//    .in(jsonBody[CommentCreateRequest])
+//    .out(jsonBody[CommentResponse])
+//    .serverLogic(session =>
+//      case (slug, CommentCreateRequest(comment)) =>
+//        articlesService
+//          .addComment(slug, session.email, comment.body)
+//          .pipe(defaultErrorsMappings)
+//          .map(CommentResponse.apply)
+//    )
+//
+//  val deleteComment: ZServerEndpoint[Any, Any] = base.secureEndpoint.delete
+//    .in("api" / "articles" / path[String]("slug") / "comments" / path[Int]("id"))
+//    .serverLogic(session =>
+//      case (slug, commentId) => articlesService.deleteComment(slug, session.email, commentId).pipe(defaultErrorsMappings)
+//    )
+//
+//  val getCommentsFromArticle: ZServerEndpoint[Any, Any] = base.optionallySecureEndpoint.get
+//    .in("api" / "articles" / path[String]("slug") / "comments")
+//    .out(jsonBody[CommentsListResponse])
+//    .serverLogic(sessionOpt =>
+//      slug =>
+//        articlesService
+//          .getCommentsFromArticle(slug, sessionOpt.map(_.email))
+//          .map(foundComments => CommentsListResponse(comments = foundComments))
+//          .pipe(defaultErrorsMappings)
+//    )
 
   val endpoints: List[ZServerEndpoint[Any, Any]] =
     List(
@@ -178,10 +179,7 @@ class ArticlesEndpoints(articlesService: ArticlesService, base: BaseEndpoints):
       create,
       delete,
       makeFavorite,
-      removeFavorite,
-      addComment,
-      deleteComment,
-      getCommentsFromArticle
+      removeFavorite
     )
 
 object ArticlesEndpoints:

@@ -1,7 +1,6 @@
 package com.softwaremill.realworld.articles.core
 
 import com.softwaremill.realworld.articles.*
-import com.softwaremill.realworld.articles.comments.CommentRow
 import com.softwaremill.realworld.articles.core.api.ArticleCreateData
 import com.softwaremill.realworld.articles.core.{Article, ArticleAuthor, ArticlesFilters}
 import com.softwaremill.realworld.common.db.UserRow
@@ -21,7 +20,6 @@ import scala.util.chaining.*
 
 case class ProfileRow(userId: Int, username: String, bio: String, image: String)
 case class ArticleFavoriteRow(profileId: Int, articleId: Int)
-
 case class ArticleRow(
     articleId: Int,
     slug: String,
@@ -32,7 +30,6 @@ case class ArticleRow(
     updatedAt: Instant,
     authorId: Int
 )
-
 case class ArticleTagRow(tag: String, articleId: Int)
 
 class ArticlesRepository(quill: Quill.Sqlite[SnakeCase]):
@@ -43,7 +40,6 @@ class ArticlesRepository(quill: Quill.Sqlite[SnakeCase]):
   private inline def queryFavoriteArticle = quote(querySchema[ArticleFavoriteRow](entity = "favorites_articles"))
   private inline def queryProfile = quote(querySchema[ProfileRow](entity = "users"))
   private inline def queryUser = quote(querySchema[UserRow](entity = "users"))
-  private inline def queryCommentArticle = quote(querySchema[CommentRow](entity = "comments_articles"))
   private inline def tagsConcat: Quoted[String => String] = quote { (str: String) =>
     sql"GROUP_CONCAT(($str), '|')".pure.as[String]
   }
@@ -203,9 +199,6 @@ class ArticlesRepository(quill: Quill.Sqlite[SnakeCase]):
   def deleteArticle(articleId: Int): Task[Long] =
     run(queryArticle.filter(_.articleId == lift(articleId)).delete)
 
-  def deleteCommentsByArticleId(articleId: Int): Task[Long] =
-    run(queryCommentArticle.filter(_.articleId == lift(articleId)).delete)
-
   def deleteFavoritesByArticleId(articleId: Int): Task[Long] =
     run(queryFavoriteArticle.filter(_.articleId == lift(articleId)).delete)
 
@@ -229,31 +222,6 @@ class ArticlesRepository(quill: Quill.Sqlite[SnakeCase]):
   def removeFavorite(articleId: Int, userId: Int): Task[Long] = run(
     queryFavoriteArticle.filter(a => (a.profileId == lift(userId)) && (a.articleId == lift(articleId))).delete
   )
-
-  def addComment(articleId: Int, authorId: Int, comment: String): Task[Index] = {
-    val now = Instant.now()
-    run {
-      queryCommentArticle
-        .insert(
-          _.articleId -> lift(articleId),
-          _.createdAt -> lift(now),
-          _.updatedAt -> lift(now),
-          _.authorId -> lift(authorId),
-          _.body -> lift(comment)
-        )
-        .returningGenerated(_.commentId)
-    }
-  }
-
-  def findComment(commentId: Int): Task[Option[CommentRow]] =
-    run(queryCommentArticle.filter(_.commentId == lift(commentId)))
-      .map(_.headOption)
-
-  def deleteComment(commentId: Int): Task[Long] =
-    run(queryCommentArticle.filter(_.commentId == lift(commentId)).delete)
-
-  def findComments(articleId: Int): Task[List[CommentRow]] =
-    run(queryCommentArticle.filter(_.articleId == lift(articleId)))
 
   private def explodeTags(tags: String): List[String] = tags.split("\\|").toList
 
@@ -299,6 +267,5 @@ class ArticlesRepository(quill: Quill.Sqlite[SnakeCase]):
   }
 
 object ArticlesRepository:
-
   val live: ZLayer[Quill.Sqlite[SnakeCase], Nothing, ArticlesRepository] =
     ZLayer.fromFunction(new ArticlesRepository(_))

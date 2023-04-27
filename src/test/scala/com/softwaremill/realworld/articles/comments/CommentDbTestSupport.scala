@@ -22,6 +22,7 @@ object CommentDbTestSupport:
     for {
       articleRepo <- ZIO.service[ArticlesRepository]
       userRepo <- ZIO.service[UsersRepository]
+      commentRepo <- ZIO.service[CommentsRepository]
       _ <- userRepo.add(exampleUser1)
       _ <- userRepo.add(exampleUser2)
       _ <- userRepo.add(exampleUser4)
@@ -30,8 +31,8 @@ object CommentDbTestSupport:
       user4 <- userRepo.findByEmail(exampleUser4.email).someOrFail(s"User with email ${exampleUser4.email} doesn't exist.")
       _ <- articleRepo.add(exampleArticle3, user2.userId)
       article3 <- articleRepo.findArticleBySlug(exampleArticle3Slug).someOrFail(s"Article $exampleArticle3Slug doesn't exist")
-      _ <- articleRepo.addComment(article3.articleId, user1.userId, "Thank you so much!")
-      _ <- articleRepo.addComment(article3.articleId, user4.userId, "Great article!")
+      _ <- commentRepo.addComment(article3.articleId, user1.userId, "Thank you so much!")
+      _ <- commentRepo.addComment(article3.articleId, user4.userId, "Great article!")
     } yield ()
   }
 
@@ -39,6 +40,7 @@ object CommentDbTestSupport:
     for {
       articleRepo <- ZIO.service[ArticlesRepository]
       userRepo <- ZIO.service[UsersRepository]
+      commentRepo <- ZIO.service[CommentsRepository]
       _ <- userRepo.add(exampleUser2)
       _ <- userRepo.add(exampleUser3)
       _ <- userRepo.add(exampleUser4)
@@ -47,8 +49,8 @@ object CommentDbTestSupport:
       user4 <- userRepo.findByEmail(exampleUser4.email).someOrFail(s"User with email ${exampleUser4.email} doesn't exist.")
       _ <- articleRepo.add(exampleArticle4, user2.userId)
       article4 <- articleRepo.findArticleBySlug(exampleArticle4Slug).someOrFail(s"Article $exampleArticle4Slug doesn't exist")
-      _ <- articleRepo.addComment(article4.articleId, user3.userId, "Amazing article!")
-      _ <- articleRepo.addComment(article4.articleId, user4.userId, "Not bad.")
+      _ <- commentRepo.addComment(article4.articleId, user3.userId, "Amazing article!")
+      _ <- commentRepo.addComment(article4.articleId, user4.userId, "Not bad.")
     } yield ()
   }
 

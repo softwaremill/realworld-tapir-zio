@@ -1,5 +1,6 @@
 package com.softwaremill.realworld.articles.core
 
+import com.softwaremill.realworld.articles.comments.CommentsRepository
 import com.softwaremill.realworld.articles.core.ArticleDbTestSupport.*
 import com.softwaremill.realworld.articles.core.ArticleEndpointTestSupport.*
 import com.softwaremill.realworld.articles.core.api.{ArticleUpdateData, ArticleUpdateRequest}
@@ -261,6 +262,7 @@ object ArticlesEndpointsSpec extends ZIOSpecDefault:
     UsersRepository.live,
     UsersService.live,
     ArticlesRepository.live,
+    CommentsRepository.live,
     TagsRepository.live,
     ArticlesService.live,
     ArticlesEndpoints.live,

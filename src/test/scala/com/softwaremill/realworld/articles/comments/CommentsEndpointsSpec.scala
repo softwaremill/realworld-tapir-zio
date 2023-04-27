@@ -1,8 +1,8 @@
 package com.softwaremill.realworld.articles.comments
 
-import com.softwaremill.realworld.articles.comments.CommentCreateData
 import com.softwaremill.realworld.articles.comments.CommentDbTestSupport.*
 import com.softwaremill.realworld.articles.comments.CommentTestSupport.*
+import com.softwaremill.realworld.articles.comments.api.{CommentCreateData, CommentsEndpoints}
 import com.softwaremill.realworld.articles.core.{ArticlesEndpoints, ArticlesRepository, ArticlesService}
 import com.softwaremill.realworld.articles.tags.TagsRepository
 import com.softwaremill.realworld.auth.AuthService
@@ -88,10 +88,10 @@ object CommentsEndpointsSpec extends ZIOSpecDefault:
     AuthService.live,
     UsersRepository.live,
     ArticlesRepository.live,
-    ArticlesService.live,
-    ArticlesEndpoints.live,
+    CommentsRepository.live,
+    CommentsService.live,
+    CommentsEndpoints.live,
+    CommentsServerEndpoints.live,
     BaseEndpoints.live,
-    TagsRepository.live,
-    UsersService.live,
     testDbLayerWithEmptyDb
   )

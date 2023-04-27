@@ -1,5 +1,6 @@
 package com.softwaremill.realworld
 
+import com.softwaremill.realworld.articles.comments.CommentsServerEndpoints
 import com.softwaremill.realworld.articles.core.ArticlesEndpoints
 import com.softwaremill.realworld.articles.tags.TagsEndpoints
 import com.softwaremill.realworld.common.db.DbConfig
@@ -10,12 +11,13 @@ import zio.{Task, ZIO, ZLayer}
 
 class Endpoints(
     articlesEndpoints: ArticlesEndpoints,
-    usersEndpoints: UsersServerEndpoints,
-    tagsEndpoints: TagsEndpoints
+    commentsServerEndpoints: CommentsServerEndpoints,
+    tagsEndpoints: TagsEndpoints,
+    usersServerEndpoints: UsersServerEndpoints
 ):
 
   val endpoints: List[ZServerEndpoint[Any, Any]] = {
-    val api = articlesEndpoints.endpoints ++ usersEndpoints.endpoints ++ tagsEndpoints.endpoints
+    val api = articlesEndpoints.endpoints ++ commentsServerEndpoints.endpoints ++ tagsEndpoints.endpoints ++ usersServerEndpoints.endpoints
     val docs = docsEndpoints(api)
     api ++ docs
   }
@@ -24,5 +26,5 @@ class Endpoints(
     .fromServerEndpoints[Task](apiEndpoints, "realworld-tapir-zio", "0.1.0")
 
 object Endpoints:
-  val live: ZLayer[ArticlesEndpoints with UsersServerEndpoints with TagsEndpoints, Nothing, Endpoints] =
-    ZLayer.fromFunction(new Endpoints(_, _, _))
+  val live: ZLayer[ArticlesEndpoints with CommentsServerEndpoints with TagsEndpoints with UsersServerEndpoints, Nothing, Endpoints] =
+    ZLayer.fromFunction(new Endpoints(_, _, _, _))

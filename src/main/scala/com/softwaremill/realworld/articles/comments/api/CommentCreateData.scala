@@ -1,4 +1,4 @@
-package com.softwaremill.realworld.articles.comments
+package com.softwaremill.realworld.articles.comments.api
 
 import zio.json.{DeriveJsonDecoder, DeriveJsonEncoder, JsonDecoder, JsonEncoder}
 

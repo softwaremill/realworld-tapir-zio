@@ -116,12 +116,6 @@ class UsersService(authService: AuthService, usersRepository: UsersRepository):
     user <- ZIO.fromOption(userOpt).mapError(_ => NotFound("Couldn't find user for logged in session"))
   } yield user
 
-  def getProfileData(profileId: Int, asSeenByUserWithIdOpt: Option[Int]): Task[Profile] =
-    usersRepository
-      .findById(profileId)
-      .someOrFail(NotFound(s"Couldn't find a profile for user with id=$profileId"))
-      .flatMap(getProfileData(_, asSeenByUserWithIdOpt))
-
   private def getProfileData(user: UserRow, asSeenByUserWithIdOpt: Option[Int]): Task[Profile] =
     asSeenByUserWithIdOpt match
       case Some(asSeenByUserWithId) =>
