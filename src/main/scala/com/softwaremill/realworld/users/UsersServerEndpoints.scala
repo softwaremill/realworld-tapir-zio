@@ -21,7 +21,7 @@ class UsersServerEndpoints(usersService: UsersService, userEndpoints: UsersEndpo
   val registerServerEndpoint: ZServerEndpoint[Any, Any] = userEndpoints.registerEndpoint
     .zServerLogic(data =>
       usersService
-        .register(data.userRegisterData)
+        .register(data.user)
         .logError
         .pipe(defaultErrorsMappings)
     )
@@ -29,7 +29,7 @@ class UsersServerEndpoints(usersService: UsersService, userEndpoints: UsersEndpo
   val loginServerEndpoint: ZServerEndpoint[Any, Any] = userEndpoints.loginEndpoint
     .zServerLogic(data =>
       usersService
-        .login(data.userLoginData)
+        .login(data.user)
         .logError
         .pipe(defaultErrorsMappings)
         .map(UserResponse.apply)
@@ -52,7 +52,7 @@ class UsersServerEndpoints(usersService: UsersService, userEndpoints: UsersEndpo
     .serverLogic(session =>
       data =>
         usersService
-          .update(data.userUpdateData, session.email)
+          .update(data.user, session.email)
           .logError
           .pipe(defaultErrorsMappings)
           .map(UserResponse.apply)

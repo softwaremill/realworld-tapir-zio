@@ -48,7 +48,7 @@ class UsersEndpoints(base: BaseEndpoints):
       .out(jsonBody[ProfileResponse].example(Examples.profileResponse))
 
   object Examples:
-    val userRegisterRequest: UserRegisterRequest = UserRegisterRequest(userRegisterData =
+    val userRegisterRequest: UserRegisterRequest = UserRegisterRequest(user =
       UserRegisterData(
         email = "user123@email.com",
         username = "user123",
@@ -56,14 +56,14 @@ class UsersEndpoints(base: BaseEndpoints):
       )
     )
 
-    val userLoginRequest: UserLoginRequest = UserLoginRequest(userLoginData =
+    val userLoginRequest: UserLoginRequest = UserLoginRequest(user =
       UserLoginData(
         email = "user123@email.com",
         password = "secret_password"
       )
     )
 
-    val userUpdateRequest: UserUpdateRequest = UserUpdateRequest(userUpdateData =
+    val userUpdateRequest: UserUpdateRequest = UserUpdateRequest(user =
       UserUpdateData(
         email = Some("updatedUser@email.com"),
         username = Some("updatedUser"),
