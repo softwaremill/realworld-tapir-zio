@@ -1,4 +1,4 @@
-package com.softwaremill.realworld.common.db
+package com.softwaremill.realworld.db
 
 import com.softwaremill.realworld.articles.core.ArticlesRepository
 import com.softwaremill.realworld.common.AppConfig

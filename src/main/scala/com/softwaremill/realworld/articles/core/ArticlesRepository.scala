@@ -3,9 +3,8 @@ package com.softwaremill.realworld.articles.core
 import com.softwaremill.realworld.articles.*
 import com.softwaremill.realworld.articles.core.api.ArticleCreateData
 import com.softwaremill.realworld.articles.core.{Article, ArticleAuthor, ArticlesFilters}
-import com.softwaremill.realworld.common.db.UserRow
 import com.softwaremill.realworld.common.{Exceptions, Pagination}
-import com.softwaremill.realworld.users.Profile
+import com.softwaremill.realworld.users.{Profile, UserRow}
 import io.getquill.*
 import io.getquill.jdbczio.*
 import org.sqlite.SQLiteErrorCode.SQLITE_CONSTRAINT_UNIQUE

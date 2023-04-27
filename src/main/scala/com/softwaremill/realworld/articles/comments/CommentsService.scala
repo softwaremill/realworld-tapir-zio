@@ -4,8 +4,7 @@ import com.softwaremill.realworld.articles.core.{ArticleAuthor, ArticlesReposito
 import com.softwaremill.realworld.articles.tags.TagsRepository
 import com.softwaremill.realworld.common.Exceptions
 import com.softwaremill.realworld.common.Exceptions.{BadRequest, NotFound, Unauthorized}
-import com.softwaremill.realworld.common.db.UserRow
-import com.softwaremill.realworld.users.UsersRepository
+import com.softwaremill.realworld.users.{UserRow, UsersRepository}
 import zio.{Task, ZIO, ZLayer}
 
 class CommentsService(

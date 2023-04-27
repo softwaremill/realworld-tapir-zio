@@ -5,8 +5,7 @@ import com.softwaremill.realworld.articles.core.api.ArticleCreateData
 import com.softwaremill.realworld.articles.core.{Article, ArticleAuthor, ArticlesFilters, ArticlesRepository}
 import com.softwaremill.realworld.common.Exceptions.AlreadyInUse
 import com.softwaremill.realworld.common.Pagination
-import com.softwaremill.realworld.common.db.UserRow
-import com.softwaremill.realworld.users.{Profile, UsersRepository}
+import com.softwaremill.realworld.users.{Profile, UserRow, UsersRepository}
 import sttp.client3.testing.SttpBackendStub
 import sttp.client3.{HttpError, Response, ResponseException, UriContext, basicRequest}
 import sttp.tapir.EndpointOutput.StatusCode

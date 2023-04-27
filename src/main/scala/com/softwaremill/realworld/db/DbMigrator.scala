@@ -1,4 +1,4 @@
-package com.softwaremill.realworld.common.db
+package com.softwaremill.realworld.db
 
 import io.getquill.SnakeCase
 import org.flywaydb.core.Flyway

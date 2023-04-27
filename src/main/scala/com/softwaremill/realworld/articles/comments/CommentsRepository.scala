@@ -1,8 +1,8 @@
 package com.softwaremill.realworld.articles.comments
 
 import com.softwaremill.realworld.articles.core.ArticlesRepository
-import io.getquill.jdbczio.*
 import io.getquill.*
+import io.getquill.jdbczio.*
 import zio.{Task, ZLayer}
 
 import java.time.Instant

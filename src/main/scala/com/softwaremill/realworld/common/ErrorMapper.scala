@@ -1,4 +1,4 @@
-package com.softwaremill.realworld.http
+package com.softwaremill.realworld.common
 
 import com.softwaremill.realworld.common.*
 import zio.IO

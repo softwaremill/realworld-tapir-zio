@@ -1,8 +1,8 @@
 package com.softwaremill.realworld.users
 
 import com.softwaremill.realworld.auth.AuthService
-import com.softwaremill.realworld.common.db.{Db, DbConfig, DbMigrator}
 import com.softwaremill.realworld.common.{BaseEndpoints, Configuration}
+import com.softwaremill.realworld.db.{Db, DbConfig, DbMigrator}
 import com.softwaremill.realworld.users.UserDbTestSupport.*
 import com.softwaremill.realworld.users.UserEndpointTestSupport.*
 import com.softwaremill.realworld.users.api.{UserLoginData, UserRegisterData, UsersEndpoints}

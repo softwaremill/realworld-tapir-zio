@@ -5,8 +5,8 @@ import com.softwaremill.realworld.articles.comments.{CommentsRepository, Comment
 import com.softwaremill.realworld.articles.core.{ArticlesEndpoints, ArticlesRepository, ArticlesService}
 import com.softwaremill.realworld.articles.tags.{TagsEndpoints, TagsRepository, TagsService}
 import com.softwaremill.realworld.auth.AuthService
-import com.softwaremill.realworld.common.db.{Db, DbConfig, DbMigrator}
-import com.softwaremill.realworld.common.{AppConfig, BaseEndpoints, Configuration, Exceptions}
+import com.softwaremill.realworld.common.*
+import com.softwaremill.realworld.db.{Db, DbConfig, DbMigrator}
 import com.softwaremill.realworld.users.api.UsersEndpoints
 import com.softwaremill.realworld.users.{UsersRepository, UsersServerEndpoints, UsersService}
 import sttp.model.StatusCode

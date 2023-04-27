@@ -1,7 +1,6 @@
 package com.softwaremill.realworld.users
 
 import com.softwaremill.diffx.{Diff, compare}
-import com.softwaremill.realworld.common.db.UserRow
 import com.softwaremill.realworld.users.api.{UserRegisterData, UserUpdateData}
 import sttp.client3.testing.SttpBackendStub
 import sttp.client3.ziojson.*

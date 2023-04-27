@@ -3,7 +3,7 @@ package com.softwaremill.realworld
 import com.softwaremill.realworld.articles.comments.CommentsServerEndpoints
 import com.softwaremill.realworld.articles.core.ArticlesEndpoints
 import com.softwaremill.realworld.articles.tags.TagsEndpoints
-import com.softwaremill.realworld.common.db.DbConfig
+import com.softwaremill.realworld.db.DbConfig
 import com.softwaremill.realworld.users.UsersServerEndpoints
 import sttp.tapir.swagger.bundle.SwaggerInterpreter
 import sttp.tapir.ztapir.ZServerEndpoint

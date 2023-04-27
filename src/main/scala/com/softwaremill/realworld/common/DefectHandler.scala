@@ -1,4 +1,4 @@
-package com.softwaremill.realworld
+package com.softwaremill.realworld.common
 
 import com.softwaremill.realworld.common.Exceptions
 import sttp.model.StatusCode

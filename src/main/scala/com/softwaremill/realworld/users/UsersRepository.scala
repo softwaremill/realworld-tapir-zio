@@ -1,7 +1,6 @@
 package com.softwaremill.realworld.users
 
 import com.softwaremill.realworld.common.Exceptions
-import com.softwaremill.realworld.common.db.UserRow
 import com.softwaremill.realworld.users.api.{UserRegisterData, UserUpdateData}
 import io.getquill.*
 import io.getquill.jdbczio.*

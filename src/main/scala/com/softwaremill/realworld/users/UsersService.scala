@@ -2,7 +2,6 @@ package com.softwaremill.realworld.users
 
 import com.softwaremill.realworld.auth.AuthService
 import com.softwaremill.realworld.common.Exceptions.{BadRequest, NotFound, Unauthorized}
-import com.softwaremill.realworld.common.db.UserRow
 import com.softwaremill.realworld.common.{Exceptions, Pagination}
 import com.softwaremill.realworld.users.api.*
 import zio.{Console, IO, Task, ZIO, ZLayer}

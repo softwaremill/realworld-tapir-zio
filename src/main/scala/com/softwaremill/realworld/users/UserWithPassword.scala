@@ -1,6 +1,5 @@
 package com.softwaremill.realworld.users
 
-import com.softwaremill.realworld.common.db.UserRow
 import com.softwaremill.realworld.users.User
 
 case class UserWithPassword(

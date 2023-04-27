@@ -4,7 +4,7 @@ import com.softwaremill.realworld.articles.core.{ArticlesEndpoints, ArticlesServ
 import com.softwaremill.realworld.auth.AuthService
 import com.softwaremill.realworld.common.*
 import com.softwaremill.realworld.common.BaseEndpoints.defaultErrorOutputs
-import com.softwaremill.realworld.common.db.{Db, DbConfig}
+import com.softwaremill.realworld.db.{Db, DbConfig}
 import io.getquill.SnakeCase
 import sttp.model.headers.WWWAuthenticateChallenge
 import sttp.model.{HeaderNames, StatusCode}

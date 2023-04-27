@@ -1,7 +1,6 @@
 package com.softwaremill.realworld.users
 
 import com.softwaremill.realworld.common.NoneAsNullOptionEncoder.*
-import com.softwaremill.realworld.common.db.UserRow
 import com.softwaremill.realworld.users.api.UserUpdateData
 import zio.json.{DeriveJsonDecoder, DeriveJsonEncoder}
 

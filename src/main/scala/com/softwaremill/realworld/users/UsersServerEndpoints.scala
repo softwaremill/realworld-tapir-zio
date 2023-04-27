@@ -1,8 +1,8 @@
 package com.softwaremill.realworld.users
 
 import com.softwaremill.realworld.common.*
-import com.softwaremill.realworld.common.db.{Db, DbConfig}
-import com.softwaremill.realworld.http.ErrorMapper.defaultErrorsMappings
+import com.softwaremill.realworld.common.ErrorMapper.defaultErrorsMappings
+import com.softwaremill.realworld.db.{Db, DbConfig}
 import com.softwaremill.realworld.users.api.*
 import io.getquill.SnakeCase
 import sttp.model.StatusCode

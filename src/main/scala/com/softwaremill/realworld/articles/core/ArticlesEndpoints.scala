@@ -4,8 +4,8 @@ import com.softwaremill.realworld.articles.comments.*
 import com.softwaremill.realworld.articles.comments.api.{CommentCreateRequest, CommentResponse, CommentsListResponse}
 import com.softwaremill.realworld.articles.core.api.{ArticleCreateRequest, ArticleResponse, ArticleUpdateRequest, ArticlesListResponse}
 import com.softwaremill.realworld.common.*
-import com.softwaremill.realworld.common.db.{Db, DbConfig}
-import com.softwaremill.realworld.http.ErrorMapper.defaultErrorsMappings
+import com.softwaremill.realworld.common.ErrorMapper.defaultErrorsMappings
+import com.softwaremill.realworld.db.{Db, DbConfig}
 import io.getquill.SnakeCase
 import sttp.model.StatusCode
 import sttp.tapir.generic.auto.*

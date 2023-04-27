@@ -6,9 +6,9 @@ import com.softwaremill.realworld.articles.core.api.{ArticleResponse, ArticlesLi
 import com.softwaremill.realworld.articles.core.{Article, ArticlesEndpoints, ArticlesRepository, ArticlesService}
 import com.softwaremill.realworld.articles.tags.TagsRepository
 import com.softwaremill.realworld.auth.AuthService
-import com.softwaremill.realworld.common.db.{Db, DbConfig, DbMigrator}
 import com.softwaremill.realworld.common.model.auth.*
 import com.softwaremill.realworld.common.{BaseEndpoints, Configuration}
+import com.softwaremill.realworld.db.{Db, DbConfig, DbMigrator}
 import com.softwaremill.realworld.users.UsersEndpointsSpec.test
 import com.softwaremill.realworld.users.api.{ProfileResponse, UserResponse, UsersEndpoints}
 import com.softwaremill.realworld.users.{UsersRepository, UsersServerEndpoints, UsersService}

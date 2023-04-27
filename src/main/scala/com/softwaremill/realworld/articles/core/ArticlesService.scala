@@ -5,9 +5,8 @@ import com.softwaremill.realworld.articles.core.api.{ArticleCreateData, ArticleU
 import com.softwaremill.realworld.articles.core.{Article, ArticlesFilters, ArticlesRepository}
 import com.softwaremill.realworld.articles.tags.TagsRepository
 import com.softwaremill.realworld.common.Exceptions.{BadRequest, NotFound, Unauthorized}
-import com.softwaremill.realworld.common.db.UserRow
 import com.softwaremill.realworld.common.{Exceptions, Pagination}
-import com.softwaremill.realworld.users.{UsersRepository, UsersService}
+import com.softwaremill.realworld.users.{UserRow, UsersRepository, UsersService}
 import zio.{Console, IO, Task, ZIO, ZLayer}
 
 import java.sql.SQLException
@@ -99,15 +98,6 @@ class ArticlesService(
 
   private def userByEmail(email: String): Task[UserRow] =
     usersRepository.findByEmail(email).someOrFail(NotFound("User doesn't exist, re-login may be needed!"))
-
-  private def handleProcessingResult[T](
-      option: Option[T],
-      errorMessage: String
-  ): Task[T] =
-    option match {
-      case Some(value) => ZIO.succeed(value)
-      case None        => ZIO.fail(Exceptions.NotFound(errorMessage))
-    }
 
   private def updateArticleData(articleData: Article, updatedData: ArticleUpdateData): Article = {
     articleData.copy(

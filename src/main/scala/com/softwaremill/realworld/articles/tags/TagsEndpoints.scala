@@ -1,7 +1,7 @@
 package com.softwaremill.realworld.articles.tags
 
 import com.softwaremill.realworld.common.BaseEndpoints
-import com.softwaremill.realworld.http.ErrorMapper.defaultErrorsMappings
+import com.softwaremill.realworld.common.ErrorMapper.defaultErrorsMappings
 import sttp.tapir.generic.auto.*
 import sttp.tapir.json.zio.jsonBody
 import sttp.tapir.ztapir.*
