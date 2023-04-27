@@ -6,6 +6,11 @@ import zio.{Task, ZIO, ZLayer}
 
 import java.sql.SQLException
 
+case class TagRow(
+    articleId: Int,
+    tag: String
+)
+
 class TagsRepository(quill: Quill.Sqlite[SnakeCase]):
   import quill.*
 

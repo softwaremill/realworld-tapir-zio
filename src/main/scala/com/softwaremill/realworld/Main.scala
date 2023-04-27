@@ -3,7 +3,8 @@ package com.softwaremill.realworld
 import com.softwaremill.realworld.articles.comments.api.CommentsEndpoints
 import com.softwaremill.realworld.articles.comments.{CommentsRepository, CommentsServerEndpoints, CommentsService}
 import com.softwaremill.realworld.articles.core.{ArticlesEndpoints, ArticlesRepository, ArticlesService}
-import com.softwaremill.realworld.articles.tags.{TagsEndpoints, TagsRepository, TagsService}
+import com.softwaremill.realworld.articles.tags.api.TagsEndpoints
+import com.softwaremill.realworld.articles.tags.{TagsRepository, TagsServerEndpoints, TagsService}
 import com.softwaremill.realworld.auth.AuthService
 import com.softwaremill.realworld.common.*
 import com.softwaremill.realworld.db.{Db, DbConfig, DbMigrator}
@@ -68,6 +69,7 @@ object Main extends ZIOAppDefault:
         CommentsRepository.live,
         BaseEndpoints.live,
         TagsEndpoints.live,
+        TagsServerEndpoints.live,
         TagsService.live,
         TagsRepository.live,
         ServerConfig.live(ServerConfig.default.port(port)),

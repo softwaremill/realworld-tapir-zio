@@ -1,6 +1,6 @@
 package com.softwaremill.realworld.articles.comments.api
 
-import com.softwaremill.realworld.common.BaseEndpoints
+import com.softwaremill.realworld.common.{BaseEndpoints, ErrorInfo, UserSession}
 import com.softwaremill.realworld.users.api.UsersEndpoints
 import sttp.tapir.Endpoint
 import sttp.tapir.generic.auto.*
