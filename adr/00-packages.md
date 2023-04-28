@@ -15,7 +15,6 @@ We decided on the following packages:
 * `db`
 * `auth`
 * `articles`
-* `comments`
 * `users`
 
 The `common` package will contain auxiliary structures that will be used in the project.
@@ -23,9 +22,9 @@ The `db` package will have the necessary data to operate the database.
 The `auth` package will contain the tools needed to authorize the user. 
 
 
-Packages of `articles`, `comments` and `users` will have a similar structure. 
-Each of them will contain specific endpoints, will service them using services and will communicate with the database using repositories.
-They will include domain classes and clearly separated api layer that will contain "the contract", i.e. the endpoint descriptions, without logic.
+The `articles` consist of 3 smaller submodules: `core`, `comments` and `users`. 
+Each of them will have a similar structure. They will contain specific endpoints, will service them using services and will communicate with the database using repositories.
+These packages will include domain classes and clearly separated api layer that will contain "the contract", i.e. the endpoint descriptions, without logic.
   
 Example with one implementation per service:
 
@@ -46,36 +45,41 @@ db
 auth
 └── AuthService
 articles
-├── api
-│   ├── ArticleResponse
-│   ├── ArticlesListResponse
-│   ├── ArticleCreateData
-│   ├── ArticleCreateRequest
-│   ├── ArticleUpdateData
-│   ├── ArticleUpdateRequest
-│   └── ArticlesEndpoints
-├── Author
-├── Article
-├── ArticlesRepository
-├── ArticlesService
-├── Tag
-├── TagsRepository
-├── TagsService
-└── ArticlesServerEndpoints
-comments
-├── api
-│   ├── CommentResponse
-│   ├── CommentsListResponse
-│   ├── CommentCreateData
-│   ├── CommentCreateRequest
-│   ├── CommentUpdateData
-│   ├── CommentUpdateRequest
-│   └── CommentsEndpoints
-├── Author
-├── Comment
-├── CommentsRepository
-├── CommentsService
-└── CommentsServerEndpoints
+├── core
+│   ├── api
+│   │   ├── ArticleResponse
+│   │   ├── ArticlesListResponse
+│   │   ├── ArticleCreateData
+│   │   ├── ArticleCreateRequest
+│   │   ├── ArticleUpdateData
+│   │   ├── ArticleUpdateRequest
+│   │   └── ArticlesEndpoints
+│   ├── ArticleAuthor
+│   ├── Article
+│   ├── ArticlesRepository
+│   ├── ArticlesService
+│   └── ArticlesServerEndpoints
+├── comments
+│   ├── api
+│   │   ├── CommentResponse
+│   │   ├── CommentsListResponse
+│   │   ├── CommentCreateData
+│   │   ├── CommentCreateRequest
+│   │   ├── CommentUpdateData
+│   │   ├── CommentUpdateRequest
+│   │   └── CommentsEndpoints
+│   ├── CommentAuthor
+│   ├── Comment
+│   ├── CommentsRepository
+│   ├── CommentsService
+│   └── CommentsServerEndpoints
+├── tags
+│   ├── api
+│   │   ├── TagsEndpoints
+│   │   └── TagsListResponse
+│   ├── TagsRepository
+│   ├── TagsService
+│   └── TagsServerEndpoints
 users
 ├── api
 │   ├── ProfileResponse
