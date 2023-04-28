@@ -1,7 +1,7 @@
 package com.softwaremill.realworld.users
 
 import com.softwaremill.realworld.common.Exceptions
-import com.softwaremill.realworld.users.model.*
+import com.softwaremill.realworld.users.api.{UserRegisterData, UserUpdateData}
 import io.getquill.*
 import io.getquill.jdbczio.*
 import org.sqlite.SQLiteErrorCode.SQLITE_CONSTRAINT_UNIQUE
@@ -11,6 +11,8 @@ import zio.{Console, IO, RIO, Task, UIO, ZIO, ZLayer}
 import java.sql.SQLException
 import javax.sql.DataSource
 import scala.util.chaining.*
+
+case class Followers(userId: Int, followerId: Int)
 
 class UsersRepository(quill: Quill.Sqlite[SnakeCase]):
   import quill.*
@@ -49,7 +51,7 @@ class UsersRepository(quill: Quill.Sqlite[SnakeCase]):
   ).unit
     .pipe(mapUniqueConstraintViolationError)
 
-  def updateByEmail(updateData: UserUpdateData, email: String): IO[Throwable, Option[UserData]] = {
+  def updateByEmail(updateData: UserUpdateData, email: String): IO[Throwable, Option[User]] = {
     val update = queryUser.dynamic
       .filter(_.email == lift(email))
       .update(
@@ -69,8 +71,20 @@ class UsersRepository(quill: Quill.Sqlite[SnakeCase]):
     transaction {
       run(update)
         .flatMap(_ => run(read))
-        .map(_.map(UserData.fromRow))
+        .map(_.map(User.fromRow))
     }
+  }
+
+  def follow(followedId: Int, followerId: Int): ZIO[Any, SQLException, Long] = run {
+    query[Followers].insert(_.userId -> lift(followedId), _.followerId -> lift(followerId)).onConflictIgnore
+  }
+
+  def unfollow(followedId: Int, followerId: Int): ZIO[Any, SQLException, Long] = run {
+    query[Followers].filter(f => (f.userId == lift(followedId)) && (f.followerId == lift(followerId))).delete
+  }
+
+  def isFollowing(followedId: Int, followerId: Int): ZIO[Any, SQLException, Boolean] = run {
+    query[Followers].filter(_.userId == lift(followedId)).filter(_.followerId == lift(followerId)).map(_ => 1).nonEmpty
   }
 
   private def mapUniqueConstraintViolationError[R, A](task: RIO[R, A]): RIO[R, A] = task.mapError {

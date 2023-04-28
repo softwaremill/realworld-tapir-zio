@@ -1,7 +1,7 @@
 package com.softwaremill.realworld.users
 
 import com.softwaremill.diffx.{Diff, compare}
-import com.softwaremill.realworld.users.model.*
+import com.softwaremill.realworld.users.api.{UserRegisterData, UserUpdateData}
 import sttp.client3.testing.SttpBackendStub
 import sttp.client3.ziojson.*
 import sttp.client3.{HttpError, Response, ResponseException, UriContext, basicRequest}
@@ -35,7 +35,7 @@ object UserRepositoryTestSupport:
     } yield result
   }
 
-  def callUpdateByEmail(userUpdateData: UserUpdateData, email: String): ZIO[UsersRepository, Throwable, Option[UserData]] = {
+  def callUpdateByEmail(userUpdateData: UserUpdateData, email: String): ZIO[UsersRepository, Throwable, Option[User]] = {
     for {
       repo <- ZIO.service[UsersRepository]
       result <- repo.updateByEmail(userUpdateData, email)
@@ -74,7 +74,7 @@ object UserRepositoryTestSupport:
         (hasField(
           "user",
           _.user,
-          (hasField("email", _.email, equalTo("jake@example.com")): Assertion[UserData]) &&
+          (hasField("email", _.email, equalTo("jake@example.com")): Assertion[User]) &&
             hasField("token", _.token, isNone) &&
             hasField("username", _.username, equalTo("jake")) &&
             hasField("bio", _.bio, isNone) &&
@@ -119,19 +119,19 @@ object UserRepositoryTestSupport:
       userRowOpt <- callUpdateByEmail(userUpdateData, userRegisterData.email)
     } yield zio.test.assert(userRowOpt) {
       isSome {
-        hasField[UserData, Option[String]](
+        hasField[User, Option[String]](
           "bio",
           _.bio, {
             isSome {
               equalTo("Updated test bio")
             }
           }
-        ) && hasField[UserData, String](
+        ) && hasField[User, String](
           "email",
           _.email, {
             equalTo("test@test.com")
           }
-        ) && hasField[UserData, String](
+        ) && hasField[User, String](
           "username",
           _.username, {
             equalTo("tested")
@@ -150,19 +150,19 @@ object UserRepositoryTestSupport:
       userRowOpt <- callUpdateByEmail(userUpdateData, userRegisterData.email)
     } yield zio.test.assert(userRowOpt) {
       isSome {
-        hasField[UserData, Option[String]](
+        hasField[User, Option[String]](
           "bio",
           _.bio, {
             isSome {
               equalTo("Updated test bio")
             }
           }
-        ) && hasField[UserData, String](
+        ) && hasField[User, String](
           "email",
           _.email, {
             equalTo("updated@test.com")
           }
-        ) && hasField[UserData, String](
+        ) && hasField[User, String](
           "username",
           _.username, {
             equalTo("tested")

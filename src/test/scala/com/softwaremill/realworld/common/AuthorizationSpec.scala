@@ -1,16 +1,17 @@
 package com.softwaremill.realworld.common
 
-import com.softwaremill.realworld.articles.model.{Article, ArticleAuthor, ArticleData, ArticlesList}
-import com.softwaremill.realworld.articles.{ArticlesEndpoints, ArticlesRepository, ArticlesService}
+import com.softwaremill.realworld.articles.comments.api.{CommentResponse, CommentsEndpoints}
+import com.softwaremill.realworld.articles.comments.{CommentsRepository, CommentsServerEndpoints, CommentsService}
+import com.softwaremill.realworld.articles.core.api.{ArticleResponse, ArticlesEndpoints, ArticlesListResponse}
+import com.softwaremill.realworld.articles.core.{Article, ArticlesRepository, ArticlesServerEndpoints, ArticlesService}
+import com.softwaremill.realworld.articles.tags.TagsRepository
 import com.softwaremill.realworld.auth.AuthService
 import com.softwaremill.realworld.common.model.auth.*
 import com.softwaremill.realworld.common.{BaseEndpoints, Configuration}
 import com.softwaremill.realworld.db.{Db, DbConfig, DbMigrator}
-import com.softwaremill.realworld.profiles.{Profile, ProfilesEndpoints, ProfilesRepository, ProfilesService}
-import com.softwaremill.realworld.tags.TagsRepository
 import com.softwaremill.realworld.users.UsersEndpointsSpec.test
-import com.softwaremill.realworld.users.model.User
-import com.softwaremill.realworld.users.{UsersEndpoints, UsersRepository, UsersService}
+import com.softwaremill.realworld.users.api.{ProfileResponse, UserResponse, UsersEndpoints}
+import com.softwaremill.realworld.users.{UsersRepository, UsersServerEndpoints, UsersService}
 import com.softwaremill.realworld.utils.TestUtils.*
 import sttp.client3.testing.SttpBackendStub
 import sttp.client3.ziojson.*
@@ -43,6 +44,36 @@ object AuthorizationSpec extends ZIOSpecDefault:
     ),
     UserAuthTestParameters(
       endpointParam = UserAuthEndpointParameters.update,
+      headers = Map(),
+      expectedError = "Invalid value for: header Authorization (missing)"
+    ),
+    UserAuthTestParameters(
+      endpointParam = UserAuthEndpointParameters.getProfile("username"),
+      headers = Map("Authorization" -> "Token Invalid JWT"),
+      expectedError = "{\"error\":\"Invalid token!\"}"
+    ),
+    UserAuthTestParameters(
+      endpointParam = UserAuthEndpointParameters.getProfile("username"),
+      headers = Map(),
+      expectedError = "Invalid value for: header Authorization (missing)"
+    ),
+    UserAuthTestParameters(
+      endpointParam = UserAuthEndpointParameters.followUser("username"),
+      headers = Map("Authorization" -> "Token Invalid JWT"),
+      expectedError = "{\"error\":\"Invalid token!\"}"
+    ),
+    UserAuthTestParameters(
+      endpointParam = UserAuthEndpointParameters.followUser("username"),
+      headers = Map(),
+      expectedError = "Invalid value for: header Authorization (missing)"
+    ),
+    UserAuthTestParameters(
+      endpointParam = UserAuthEndpointParameters.unfollowUser("username"),
+      headers = Map("Authorization" -> "Token Invalid JWT"),
+      expectedError = "{\"error\":\"Invalid token!\"}"
+    ),
+    UserAuthTestParameters(
+      endpointParam = UserAuthEndpointParameters.unfollowUser("username"),
       headers = Map(),
       expectedError = "Invalid value for: header Authorization (missing)"
     )
@@ -117,74 +148,44 @@ object AuthorizationSpec extends ZIOSpecDefault:
       endpointParam = ArticleAuthEndpointParameters.removeFavorite("slug"),
       headers = Map(),
       expectedError = "Invalid value for: header Authorization (missing)"
-    ),
-    ArticleAuthTestParameters(
-      endpointParam = ArticleAuthEndpointParameters.addComment("slug"),
-      headers = Map("Authorization" -> "Token Invalid JWT"),
-      expectedError = "{\"error\":\"Invalid token!\"}"
-    ),
-    ArticleAuthTestParameters(
-      endpointParam = ArticleAuthEndpointParameters.addComment("slug"),
-      headers = Map(),
-      expectedError = "Invalid value for: header Authorization (missing)"
-    ),
-    ArticleAuthTestParameters(
-      endpointParam = ArticleAuthEndpointParameters.deleteComment("slug", 1),
-      headers = Map("Authorization" -> "Token Invalid JWT"),
-      expectedError = "{\"error\":\"Invalid token!\"}"
-    ),
-    ArticleAuthTestParameters(
-      endpointParam = ArticleAuthEndpointParameters.deleteComment("slug", 1),
-      headers = Map(),
-      expectedError = "Invalid value for: header Authorization (missing)"
-    ),
-    ArticleAuthTestParameters(
-      endpointParam = ArticleAuthEndpointParameters.getCommentsFromArticle("slug"),
-      headers = Map("Authorization" -> "Token Invalid JWT"),
-      expectedError = "{\"error\":\"Invalid token!\"}"
     )
   )
-  val profileTestParameters: List[ProfileAuthTestParameters] = List(
-    ProfileAuthTestParameters(
-      endpointParam = ProfileAuthEndpointParameters.getProfile("username"),
+  val commentTestParameters: List[CommentAuthTestParameters] = List(
+    CommentAuthTestParameters(
+      endpointParam = CommentAuthEndpointParameters.addComment("slug"),
       headers = Map("Authorization" -> "Token Invalid JWT"),
       expectedError = "{\"error\":\"Invalid token!\"}"
     ),
-    ProfileAuthTestParameters(
-      endpointParam = ProfileAuthEndpointParameters.getProfile("username"),
+    CommentAuthTestParameters(
+      endpointParam = CommentAuthEndpointParameters.addComment("slug"),
       headers = Map(),
       expectedError = "Invalid value for: header Authorization (missing)"
     ),
-    ProfileAuthTestParameters(
-      endpointParam = ProfileAuthEndpointParameters.followUser("username"),
+    CommentAuthTestParameters(
+      endpointParam = CommentAuthEndpointParameters.deleteComment("slug", 1),
       headers = Map("Authorization" -> "Token Invalid JWT"),
       expectedError = "{\"error\":\"Invalid token!\"}"
     ),
-    ProfileAuthTestParameters(
-      endpointParam = ProfileAuthEndpointParameters.followUser("username"),
+    CommentAuthTestParameters(
+      endpointParam = CommentAuthEndpointParameters.deleteComment("slug", 1),
       headers = Map(),
       expectedError = "Invalid value for: header Authorization (missing)"
     ),
-    ProfileAuthTestParameters(
-      endpointParam = ProfileAuthEndpointParameters.unfollowUser("username"),
+    CommentAuthTestParameters(
+      endpointParam = CommentAuthEndpointParameters.getCommentsFromArticle("slug"),
       headers = Map("Authorization" -> "Token Invalid JWT"),
       expectedError = "{\"error\":\"Invalid token!\"}"
-    ),
-    ProfileAuthTestParameters(
-      endpointParam = ProfileAuthEndpointParameters.unfollowUser("username"),
-      headers = Map(),
-      expectedError = "Invalid value for: header Authorization (missing)"
     )
   )
 
-  def userEndpointsAuthorizationTest(testParameters: UserAuthTestParameters): Spec[UsersEndpoints, Throwable] = {
+  def userEndpointsAuthorizationTest(testParameters: UserAuthTestParameters): Spec[UsersServerEndpoints, Throwable] = {
     test(s"User endpoints negative authorization test [expected: ${testParameters.expectedError}]") {
       assertZIO(
         testParameters.endpoint
           .flatMap { endpoint =>
             testParameters.request
               .headers(testParameters.headers)
-              .response(asJson[User])
+              .response(asJson[UserResponse])
               .send(backendStub(endpoint))
               .map(_.body)
           }
@@ -192,14 +193,14 @@ object AuthorizationSpec extends ZIOSpecDefault:
     }
   }
 
-  def articleEndpointsAuthorizationTest(testParameters: ArticleAuthTestParameters): Spec[ArticlesEndpoints, Throwable] = {
+  def articleEndpointsAuthorizationTest(testParameters: ArticleAuthTestParameters): Spec[ArticlesServerEndpoints, Throwable] = {
     test(s"Article endpoints negative authorization test [expected: ${testParameters.expectedError}]") {
       assertZIO(
         testParameters.endpoint
           .flatMap { endpoint =>
             testParameters.request
               .headers(testParameters.headers)
-              .response(asJson[Article])
+              .response(asJson[ArticleResponse])
               .send(backendStub(endpoint))
               .map(_.body)
           }
@@ -207,14 +208,14 @@ object AuthorizationSpec extends ZIOSpecDefault:
     }
   }
 
-  def profileEndpointsAuthorizationTest(testParameters: ProfileAuthTestParameters): Spec[ProfilesEndpoints, Throwable] = {
-    test(s"Profile endpoints negative authorization test [expected: ${testParameters.expectedError}]") {
+  def commentEndpointsAuthorizationTest(testParameters: CommentAuthTestParameters): Spec[CommentsServerEndpoints, Throwable] = {
+    test(s"Comment endpoints negative authorization test [expected: ${testParameters.expectedError}]") {
       assertZIO(
         testParameters.endpoint
           .flatMap { endpoint =>
             testParameters.request
               .headers(testParameters.headers)
-              .response(asJson[Profile])
+              .response(asJson[CommentResponse])
               .send(backendStub(endpoint))
               .map(_.body)
           }
@@ -222,15 +223,15 @@ object AuthorizationSpec extends ZIOSpecDefault:
     }
   }
 
-  def spec = suite("check authorization")(
+  override def spec = suite("check authorization")(
     suite("articles endpoints")(
       articleTestParameters.map(articleEndpointsAuthorizationTest): _*
     ),
     suite("user endpoints")(
       userTestParameters.map(userEndpointsAuthorizationTest): _*
     ),
-    suite("profile endpoints")(
-      profileTestParameters.map(profileEndpointsAuthorizationTest): _*
+    suite("user endpoints")(
+      commentTestParameters.map(commentEndpointsAuthorizationTest): _*
     )
   ).provide(
     Configuration.live,
@@ -238,13 +239,16 @@ object AuthorizationSpec extends ZIOSpecDefault:
     UsersRepository.live,
     UsersService.live,
     UsersEndpoints.live,
+    UsersServerEndpoints.live,
     ArticlesRepository.live,
     ArticlesService.live,
     ArticlesEndpoints.live,
+    ArticlesServerEndpoints.live,
+    CommentsRepository.live,
+    CommentsService.live,
+    CommentsEndpoints.live,
+    CommentsServerEndpoints.live,
     BaseEndpoints.live,
-    ProfilesRepository.live,
-    ProfilesEndpoints.live,
-    ProfilesService.live,
     TagsRepository.live,
     testDbLayer
   )
