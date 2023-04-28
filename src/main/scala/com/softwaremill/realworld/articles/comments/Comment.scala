@@ -2,8 +2,10 @@ package com.softwaremill.realworld.articles.comments
 
 import zio.json.{DeriveJsonDecoder, DeriveJsonEncoder, JsonDecoder, JsonEncoder}
 
-case class Comment(comment: CommentData)
+import java.time.Instant
+
+case class Comment(id: Int, createdAt: Instant, updatedAt: Instant, body: String, author: CommentAuthor)
 
 object Comment:
-  given commentEncoder: JsonEncoder[Comment] = DeriveJsonEncoder.gen
-  given commentDecoder: JsonDecoder[Comment] = DeriveJsonDecoder.gen
+  given commentDataEncoder: JsonEncoder[Comment] = DeriveJsonEncoder.gen
+  given commentDataDecoder: JsonDecoder[Comment] = DeriveJsonDecoder.gen

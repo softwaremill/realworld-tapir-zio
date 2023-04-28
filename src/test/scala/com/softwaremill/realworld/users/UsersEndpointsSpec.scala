@@ -1,148 +1,114 @@
 package com.softwaremill.realworld.users
 
-import com.softwaremill.diffx.{Diff, compare}
 import com.softwaremill.realworld.auth.AuthService
 import com.softwaremill.realworld.common.{BaseEndpoints, Configuration}
 import com.softwaremill.realworld.db.{Db, DbConfig, DbMigrator}
+import com.softwaremill.realworld.users.UserDbTestSupport.*
+import com.softwaremill.realworld.users.UserEndpointTestSupport.*
+import com.softwaremill.realworld.users.api.{UserLoginData, UserRegisterData, UsersEndpoints}
 import com.softwaremill.realworld.utils.TestUtils.*
-import sttp.client3.testing.SttpBackendStub
-import sttp.client3.ziojson.*
-import sttp.client3.{HttpError, Response, ResponseException, UriContext, basicRequest}
-import sttp.tapir.EndpointOutput.StatusCode
-import sttp.tapir.server.stub.TapirStubInterpreter
-import sttp.tapir.ztapir.{RIOMonadError, ZServerEndpoint}
-import zio.test.Assertion.*
-import zio.test.{Assertion, TestAspect, TestRandom, ZIOSpecDefault, assertTrue, assertZIO}
-import zio.{RIO, Random, ZIO, ZLayer}
-
-import java.time.{Instant, ZonedDateTime}
-import javax.sql.DataSource
+import sttp.client3.UriContext
+import zio.test.ZIOSpecDefault
 
 object UsersEndpointsSpec extends ZIOSpecDefault:
-  def spec = suite("Users endpoints tests")(
-    suite("Get current user")(
-      test("return not found error") {
-        assertZIO(
+  override def spec = suite("user endpoints tests")(
+    suite("with no header")(
+      test("get profile") {
+        checkIfUnauthorizedErrorOccurInGet(authorizationHeaderOpt = None, uri = uri"http://test.com/api/profiles/jake")
+      },
+      test("follow profile") {
+        checkIfUnauthorizedErrorOccurInFollow(authorizationHeaderOpt = None, uri = uri"http://test.com/api/profiles/jake/follow")
+      },
+      test("unfollow profile") {
+        checkIfUnauthorizedErrorOccurInUnfollow(authorizationHeaderOpt = None, uri = uri"http://test.com/api/profiles/john/follow")
+      }
+    ),
+    suite("with auth header")(
+      test("get profile") {
+        for {
+          _ <- prepareBasicProfileData
+          authHeader <- getValidAuthorizationHeader("john@example.com")
+          result <- checkGetProfile(authorizationHeaderOpt = Some(authHeader), uri = uri"http://test.com/api/profiles/jake")
+        } yield result
+      },
+      test("follow profile") {
+        for {
+          _ <- prepareBasicProfileData
+          authHeader <- getValidAuthorizationHeader()
+          result <- checkFollowUser(authorizationHeaderOpt = Some(authHeader), uri = uri"http://test.com/api/profiles/john/follow")
+        } yield result
+      },
+      test("unfollow profile") {
+        for {
+          _ <- prepareBasicProfileData
+          authHeader <- getValidAuthorizationHeader("john@example.com")
+          result <- checkUnfollowUser(authorizationHeaderOpt = Some(authHeader), uri = uri"http://test.com/api/profiles/jake/follow")
+        } yield result
+      },
+      suite("get current user")(
+        test("return not found error") {
           for {
-            usersEndpoints <- ZIO.service[UsersEndpoints]
-            endpoint = usersEndpoints.getCurrentUser
+            _ <- prepareBasicUsersData
             authHeader <- getValidAuthorizationHeader("invalid_email@invalid.com")
-            response <- basicRequest
-              .get(uri"http://test.com/api/user")
-              .headers(authHeader)
-              .response(asJson[User])
-              .send(backendStub(endpoint))
-            body = response.body
-          } yield body
-        )(isLeft(equalTo(HttpError("{\"error\":\"User doesn't exist.\"}", sttp.model.StatusCode(404)))))
-      },
-      test("return valid user") {
-        assertZIO(
+            result <- checkIfUserNotExistsErrorOccur(authorizationHeader = authHeader, uri = uri"http://test.com/api/user")
+          } yield result
+        },
+        test("return valid user") {
           for {
-            usersEndpoints <- ZIO.service[UsersEndpoints]
-            endpoint = usersEndpoints.getCurrentUser
+            _ <- prepareBasicUsersData
             authHeader <- getValidAuthorizationHeader()
-            response <- basicRequest
-              .get(uri"http://test.com/api/user")
-              .headers(authHeader)
-              .response(asJson[User])
-              .send(backendStub(endpoint))
-            body = response.body
-          } yield body
-        )(
-          isRight(
-            equalTo(
-              User(
-                UserData(
-                  "admin@example.com",
-                  None,
-                  "admin",
-                  Some("I dont work"),
-                  Some("")
-                )
-              )
+            result <- checkGetCurrentUser(authorizationHeader = authHeader, uri = uri"http://test.com/api/user")
+          } yield result
+        }
+      ),
+      suite("user register")(
+        test("return already in use error") {
+          for {
+            _ <- prepareBasicUsersData
+            authHeader <- getValidAuthorizationHeader()
+            result <- checkIfUserAlreadyExistsErrorOccur(
+              authorizationHeader = authHeader,
+              uri = uri"http://test.com/api/users",
+              userRegisterData = UserRegisterData(email = "jake@example.com", username = "jake", password = "password")
             )
-          )
-        )
-      }
-    ),
-    suite("User register")(
-      test("return already in use error") {
-        assertZIO(
-          ZIO
-            .service[UsersEndpoints]
-            .map(_.register)
-            .flatMap { endpoint =>
-              basicRequest
-                .post(uri"http://test.com/api/users")
-                .body(UserRegister(UserRegisterData(email = "admin@example.com", username = "user", password = "password")))
-                .response(asJson[User])
-                .send(backendStub(endpoint))
-                .map(_.body)
-            }
-        )(isLeft(equalTo(HttpError("{\"error\":\"E-mail already in use!\"}", sttp.model.StatusCode(409)))))
-      },
-      test("return registered user") {
-        for {
-          result <- ZIO
-            .service[UsersEndpoints]
-            .map(_.register)
-            .flatMap { endpoint =>
-              basicRequest
-                .post(uri"http://test.com/api/users")
-                .body(UserRegister(UserRegisterData(email = "new_user@example.com", username = "user", password = "password")))
-                .response(asJson[User])
-                .send(backendStub(endpoint))
-                .map(_.body)
-            }
-        } yield assertTrue {
-          // TODO there must be better way to implement this...
-          import com.softwaremill.realworld.common.model.UserDiff.{*, given}
-          compare(
-            result.toOption.get,
-            User(UserData(email = "new_user@example.com", token = None, username = "user", bio = None, image = None))
-          ).isIdentical
+          } yield result
+        },
+        test("return registered user") {
+          for {
+            _ <- prepareBasicUsersData
+            authHeader <- getValidAuthorizationHeader()
+            result <- checkRegisterUser(
+              authorizationHeader = authHeader,
+              uri = uri"http://test.com/api/users",
+              userRegisterData = UserRegisterData(email = "new_user@example.com", username = "user", password = "password")
+            )
+          } yield result
         }
-      }
-    ),
-    suite("User login")(
-      test("return invalid credentials error") {
-        assertZIO(
-          ZIO
-            .service[UsersEndpoints]
-            .map(_.login)
-            .flatMap { endpoint =>
-              basicRequest
-                .post(uri"http://test.com/api/users/login")
-                .body(UserLogin(UserLoginData(email = "admin@example.com", password = "invalid_password")))
-                .response(asJson[User])
-                .send(backendStub(endpoint))
-                .map(_.body)
-            }
-        )(isLeft(equalTo(HttpError("{\"error\":\"Invalid email or password!\"}", sttp.model.StatusCode(401)))))
-      },
-      test("return logged in user") {
-        for {
-          result <- ZIO
-            .service[UsersEndpoints]
-            .map(_.login)
-            .flatMap { endpoint =>
-              basicRequest
-                .post(uri"http://test.com/api/users/login")
-                .body(UserLogin(UserLoginData(email = "admin@example.com", password = "password")))
-                .response(asJson[User])
-                .send(backendStub(endpoint))
-                .map(_.body)
-            }
-        } yield assertTrue {
-          // TODO there must be better way to implement this...
-          import com.softwaremill.realworld.common.model.UserDiff.{*, given}
-          compare(
-            result.toOption.get,
-            User(UserData(email = "admin@example.com", token = None, username = "admin", bio = Some("I dont work"), image = Some("")))
-          ).isIdentical
+      ),
+      suite("user login")(
+        test("return invalid credentials error") {
+          for {
+            _ <- prepareBasicUsersData
+            authHeader <- getValidAuthorizationHeader()
+            result <- checkIfInvalidPasswordErrorOccur(
+              authorizationHeader = authHeader,
+              uri = uri"http://test.com/api/users/login",
+              userLoginData = UserLoginData(email = "jake@example.com", password = "invalid_password")
+            )
+          } yield result
+        },
+        test("return logged in user") {
+          for {
+            _ <- prepareBasicUsersData
+            authHeader <- getValidAuthorizationHeader()
+            result <- checkLoginUser(
+              authorizationHeader = authHeader,
+              uri = uri"http://test.com/api/users/login",
+              userLoginData = UserLoginData(email = "jake@example.com", password = "password")
+            )
+          } yield result
         }
-      }
+      )
     )
   ).provide(
     Configuration.live,
@@ -150,6 +116,7 @@ object UsersEndpointsSpec extends ZIOSpecDefault:
     UsersRepository.live,
     UsersService.live,
     UsersEndpoints.live,
+    UsersServerEndpoints.live,
     BaseEndpoints.live,
     testDbLayerWithEmptyDb
   )

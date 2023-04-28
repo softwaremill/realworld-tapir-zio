@@ -1,6 +1,6 @@
 package com.softwaremill.realworld.db
 
-import com.softwaremill.realworld.articles.ArticlesRepository
+import com.softwaremill.realworld.articles.core.ArticlesRepository
 import com.softwaremill.realworld.common.AppConfig
 import zio.{ZIO, ZLayer}
 
