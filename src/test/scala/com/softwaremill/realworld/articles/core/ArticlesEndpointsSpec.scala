@@ -20,7 +20,7 @@ import zio.test.ZIOSpecDefault
 
 object ArticlesEndpointsSpec extends ZIOSpecDefault:
 
-  def spec = suite("article endpoints tests")(
+  override def spec = suite("article endpoints tests")(
     suite("check articles list")(
       suite("with auth header")(
         test("return empty list") {

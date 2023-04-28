@@ -11,7 +11,7 @@ import sttp.client3.UriContext
 import zio.test.ZIOSpecDefault
 
 object UsersEndpointsSpec extends ZIOSpecDefault:
-  def spec = suite("user endpoints tests")(
+  override def spec = suite("user endpoints tests")(
     suite("with no header")(
       test("get profile") {
         checkIfUnauthorizedErrorOccurInGet(authorizationHeaderOpt = None, uri = uri"http://test.com/api/profiles/jake")

@@ -8,7 +8,7 @@ import com.softwaremill.realworld.utils.TestUtils.*
 import zio.test.ZIOSpecDefault
 
 object UsersRepositorySpec extends ZIOSpecDefault:
-  def spec = suite("user repository tests")(
+  override def spec = suite("user repository tests")(
     suite("find user by email")(
       test("user not found") {
         for {

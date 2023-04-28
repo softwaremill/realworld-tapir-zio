@@ -47,7 +47,7 @@ class UsersEndpoints(base: BaseEndpoints):
       .in("api" / "profiles" / path[String]("username") / "follow")
       .out(jsonBody[ProfileResponse].example(Examples.profileResponse))
 
-  object Examples:
+  private object Examples:
     val userRegisterRequest: UserRegisterRequest = UserRegisterRequest(user =
       UserRegisterData(
         email = "user123@email.com",

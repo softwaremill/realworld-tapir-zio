@@ -3,8 +3,8 @@ package com.softwaremill.realworld.articles.tags
 import com.softwaremill.realworld.articles.tags.TagsServerEndpoints
 import com.softwaremill.realworld.articles.tags.api.TagsListResponse
 import com.softwaremill.realworld.utils.TestUtils.backendStub
-import sttp.client3.basicRequest
 import sttp.client3.ziojson.asJson
+import sttp.client3.{ResponseException, basicRequest}
 import sttp.model.Uri
 import zio.ZIO
 import zio.test.Assertion.{equalTo, isRight}
@@ -12,7 +12,7 @@ import zio.test.{TestResult, assertZIO}
 
 object TagEndpointTestSupport:
 
-  def callGetTags(uri: Uri) =
+  def callGetTags(uri: Uri): ZIO[TagsServerEndpoints, Throwable, Either[ResponseException[String, String], TagsListResponse]] =
     ZIO
       .service[TagsServerEndpoints]
       .map(_.getTagsServerEndpoint)

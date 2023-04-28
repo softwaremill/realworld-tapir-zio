@@ -15,7 +15,7 @@ import zio.test.ZIOSpecDefault
 
 object CommentsEndpointsSpec extends ZIOSpecDefault:
 
-  def spec = suite("comment endpoints endpoints")(
+  override def spec = suite("comment endpoints endpoints")(
     suite("with auth header")(
       test("return empty list if there are no comments for article") {
         for {

@@ -223,7 +223,7 @@ object AuthorizationSpec extends ZIOSpecDefault:
     }
   }
 
-  def spec = suite("check authorization")(
+  override def spec = suite("check authorization")(
     suite("articles endpoints")(
       articleTestParameters.map(articleEndpointsAuthorizationTest): _*
     ),
