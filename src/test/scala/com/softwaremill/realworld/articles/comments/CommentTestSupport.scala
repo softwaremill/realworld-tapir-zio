@@ -5,7 +5,7 @@ import com.softwaremill.realworld.articles.comments.api.*
 import com.softwaremill.realworld.articles.core.ArticlesServerEndpoints
 import com.softwaremill.realworld.utils.TestUtils.backendStub
 import sttp.client3.ziojson.{asJson, zioJsonBodySerializer}
-import sttp.client3.{Response, ResponseException, basicRequest}
+import sttp.client3.{HttpError, Response, ResponseException, basicRequest}
 import sttp.model.Uri
 import sttp.tapir.json.zio.jsonBody
 import zio.ZIO
@@ -61,7 +61,7 @@ object CommentTestSupport:
   def deleteCommentRequest(
       authorizationHeader: Map[String, String],
       uri: Uri
-  ): ZIO[CommentsServerEndpoints, Throwable, Response[Either[String, String]]] = {
+  ): ZIO[CommentsServerEndpoints, Throwable, Either[String, String]] = {
 
     ZIO
       .service[CommentsServerEndpoints]
@@ -71,6 +71,7 @@ object CommentTestSupport:
           .delete(uri)
           .headers(authorizationHeader)
           .send(backendStub(endpoint))
+          .map(_.body)
       }
   }
 
@@ -88,6 +89,34 @@ object CommentTestSupport:
             comments = List.empty[Comment]
           )
         )
+      )
+    )
+  }
+
+  def checkIfNotAuthorOfCommentErrorOccurInDelete(
+      authorizationHeader: Map[String, String],
+      uri: Uri
+  ): ZIO[CommentsServerEndpoints, Throwable, TestResult] = {
+
+    assertZIO(
+      deleteCommentRequest(authorizationHeader, uri)
+    )(
+      isLeft(
+        equalTo("{\"error\":\"Can't remove the comment you're not an author of\"}")
+      )
+    )
+  }
+
+  def checkIfCommentNotLinkedToSlugErrorOccurInDelete(
+      authorizationHeader: Map[String, String],
+      uri: Uri
+  ): ZIO[CommentsServerEndpoints, Throwable, TestResult] = {
+
+    assertZIO(
+      deleteCommentRequest(authorizationHeader, uri)
+    )(
+      isLeft(
+        equalTo("{\"error\":\"Comment with ID=1 is not linked to slug how-to-train-your-dragon-4\"}")
       )
     )
   }
@@ -146,7 +175,6 @@ object CommentTestSupport:
     for {
       commentsList <- callGetCommentsFromArticle(authorizationHeaderOpt, uri)
     } yield zio.test.assert(commentsList.toOption) {
-
       isSome(
         hasField(
           "comments",

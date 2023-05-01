@@ -18,6 +18,7 @@ class UsersService(authService: AuthService, usersRepository: UsersRepository):
       case None    => ZIO.fail(Exceptions.NotFound("User doesn't exist."))
     }
 
+  // TODO username should also be checked (in database is unique)
   def register(user: UserRegisterData): IO[Throwable, UserResponse] = {
     val emailClean = user.email.toLowerCase.trim()
     val usernameClean = user.username.trim()

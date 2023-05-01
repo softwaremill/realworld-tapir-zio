@@ -43,11 +43,31 @@ object CommentsEndpointsSpec extends ZIOSpecDefault:
           authHeader <- getValidAuthorizationHeader(email = "bill@example.com")
           _ <- deleteCommentRequest(
             authorizationHeader = authHeader,
-            uri = uri"http://test.com/api/articles/how-to-train-your-dragon-4/comments/1"
+            uri = uri"http://test.com/api/articles/how-to-train-your-dragon-4/comments/2"
           )
           result <- checkCommentsListAfterDelete(
             authorizationHeaderOpt = Some(authHeader),
             uri = uri"http://test.com/api/articles/how-to-train-your-dragon-4/comments"
+          )
+        } yield result
+      },
+      test("negative comment removing - not author of comment") {
+        for {
+          _ <- prepareDataForCommentsRemoving
+          authHeader <- getValidAuthorizationHeader(email = "michael@example.com")
+          result <- checkIfNotAuthorOfCommentErrorOccurInDelete(
+            authorizationHeader = authHeader,
+            uri = uri"http://test.com/api/articles/how-to-train-your-dragon-4/comments/2"
+          )
+        } yield result
+      },
+      test("negative comment removing - comment not linked to slug") {
+        for {
+          _ <- prepareDataForCommentsRemoving
+          authHeader <- getValidAuthorizationHeader(email = "bill@example.com")
+          result <- checkIfCommentNotLinkedToSlugErrorOccurInDelete(
+            authorizationHeader = authHeader,
+            uri = uri"http://test.com/api/articles/how-to-train-your-dragon-4/comments/1"
           )
         } yield result
       },

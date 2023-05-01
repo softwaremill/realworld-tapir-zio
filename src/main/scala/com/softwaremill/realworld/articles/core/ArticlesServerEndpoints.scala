@@ -22,7 +22,7 @@ import scala.util.chaining.*
 class ArticlesServerEndpoints(articlesEndpoints: ArticlesEndpoints, articlesService: ArticlesService):
 
   val listArticlesServerEndpoint: ZServerEndpoint[Any, Any] = articlesEndpoints.listArticlesEndpoint
-    .serverLogic(session =>
+    .serverLogic(_ =>
       (filters, pagination) =>
         articlesService
           .list(filters, pagination)
