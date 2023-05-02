@@ -116,7 +116,7 @@ object CommentTestSupport:
       deleteCommentRequest(authorizationHeader, uri)
     )(
       isLeft(
-        equalTo("{\"error\":\"Comment with ID=1 is not linked to slug how-to-train-your-dragon-4\"}")
+        equalTo("{\"error\":\"Comment with id=1 is not linked to slug how-to-train-your-dragon-4\"}")
       )
     )
   }

@@ -13,10 +13,6 @@ class CommentsService(
     usersRepository: UsersRepository
 ):
 
-  private val ArticleNotFoundMessage = (slug: String) => s"Article with slug $slug doesn't exist."
-  private val CommentNotFoundMessage = (commentId: Int) => s"Comment with ID=$commentId doesn't exist"
-  private val ArticleAndAuthorIdsNotFoundMessage = (commentId: Int) => s"ArticleId or AuthorId for comment with ID=$commentId doesn't exist"
-
   def addComment(slug: String, email: String, comment: String): Task[Comment] = for {
     userId <- userIdByEmail(email)
     articleId <- articleIdBySlug(slug)
@@ -31,8 +27,8 @@ class CommentsService(
       .findArticleAndAuthorIdsFromComment(commentId)
       .someOrFail(NotFound(ArticleAndAuthorIdsNotFoundMessage(commentId)))
     (commentAuthorId, commentArticleId) = tupleWithIds
-    _ <- ZIO.fail(Unauthorized("Can't remove the comment you're not an author of")).when(userId != commentAuthorId)
-    _ <- ZIO.fail(BadRequest(s"Comment with ID=$commentId is not linked to slug $slug")).when(articleId != commentArticleId)
+    _ <- ZIO.fail(Unauthorized(CommentCannotBeRemoveMessage)).when(userId != commentAuthorId)
+    _ <- ZIO.fail(BadRequest(CommentNotLinkedToSlugMessage(commentId, slug))).when(articleId != commentArticleId)
     _ <- commentsRepository.deleteComment(commentId)
   } yield ()
 
@@ -43,10 +39,21 @@ class CommentsService(
     } yield commentList
 
   private def userIdByEmail(email: String): Task[Int] =
-    usersRepository.findUserIdByEmail(email).someOrFail(NotFound("User doesn't exist, re-login may be needed!"))
+    usersRepository.findUserIdByEmail(email).someOrFail(NotFound(UserNotFoundMessage(email)))
 
   private def articleIdBySlug(slug: String): Task[Int] =
     articlesRepository.findArticleIdBySlug(slug).someOrFail(NotFound(ArticleNotFoundMessage(slug)))
+
+  // Todo some comments are the same in repositories, should i put it in utils?
+  // Todo is it a good idea to create method for each message?
+  private val ArticleNotFoundMessage: String => String = (slug: String) => s"Article with slug $slug doesn't exist."
+  private val CommentNotFoundMessage: Int => String = (commentId: Int) => s"Comment with id=$commentId doesn't exist"
+  private val UserNotFoundMessage: String => String = (email: String) => s"User with email $email doesn't exist"
+  private val CommentCannotBeRemoveMessage = "Can't remove the comment you're not an author of"
+  private val CommentNotLinkedToSlugMessage: (Int, String) => String = (commentId: Int, slug: String) =>
+    s"Comment with id=$commentId is not linked to slug $slug"
+  private val ArticleAndAuthorIdsNotFoundMessage: Int => String = (commentId: Int) =>
+    s"ArticleId or authorId for comment with id=$commentId doesn't exist"
 
 object CommentsService:
   val live: ZLayer[CommentsRepository with ArticlesRepository with UsersRepository, Nothing, CommentsService] =

@@ -1,7 +1,7 @@
 package com.softwaremill.realworld.users
 
 import com.softwaremill.realworld.auth.AuthService
-import com.softwaremill.realworld.common.Exceptions.{BadRequest, NotFound, Unauthorized}
+import com.softwaremill.realworld.common.Exceptions.{AlreadyInUse, BadRequest, NotFound, Unauthorized}
 import com.softwaremill.realworld.common.{Exceptions, Pagination}
 import com.softwaremill.realworld.users.api.*
 import zio.{Console, IO, Task, ZIO, ZLayer}
@@ -13,7 +13,7 @@ class UsersService(authService: AuthService, usersRepository: UsersRepository):
 
   def get(email: String): IO[Exception, User] = usersRepository
     .findUserByEmail(email)
-    .someOrFail(NotFound("User doesn't exist."))
+    .someOrFail(NotFound(UserWithEmailNotFoundMessage(email)))
 
   // TODO username should also be checked (in database is unique)
   def register(user: UserRegisterData): IO[Throwable, UserResponse] = {
@@ -24,7 +24,7 @@ class UsersService(authService: AuthService, usersRepository: UsersRepository):
     def checkUserDoesNotExist(email: String): IO[Exception, Unit] =
       for {
         maybeUser <- usersRepository.findUserByEmail(email.toLowerCase)
-        _ <- ZIO.fail(Exceptions.AlreadyInUse("E-mail already in use!")).when(maybeUser.isDefined)
+        _ <- ZIO.fail(AlreadyInUse(UserAlreadyInUseMessage(email))).when(maybeUser.isDefined)
       } yield ()
 
     for {
@@ -55,7 +55,7 @@ class UsersService(authService: AuthService, usersRepository: UsersRepository):
     for {
       oldUser <- usersRepository
         .findUserWithPasswordByEmail(email)
-        .someOrFail(NotFound("User doesn't exist."))
+        .someOrFail(NotFound(UserWithEmailNotFoundMessage(email)))
       password <- updateData.password
         .map(newPassword => authService.encryptPassword(newPassword))
         .getOrElse(ZIO.succeed(oldUser.hashedPassword))
@@ -64,7 +64,7 @@ class UsersService(authService: AuthService, usersRepository: UsersRepository):
           updateData.update(oldUser.copy(hashedPassword = password)),
           email
         )
-        .someOrFail(NotFound("User doesn't exist."))
+        .someOrFail(NotFound(UserWithEmailNotFoundMessage(email)))
     } yield updatedUser
 
   def getProfile(username: String, viewerEmail: String): Task[ProfileResponse] = for {
@@ -78,7 +78,7 @@ class UsersService(authService: AuthService, usersRepository: UsersRepository):
     userWithIdTuple <- getUserWithIdByUsername(username)
     (user, userId) = userWithIdTuple
     followerId <- getFollowerIdByEmail(followerEmail)
-    _ <- ZIO.fail(BadRequest("You can't follow yourself")).when(userId == followerId)
+    _ <- ZIO.fail(BadRequest(CannotFollowYourselfMessage)).when(userId == followerId)
     _ <- usersRepository.follow(userId, followerId)
     profile <- getProfileData(user, userId, Some(followerId))
   } yield ProfileResponse(profile)
@@ -103,16 +103,23 @@ class UsersService(authService: AuthService, usersRepository: UsersRepository):
 
   private def getUserWithIdByUsername(username: String): Task[(User, Int)] = usersRepository
     .findUserWithIdByUsername(username)
-    .someOrFail(NotFound(s"No profile with provided username '$username' could be found"))
+    .someOrFail(NotFound(UserWithUsernameNotFoundMessage(username)))
 
   private def getFollowerIdByEmail(email: String): Task[Int] =
-    usersRepository.findUserIdByEmail(email).someOrFail(NotFound("Couldn't find user for logged in session"))
+    usersRepository.findUserIdByEmail(email).someOrFail(NotFound(UserWithEmailNotFoundMessage(email)))
 
   private def getProfileData(user: User, userId: Int, asSeenByUserWithIdOpt: Option[Int]): Task[Profile] =
     asSeenByUserWithIdOpt match
       case Some(asSeenByUserWithId) =>
         usersRepository.isFollowing(userId, asSeenByUserWithId).map(Profile(user.username, user.bio, user.image, _))
       case None => ZIO.succeed(Profile(user.username, user.bio, user.image, false))
+
+  // Todo some comments are the same in repositories, should i put it in utils?
+  // Todo is it a good idea to create method for each message?
+  private val UserWithEmailNotFoundMessage: String => String = (email: String) => s"User with email $email doesn't exist"
+  private val UserWithUsernameNotFoundMessage: String => String = (username: String) => s"User with username $username doesn't exist"
+  private val UserAlreadyInUseMessage: String => String = (email: String) => s"User with email $email already in use"
+  private val CannotFollowYourselfMessage: String = "You can't follow yourself"
 
 object UsersService:
   val live: ZLayer[AuthService with UsersRepository, Nothing, UsersService] = ZLayer.fromFunction(UsersService(_, _))

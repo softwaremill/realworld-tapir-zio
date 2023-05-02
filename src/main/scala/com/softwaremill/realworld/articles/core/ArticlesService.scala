@@ -20,9 +20,6 @@ class ArticlesService(
     commentsRepository: CommentsRepository
 ):
 
-  private val ArticleNotFoundMessage = (slug: String) => s"Article with slug $slug doesn't exist."
-  private val ArticleAndAuthorIdsNotFoundMessage = (slug: String) => s"ArticleId or AuthorId for article with slug $slug doesn't exist"
-
   def list(filters: ArticlesFilters, pagination: Pagination): IO[SQLException, List[Article]] = articlesRepository
     .list(filters, pagination)
 
@@ -56,7 +53,7 @@ class ArticlesService(
       .findArticleAndAuthorIdsBySlug(slug)
       .someOrFail(NotFound(ArticleAndAuthorIdsNotFoundMessage(slug)))
     (articleId, authorId) = tupleWithIds
-    _ <- ZIO.fail(Unauthorized("Can't remove the article you're not an author of")).when(userId != authorId)
+    _ <- ZIO.fail(Unauthorized(ArticleCannotBeRemovedMessage)).when(userId != authorId)
     _ <- commentsRepository.deleteCommentsByArticleId(articleId)
     _ <- articlesRepository.deleteFavoritesByArticleId(articleId)
     _ <- tagsRepository.deleteTagsByArticleId(articleId)
@@ -71,7 +68,7 @@ class ArticlesService(
         .someOrFail(NotFound(ArticleNotFoundMessage(slug)))
       oldArticleUserId <- userIdByUsername(oldArticle.author.username)
       _ <- ZIO
-        .fail(Unauthorized(s"You're not an author of article that you're trying to update"))
+        .fail(Unauthorized(ArticleCannotBeUpdatedMessage))
         .when(userId != oldArticleUserId)
       updatedArticle = updateArticleData(oldArticle, articleUpdateData)
       articleId <- articlesRepository.findArticleIdBySlug(slug).someOrFail(NotFound(ArticleNotFoundMessage(slug)))
@@ -112,11 +109,21 @@ class ArticlesService(
   private def findBySlugAsSeenBy(articleId: Int, email: String): Task[Article] = articlesRepository
     .findBySlugAsSeenBy(articleId, email)
     .someOrFail(NotFound(ArticleNotFoundMessage(s"$articleId")))
+
   private def userIdByEmail(email: String): Task[Int] =
-    usersRepository.findUserIdByEmail(email).someOrFail(NotFound("User doesn't exist, re-login may be needed!"))
+    usersRepository.findUserIdByEmail(email).someOrFail(NotFound(UserWithEmailNotFoundMessage(email)))
 
   private def userIdByUsername(username: String): Task[Int] =
-    usersRepository.findUserIdByUsername(username).someOrFail(NotFound("User doesn't exist, re-login may be needed!"))
+    usersRepository.findUserIdByUsername(username).someOrFail(NotFound(UserWithUsernameNotFoundMessage(username)))
+
+  // Todo some comments are the same in repositories, should i put it in utils?
+  // Todo is it a good idea to create method for each message?
+  private val ArticleNotFoundMessage = (slug: String) => s"Article with slug $slug doesn't exist."
+  private val UserWithEmailNotFoundMessage: String => String = (email: String) => s"User with email $email doesn't exist"
+  private val UserWithUsernameNotFoundMessage: String => String = (username: String) => s"User with username $username doesn't exist"
+  private val ArticleAndAuthorIdsNotFoundMessage = (slug: String) => s"ArticleId or AuthorId for article with slug $slug doesn't exist"
+  private val ArticleCannotBeRemovedMessage: String = "Can't remove the article you're not an author of"
+  private val ArticleCannotBeUpdatedMessage: String = "You're not an author of article that you're trying to update"
 
 object ArticlesService:
   val live: ZLayer[
