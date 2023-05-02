@@ -51,6 +51,7 @@ class ArticlesRepository(quill: Quill.Sqlite[SnakeCase]):
     sql"GROUP_CONCAT(($str), '|')".pure.as[String]
   }
 
+  // Todo Improve queries, reduce duplicate code, check if it possible to change this huge sql query
   def list(filters: ArticlesFilters, pagination: Pagination): IO[SQLException, List[Article]] = {
     val tagFilter = filters.tag.getOrElse("")
     val authorFilter = filters.author.getOrElse("")
@@ -132,12 +133,12 @@ class ArticlesRepository(quill: Quill.Sqlite[SnakeCase]):
     )
       .map(_.headOption)
 
-  def findArticleBySlug(slug: String): Task[Option[ArticleRow]] =
-    run(
-      queryArticle
-        .filter(a => a.slug == lift(slug))
-    )
-      .map(_.headOption)
+  def findArticleAndAuthorIdsBySlug(slug: String): Task[Option[(Int, Int)]] =
+    run(queryArticle.filter(a => a.slug == lift(slug)))
+      .map(
+        _.headOption
+          .map(aR => (aR.articleId, aR.authorId))
+      )
 
   def findBySlugAsSeenBy(slug: String, viewerEmail: String): IO[SQLException, Option[Article]] =
     run(for {

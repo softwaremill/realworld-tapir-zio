@@ -80,7 +80,7 @@ class CommentsRepository(quill: Quill.Sqlite[SnakeCase]):
         ar <- queryProfile.leftJoin(ar => ar.userId == cr.authorId)
       } yield (cr, ar)
     )
-      .map(x => x.flatMap(comment))
+      .map(_.flatMap(comment))
 
   private def comment(tuple: (CommentRow, Option[ProfileRow])): Option[Comment] = {
     val (cr, arOpt) = tuple

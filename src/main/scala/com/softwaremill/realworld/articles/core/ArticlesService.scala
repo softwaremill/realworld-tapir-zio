@@ -21,6 +21,7 @@ class ArticlesService(
 ):
 
   private val ArticleNotFoundMessage = (slug: String) => s"Article with slug $slug doesn't exist."
+  private val ArticleAndAuthorIdsNotFoundMessage = (slug: String) => s"ArticleId or AuthorId for article with slug $slug doesn't exist"
 
   def list(filters: ArticlesFilters, pagination: Pagination): IO[SQLException, List[Article]] = articlesRepository
     .list(filters, pagination)
@@ -51,12 +52,15 @@ class ArticlesService(
 
   def delete(slug: String, email: String): Task[Unit] = for {
     userId <- userIdByEmail(email)
-    article <- articlesRepository.findArticleBySlug(slug).someOrFail(NotFound(ArticleNotFoundMessage(slug)))
-    _ <- ZIO.fail(Unauthorized("Can't remove the article you're not an author of")).when(userId != article.authorId)
-    _ <- commentsRepository.deleteCommentsByArticleId(article.articleId)
-    _ <- articlesRepository.deleteFavoritesByArticleId(article.articleId)
-    _ <- tagsRepository.deleteTagsByArticleId(article.articleId)
-    _ <- articlesRepository.deleteArticle(article.articleId)
+    tupleWithIds <- articlesRepository
+      .findArticleAndAuthorIdsBySlug(slug)
+      .someOrFail(NotFound(ArticleAndAuthorIdsNotFoundMessage(slug)))
+    (articleId, authorId) = tupleWithIds
+    _ <- ZIO.fail(Unauthorized("Can't remove the article you're not an author of")).when(userId != authorId)
+    _ <- commentsRepository.deleteCommentsByArticleId(articleId)
+    _ <- articlesRepository.deleteFavoritesByArticleId(articleId)
+    _ <- tagsRepository.deleteTagsByArticleId(articleId)
+    _ <- articlesRepository.deleteArticle(articleId)
   } yield ()
 
   def update(articleUpdateData: ArticleUpdateData, slug: String, email: String): Task[Article] =

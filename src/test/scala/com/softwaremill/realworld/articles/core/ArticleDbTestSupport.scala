@@ -38,10 +38,10 @@ object ArticleDbTestSupport:
       _ <- articleRepo.add(exampleArticle1, userId1)
       _ <- articleRepo.add(exampleArticle2, userId1)
       _ <- articleRepo.add(exampleArticle3, userId2)
-      article1 <- articleRepo.findArticleBySlug(exampleArticle1Slug).someOrFail(s"Article $exampleArticle1Slug doesn't exist")
-      article2 <- articleRepo.findArticleBySlug(exampleArticle2Slug).someOrFail(s"Article $exampleArticle2Slug doesn't exist")
-      _ <- prepareTags(articleRepo, article1.articleId, article2.articleId)
-      _ <- prepareFavorites(articleRepo, article1.articleId, article2.articleId, userId1, userId2)
+      articleId1 <- articleRepo.findArticleIdBySlug(exampleArticle1Slug).someOrFail(s"Article $exampleArticle1Slug doesn't exist")
+      articleId2 <- articleRepo.findArticleIdBySlug(exampleArticle2Slug).someOrFail(s"Article $exampleArticle2Slug doesn't exist")
+      _ <- prepareTags(articleRepo, articleId1, articleId2)
+      _ <- prepareFavorites(articleRepo, articleId1, articleId2, userId1, userId2)
     } yield ()
   }
 
@@ -65,10 +65,10 @@ object ArticleDbTestSupport:
       _ <- articleRepo.add(exampleArticle4, userId2)
       _ <- articleRepo.add(exampleArticle5, userId3)
       _ <- articleRepo.add(exampleArticle6, userId4)
-      article1 <- articleRepo.findArticleBySlug(exampleArticle1Slug).someOrFail(s"Article $exampleArticle1Slug doesn't exist")
-      article2 <- articleRepo.findArticleBySlug(exampleArticle2Slug).someOrFail(s"Article $exampleArticle2Slug doesn't exist")
-      _ <- prepareTags(articleRepo, article1.articleId, article2.articleId)
-      _ <- prepareFavorites(articleRepo, article1.articleId, article2.articleId, userId1, userId2)
+      articleId1 <- articleRepo.findArticleIdBySlug(exampleArticle1Slug).someOrFail(s"Article $exampleArticle1Slug doesn't exist")
+      articleId2 <- articleRepo.findArticleIdBySlug(exampleArticle2Slug).someOrFail(s"Article $exampleArticle2Slug doesn't exist")
+      _ <- prepareTags(articleRepo, articleId1, articleId2)
+      _ <- prepareFavorites(articleRepo, articleId1, articleId2, userId1, userId2)
     } yield ()
   }
 
@@ -82,10 +82,10 @@ object ArticleDbTestSupport:
       userId2 <- userRepo.findUserIdByEmail(exampleUser2.email).someOrFail(s"User with email ${exampleUser2.email} doesn't exist.")
       _ <- articleRepo.add(exampleArticle1, userId1)
       _ <- articleRepo.add(exampleArticle2, userId2)
-      article1 <- articleRepo.findArticleBySlug(exampleArticle1Slug).someOrFail(s"Article $exampleArticle1Slug doesn't exist")
-      article2 <- articleRepo.findArticleBySlug(exampleArticle2Slug).someOrFail(s"Article $exampleArticle2Slug doesn't exist")
-      _ <- prepareTags(articleRepo, article1.articleId, article2.articleId)
-      _ <- prepareFavorites(articleRepo, article1.articleId, article2.articleId, userId1, userId2)
+      articleId1 <- articleRepo.findArticleIdBySlug(exampleArticle1Slug).someOrFail(s"Article $exampleArticle1Slug doesn't exist")
+      articleId2 <- articleRepo.findArticleIdBySlug(exampleArticle2Slug).someOrFail(s"Article $exampleArticle2Slug doesn't exist")
+      _ <- prepareTags(articleRepo, articleId1, articleId2)
+      _ <- prepareFavorites(articleRepo, articleId1, articleId2, userId1, userId2)
     } yield ()
   }
 

@@ -30,9 +30,9 @@ object CommentDbTestSupport:
       userId2 <- userRepo.findUserIdByEmail(exampleUser2.email).someOrFail(s"User with email ${exampleUser2.email} doesn't exist.")
       userId4 <- userRepo.findUserIdByEmail(exampleUser4.email).someOrFail(s"User with email ${exampleUser4.email} doesn't exist.")
       _ <- articleRepo.add(exampleArticle3, userId2)
-      article3 <- articleRepo.findArticleBySlug(exampleArticle3Slug).someOrFail(s"Article $exampleArticle3Slug doesn't exist")
-      _ <- commentRepo.addComment(article3.articleId, userId1, "Thank you so much!")
-      _ <- commentRepo.addComment(article3.articleId, userId4, "Great article!")
+      articleId3 <- articleRepo.findArticleIdBySlug(exampleArticle3Slug).someOrFail(s"Article $exampleArticle3Slug doesn't exist")
+      _ <- commentRepo.addComment(articleId3, userId1, "Thank you so much!")
+      _ <- commentRepo.addComment(articleId3, userId4, "Great article!")
     } yield ()
   }
 
@@ -49,11 +49,11 @@ object CommentDbTestSupport:
       userId4 <- userRepo.findUserIdByEmail(exampleUser4.email).someOrFail(s"User with email ${exampleUser4.email} doesn't exist.")
       _ <- articleRepo.add(exampleArticle3, userId4)
       _ <- articleRepo.add(exampleArticle4, userId2)
-      article3 <- articleRepo.findArticleBySlug(exampleArticle3Slug).someOrFail(s"Article $exampleArticle3Slug doesn't exist")
-      article4 <- articleRepo.findArticleBySlug(exampleArticle4Slug).someOrFail(s"Article $exampleArticle4Slug doesn't exist")
-      _ <- commentRepo.addComment(article3.articleId, userId3, "Thank you so much!")
-      _ <- commentRepo.addComment(article4.articleId, userId3, "Amazing article!")
-      _ <- commentRepo.addComment(article4.articleId, userId4, "Not bad.")
+      articleId3 <- articleRepo.findArticleIdBySlug(exampleArticle3Slug).someOrFail(s"Article $exampleArticle3Slug doesn't exist")
+      articleId4 <- articleRepo.findArticleIdBySlug(exampleArticle4Slug).someOrFail(s"Article $exampleArticle4Slug doesn't exist")
+      _ <- commentRepo.addComment(articleId3, userId3, "Thank you so much!")
+      _ <- commentRepo.addComment(articleId4, userId3, "Amazing article!")
+      _ <- commentRepo.addComment(articleId4, userId4, "Not bad.")
     } yield ()
   }
 
