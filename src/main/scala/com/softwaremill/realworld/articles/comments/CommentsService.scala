@@ -4,7 +4,7 @@ import com.softwaremill.realworld.articles.core.{ArticleAuthor, ArticlesReposito
 import com.softwaremill.realworld.articles.tags.TagsRepository
 import com.softwaremill.realworld.common.Exceptions
 import com.softwaremill.realworld.common.Exceptions.{BadRequest, NotFound, Unauthorized}
-import com.softwaremill.realworld.users.{UserRow, UsersRepository}
+import com.softwaremill.realworld.users.{User, UsersRepository}
 import zio.{Task, ZIO, ZLayer}
 
 class CommentsService(
@@ -18,20 +18,20 @@ class CommentsService(
   private val ArticleAndAuthorIdsNotFoundMessage = (commentId: Int) => s"ArticleId or AuthorId for comment with ID=$commentId doesn't exist"
 
   def addComment(slug: String, email: String, comment: String): Task[Comment] = for {
-    user <- userByEmail(email)
+    userId <- userIdByEmail(email)
     articleId <- articleIdBySlug(slug)
-    commentId <- commentsRepository.addComment(articleId, user.userId, comment)
+    commentId <- commentsRepository.addComment(articleId, userId, comment)
     comment <- commentsRepository.findComment(commentId).someOrFail(NotFound(CommentNotFoundMessage(commentId)))
   } yield comment
 
   def deleteComment(slug: String, email: String, commentId: Int): Task[Unit] = for {
-    user <- userByEmail(email)
+    userId <- userIdByEmail(email)
     articleId <- articleIdBySlug(slug)
     tupleWithIds <- commentsRepository
       .findArticleAndAuthorIdsFromComment(commentId)
       .someOrFail(NotFound(ArticleAndAuthorIdsNotFoundMessage(commentId)))
     (commentAuthorId, commentArticleId) = tupleWithIds
-    _ <- ZIO.fail(Unauthorized("Can't remove the comment you're not an author of")).when(user.userId != commentAuthorId)
+    _ <- ZIO.fail(Unauthorized("Can't remove the comment you're not an author of")).when(userId != commentAuthorId)
     _ <- ZIO.fail(BadRequest(s"Comment with ID=$commentId is not linked to slug $slug")).when(articleId != commentArticleId)
     _ <- commentsRepository.deleteComment(commentId)
   } yield ()
@@ -42,8 +42,8 @@ class CommentsService(
       commentList <- commentsRepository.findComments(articleId)
     } yield commentList
 
-  private def userByEmail(email: String): Task[UserRow] =
-    usersRepository.findByEmail(email).someOrFail(NotFound("User doesn't exist, re-login may be needed!"))
+  private def userIdByEmail(email: String): Task[Int] =
+    usersRepository.findUserIdByEmail(email).someOrFail(NotFound("User doesn't exist, re-login may be needed!"))
 
   private def articleIdBySlug(slug: String): Task[Int] =
     articlesRepository.findArticleIdBySlug(slug).someOrFail(NotFound(ArticleNotFoundMessage(slug)))

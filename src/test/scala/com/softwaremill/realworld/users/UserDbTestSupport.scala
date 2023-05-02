@@ -16,8 +16,8 @@ object UserDbTestSupport:
       userRepo <- ZIO.service[UsersRepository]
       _ <- userRepo.add(exampleUser1)
       _ <- userRepo.add(exampleUser2)
-      user1 <- userRepo.findByEmail(exampleUser1.email).someOrFail(s"User with email ${exampleUser1.email} doesn't exist.")
-      user2 <- userRepo.findByEmail(exampleUser2.email).someOrFail(s"User with email ${exampleUser2.email} doesn't exist.")
-      _ <- userRepo.follow(user1.userId, user2.userId)
+      userId1 <- userRepo.findUserIdByEmail(exampleUser1.email).someOrFail(s"User with email ${exampleUser1.email} doesn't exist.")
+      userId2 <- userRepo.findUserIdByEmail(exampleUser2.email).someOrFail(s"User with email ${exampleUser2.email} doesn't exist.")
+      _ <- userRepo.follow(userId1, userId2)
     } yield ()
   }

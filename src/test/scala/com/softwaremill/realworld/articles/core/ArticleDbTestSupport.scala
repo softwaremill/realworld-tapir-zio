@@ -32,16 +32,16 @@ object ArticleDbTestSupport:
       userRepo <- ZIO.service[UsersRepository]
       _ <- userRepo.add(exampleUser1)
       _ <- userRepo.add(exampleUser2)
-      user1 <- userRepo.findByEmail(exampleUser1.email).someOrFail(s"User with email ${exampleUser1.email} doesn't exist.")
-      user2 <- userRepo.findByEmail(exampleUser2.email).someOrFail(s"User with email ${exampleUser2.email} doesn't exist.")
-      _ <- userRepo.follow(user1.userId, user2.userId)
-      _ <- articleRepo.add(exampleArticle1, user1.userId)
-      _ <- articleRepo.add(exampleArticle2, user1.userId)
-      _ <- articleRepo.add(exampleArticle3, user2.userId)
+      userId1 <- userRepo.findUserIdByEmail(exampleUser1.email).someOrFail(s"User with email ${exampleUser1.email} doesn't exist.")
+      userId2 <- userRepo.findUserIdByEmail(exampleUser2.email).someOrFail(s"User with email ${exampleUser2.email} doesn't exist.")
+      _ <- userRepo.follow(userId1, userId2)
+      _ <- articleRepo.add(exampleArticle1, userId1)
+      _ <- articleRepo.add(exampleArticle2, userId1)
+      _ <- articleRepo.add(exampleArticle3, userId2)
       article1 <- articleRepo.findArticleBySlug(exampleArticle1Slug).someOrFail(s"Article $exampleArticle1Slug doesn't exist")
       article2 <- articleRepo.findArticleBySlug(exampleArticle2Slug).someOrFail(s"Article $exampleArticle2Slug doesn't exist")
       _ <- prepareTags(articleRepo, article1.articleId, article2.articleId)
-      _ <- prepareFavorites(articleRepo, article1.articleId, article2.articleId, user1.userId, user2.userId)
+      _ <- prepareFavorites(articleRepo, article1.articleId, article2.articleId, userId1, userId2)
     } yield ()
   }
 
@@ -53,22 +53,22 @@ object ArticleDbTestSupport:
       _ <- userRepo.add(exampleUser2)
       _ <- userRepo.add(exampleUser3)
       _ <- userRepo.add(exampleUser4)
-      user1 <- userRepo.findByEmail(exampleUser1.email).someOrFail(s"User with email ${exampleUser1.email} doesn't exist.")
-      user2 <- userRepo.findByEmail(exampleUser2.email).someOrFail(s"User with email ${exampleUser2.email} doesn't exist.")
-      user3 <- userRepo.findByEmail(exampleUser3.email).someOrFail(s"User with email ${exampleUser3.email} doesn't exist.")
-      user4 <- userRepo.findByEmail(exampleUser4.email).someOrFail(s"User with email ${exampleUser4.email} doesn't exist.")
-      _ <- userRepo.follow(user1.userId, user2.userId)
-      _ <- userRepo.follow(user3.userId, user2.userId)
-      _ <- articleRepo.add(exampleArticle1, user1.userId)
-      _ <- articleRepo.add(exampleArticle2, user1.userId)
-      _ <- articleRepo.add(exampleArticle3, user2.userId)
-      _ <- articleRepo.add(exampleArticle4, user2.userId)
-      _ <- articleRepo.add(exampleArticle5, user3.userId)
-      _ <- articleRepo.add(exampleArticle6, user4.userId)
+      userId1 <- userRepo.findUserIdByEmail(exampleUser1.email).someOrFail(s"User with email ${exampleUser1.email} doesn't exist.")
+      userId2 <- userRepo.findUserIdByEmail(exampleUser2.email).someOrFail(s"User with email ${exampleUser2.email} doesn't exist.")
+      userId3 <- userRepo.findUserIdByEmail(exampleUser3.email).someOrFail(s"User with email ${exampleUser3.email} doesn't exist.")
+      userId4 <- userRepo.findUserIdByEmail(exampleUser4.email).someOrFail(s"User with email ${exampleUser4.email} doesn't exist.")
+      _ <- userRepo.follow(userId1, userId2)
+      _ <- userRepo.follow(userId3, userId2)
+      _ <- articleRepo.add(exampleArticle1, userId1)
+      _ <- articleRepo.add(exampleArticle2, userId1)
+      _ <- articleRepo.add(exampleArticle3, userId2)
+      _ <- articleRepo.add(exampleArticle4, userId2)
+      _ <- articleRepo.add(exampleArticle5, userId3)
+      _ <- articleRepo.add(exampleArticle6, userId4)
       article1 <- articleRepo.findArticleBySlug(exampleArticle1Slug).someOrFail(s"Article $exampleArticle1Slug doesn't exist")
       article2 <- articleRepo.findArticleBySlug(exampleArticle2Slug).someOrFail(s"Article $exampleArticle2Slug doesn't exist")
       _ <- prepareTags(articleRepo, article1.articleId, article2.articleId)
-      _ <- prepareFavorites(articleRepo, article1.articleId, article2.articleId, user1.userId, user2.userId)
+      _ <- prepareFavorites(articleRepo, article1.articleId, article2.articleId, userId1, userId2)
     } yield ()
   }
 
@@ -78,14 +78,14 @@ object ArticleDbTestSupport:
       userRepo <- ZIO.service[UsersRepository]
       _ <- userRepo.add(exampleUser1)
       _ <- userRepo.add(exampleUser2)
-      user1 <- userRepo.findByEmail(exampleUser1.email).someOrFail(s"User with email ${exampleUser1.email} doesn't exist.")
-      user2 <- userRepo.findByEmail(exampleUser2.email).someOrFail(s"User with email ${exampleUser2.email} doesn't exist.")
-      _ <- articleRepo.add(exampleArticle1, user1.userId)
-      _ <- articleRepo.add(exampleArticle2, user2.userId)
+      userId1 <- userRepo.findUserIdByEmail(exampleUser1.email).someOrFail(s"User with email ${exampleUser1.email} doesn't exist.")
+      userId2 <- userRepo.findUserIdByEmail(exampleUser2.email).someOrFail(s"User with email ${exampleUser2.email} doesn't exist.")
+      _ <- articleRepo.add(exampleArticle1, userId1)
+      _ <- articleRepo.add(exampleArticle2, userId2)
       article1 <- articleRepo.findArticleBySlug(exampleArticle1Slug).someOrFail(s"Article $exampleArticle1Slug doesn't exist")
       article2 <- articleRepo.findArticleBySlug(exampleArticle2Slug).someOrFail(s"Article $exampleArticle2Slug doesn't exist")
       _ <- prepareTags(articleRepo, article1.articleId, article2.articleId)
-      _ <- prepareFavorites(articleRepo, article1.articleId, article2.articleId, user1.userId, user2.userId)
+      _ <- prepareFavorites(articleRepo, article1.articleId, article2.articleId, userId1, userId2)
     } yield ()
   }
 
@@ -101,8 +101,8 @@ object ArticleDbTestSupport:
       articleRepo <- ZIO.service[ArticlesRepository]
       userRepo <- ZIO.service[UsersRepository]
       _ <- userRepo.add(exampleUser1)
-      user1 <- userRepo.findByEmail(exampleUser1.email).someOrFail(s"User with email ${exampleUser1.email} doesn't exist.")
-      _ <- articleRepo.add(exampleArticle2, user1.userId)
+      userId1 <- userRepo.findUserIdByEmail(exampleUser1.email).someOrFail(s"User with email ${exampleUser1.email} doesn't exist.")
+      _ <- articleRepo.add(exampleArticle2, userId1)
     } yield ()
   }
 
@@ -111,10 +111,10 @@ object ArticleDbTestSupport:
       articleRepo <- ZIO.service[ArticlesRepository]
       userRepo <- ZIO.service[UsersRepository]
       _ <- userRepo.add(exampleUser1)
-      user1 <- userRepo.findByEmail(exampleUser1.email).someOrFail(s"User with email ${exampleUser1.email} doesn't exist.")
-      _ <- articleRepo.add(exampleArticle1, user1.userId)
-      _ <- articleRepo.add(exampleArticle2, user1.userId)
-      _ <- articleRepo.add(exampleArticle3, user1.userId)
+      userId1 <- userRepo.findUserIdByEmail(exampleUser1.email).someOrFail(s"User with email ${exampleUser1.email} doesn't exist.")
+      _ <- articleRepo.add(exampleArticle1, userId1)
+      _ <- articleRepo.add(exampleArticle2, userId1)
+      _ <- articleRepo.add(exampleArticle3, userId1)
     } yield ()
   }
 
@@ -123,8 +123,8 @@ object ArticleDbTestSupport:
       articleRepo <- ZIO.service[ArticlesRepository]
       userRepo <- ZIO.service[UsersRepository]
       _ <- userRepo.add(exampleUser1)
-      user1 <- userRepo.findByEmail(exampleUser1.email).someOrFail(s"User with email ${exampleUser1.email} doesn't exist.")
-      _ <- articleRepo.add(exampleArticle1, user1.userId)
+      userId1 <- userRepo.findUserIdByEmail(exampleUser1.email).someOrFail(s"User with email ${exampleUser1.email} doesn't exist.")
+      _ <- articleRepo.add(exampleArticle1, userId1)
     } yield ()
   }
 
@@ -133,8 +133,8 @@ object ArticleDbTestSupport:
       articleRepo <- ZIO.service[ArticlesRepository]
       userRepo <- ZIO.service[UsersRepository]
       _ <- userRepo.add(exampleUser1)
-      user1 <- userRepo.findByEmail(exampleUser1.email).someOrFail(s"User with email ${exampleUser1.email} doesn't exist.")
-      _ <- articleRepo.add(exampleArticle1, user1.userId)
-      _ <- articleRepo.add(exampleArticle2, user1.userId)
+      userId1 <- userRepo.findUserIdByEmail(exampleUser1.email).someOrFail(s"User with email ${exampleUser1.email} doesn't exist.")
+      _ <- articleRepo.add(exampleArticle1, userId1)
+      _ <- articleRepo.add(exampleArticle2, userId1)
     } yield ()
   }

@@ -4,7 +4,7 @@ import com.softwaremill.realworld.articles.*
 import com.softwaremill.realworld.articles.core.api.ArticleCreateData
 import com.softwaremill.realworld.articles.core.{Article, ArticleAuthor, ArticlesFilters}
 import com.softwaremill.realworld.common.{Exceptions, Pagination}
-import com.softwaremill.realworld.users.{Profile, UserRow}
+import com.softwaremill.realworld.users.Profile
 import io.getquill.*
 import io.getquill.jdbczio.*
 import org.sqlite.SQLiteErrorCode.SQLITE_CONSTRAINT_UNIQUE
@@ -17,8 +17,8 @@ import javax.sql.DataSource
 import scala.collection.immutable
 import scala.util.chaining.*
 
-case class ProfileRow(userId: Int, username: String, bio: String, image: String)
 case class ArticleFavoriteRow(profileId: Int, articleId: Int)
+case class ArticleTagRow(tag: String, articleId: Int)
 case class ArticleRow(
     articleId: Int,
     slug: String,
@@ -29,7 +29,15 @@ case class ArticleRow(
     updatedAt: Instant,
     authorId: Int
 )
-case class ArticleTagRow(tag: String, articleId: Int)
+case class ProfileRow(userId: Int, username: String, bio: String, image: String)
+case class UserRow(
+    userId: Int,
+    email: String,
+    username: String,
+    password: String,
+    bio: Option[String],
+    image: Option[String]
+)
 
 class ArticlesRepository(quill: Quill.Sqlite[SnakeCase]):
   import quill.*
