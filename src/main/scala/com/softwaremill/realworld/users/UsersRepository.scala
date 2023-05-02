@@ -30,7 +30,8 @@ class UsersRepository(quill: Quill.Sqlite[SnakeCase]):
 
   def findUserByEmail(email: String): IO[Exception, Option[User]] =
     run(queryUser.filter(ur => ur.email == lift(email)))
-      .map(mapToUser)
+      .map(_.headOption)
+      .map(_.map(user))
 
   def findUserWithIdByUsername(username: String): IO[Exception, Option[(User, Int)]] =
     run(queryUser.filter(ur => ur.username == lift(username)))
@@ -49,7 +50,8 @@ class UsersRepository(quill: Quill.Sqlite[SnakeCase]):
 
   def findUserWithPasswordByEmail(email: String): IO[Exception, Option[UserWithPassword]] =
     run(queryUser.filter(ur => ur.email == lift(email)))
-      .map(mapToUserWithPassword)
+      .map(_.headOption)
+      .map(_.map(userWithPassword))
 
   def add(user: UserRegisterData): Task[Unit] = run(
     queryUser
@@ -95,14 +97,6 @@ class UsersRepository(quill: Quill.Sqlite[SnakeCase]):
 
   def isFollowing(followedId: Int, followerId: Int): IO[SQLException, Boolean] = run {
     query[Followers].filter(_.userId == lift(followedId)).filter(_.followerId == lift(followerId)).map(_ => 1).nonEmpty
-  }
-
-  private def mapToUser(listUserRow: List[UserRow]): Option[User] = {
-    listUserRow.headOption.map(user)
-  }
-
-  private def mapToUserWithPassword(listUserRow: List[UserRow]): Option[UserWithPassword] = {
-    listUserRow.headOption.map(userWithPassword)
   }
 
   private def user(userRow: UserRow): User =
