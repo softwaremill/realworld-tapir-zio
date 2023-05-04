@@ -1,6 +1,7 @@
 package com.softwaremill.realworld.articles.core
 
 import com.softwaremill.realworld.articles.comments.{Comment, CommentsRepository}
+import com.softwaremill.realworld.articles.core.ArticlesService.*
 import com.softwaremill.realworld.articles.core.api.{ArticleCreateData, ArticleUpdateData}
 import com.softwaremill.realworld.articles.core.{Article, ArticlesFilters, ArticlesRepository}
 import com.softwaremill.realworld.articles.tags.TagsRepository
@@ -116,8 +117,7 @@ class ArticlesService(
   private def userIdByUsername(username: String): Task[Int] =
     usersRepository.findUserIdByUsername(username).someOrFail(NotFound(UserWithUsernameNotFoundMessage(username)))
 
-  // Todo some comments are the same in repositories, should i put it in utils?
-  // Todo is it a good idea to create method for each message?
+object ArticlesService:
   private val ArticleNotFoundMessage = (slug: String) => s"Article with slug $slug doesn't exist."
   private val UserWithEmailNotFoundMessage: String => String = (email: String) => s"User with email $email doesn't exist"
   private val UserWithUsernameNotFoundMessage: String => String = (username: String) => s"User with username $username doesn't exist"
@@ -125,7 +125,6 @@ class ArticlesService(
   private val ArticleCannotBeRemovedMessage: String = "Can't remove the article you're not an author of"
   private val ArticleCannotBeUpdatedMessage: String = "You're not an author of article that you're trying to update"
 
-object ArticlesService:
   val live: ZLayer[
     ArticlesRepository with UsersRepository with TagsRepository with CommentsRepository,
     Nothing,

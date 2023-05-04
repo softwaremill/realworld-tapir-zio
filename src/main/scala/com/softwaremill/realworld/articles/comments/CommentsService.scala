@@ -1,5 +1,6 @@
 package com.softwaremill.realworld.articles.comments
 
+import com.softwaremill.realworld.articles.comments.CommentsService.*
 import com.softwaremill.realworld.articles.core.{ArticleAuthor, ArticlesRepository}
 import com.softwaremill.realworld.articles.tags.TagsRepository
 import com.softwaremill.realworld.common.Exceptions
@@ -44,8 +45,7 @@ class CommentsService(
   private def articleIdBySlug(slug: String): Task[Int] =
     articlesRepository.findArticleIdBySlug(slug).someOrFail(NotFound(ArticleNotFoundMessage(slug)))
 
-  // Todo some comments are the same in repositories, should i put it in utils?
-  // Todo is it a good idea to create method for each message?
+object CommentsService:
   private val ArticleNotFoundMessage: String => String = (slug: String) => s"Article with slug $slug doesn't exist."
   private val CommentNotFoundMessage: Int => String = (commentId: Int) => s"Comment with id=$commentId doesn't exist"
   private val UserNotFoundMessage: String => String = (email: String) => s"User with email $email doesn't exist"
@@ -55,6 +55,5 @@ class CommentsService(
   private val ArticleAndAuthorIdsNotFoundMessage: Int => String = (commentId: Int) =>
     s"ArticleId or authorId for comment with id=$commentId doesn't exist"
 
-object CommentsService:
   val live: ZLayer[CommentsRepository with ArticlesRepository with UsersRepository, Nothing, CommentsService] =
     ZLayer.fromFunction(CommentsService(_, _, _))

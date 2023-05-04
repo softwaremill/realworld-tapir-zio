@@ -3,6 +3,7 @@ package com.softwaremill.realworld.users
 import com.softwaremill.realworld.auth.AuthService
 import com.softwaremill.realworld.common.Exceptions.{AlreadyInUse, BadRequest, NotFound, Unauthorized}
 import com.softwaremill.realworld.common.{Exceptions, Pagination}
+import com.softwaremill.realworld.users.UsersService.*
 import com.softwaremill.realworld.users.api.*
 import zio.{Console, IO, Task, ZIO, ZLayer}
 
@@ -114,12 +115,10 @@ class UsersService(authService: AuthService, usersRepository: UsersRepository):
         usersRepository.isFollowing(userId, asSeenByUserWithId).map(Profile(user.username, user.bio, user.image, _))
       case None => ZIO.succeed(Profile(user.username, user.bio, user.image, false))
 
-  // Todo some comments are the same in repositories, should i put it in utils?
-  // Todo is it a good idea to create method for each message?
+object UsersService:
   private val UserWithEmailNotFoundMessage: String => String = (email: String) => s"User with email $email doesn't exist"
   private val UserWithUsernameNotFoundMessage: String => String = (username: String) => s"User with username $username doesn't exist"
   private val UserAlreadyInUseMessage: String => String = (email: String) => s"User with email $email already in use"
   private val CannotFollowYourselfMessage: String = "You can't follow yourself"
 
-object UsersService:
   val live: ZLayer[AuthService with UsersRepository, Nothing, UsersService] = ZLayer.fromFunction(UsersService(_, _))
