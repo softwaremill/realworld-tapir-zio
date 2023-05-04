@@ -127,7 +127,7 @@ object UserEndpointTestSupport:
   def checkIfUserNotExistsErrorOccur(authorizationHeader: Map[String, String], uri: Uri): ZIO[UsersServerEndpoints, Throwable, TestResult] =
     assertZIO(
       callGetCurrentUser(authorizationHeader, uri)
-    )(isLeft(equalTo(HttpError("{\"error\":\"User doesn't exist.\"}", sttp.model.StatusCode(404)))))
+    )(isLeft(equalTo(HttpError("{\"error\":\"User with email invalid_email@invalid.com doesn't exist\"}", sttp.model.StatusCode(404)))))
 
   def checkIfUserAlreadyExistsErrorOccur(
       authorizationHeader: Map[String, String],
@@ -136,7 +136,7 @@ object UserEndpointTestSupport:
   ): ZIO[UsersServerEndpoints, Throwable, TestResult] =
     assertZIO(
       callRegisterUser(authorizationHeader, uri, userRegisterData)
-    )(isLeft(equalTo(HttpError("{\"error\":\"E-mail already in use!\"}", sttp.model.StatusCode(409)))))
+    )(isLeft(equalTo(HttpError("{\"error\":\"User with email jake@example.com already in use\"}", sttp.model.StatusCode(409)))))
 
   def checkIfInvalidPasswordErrorOccur(
       authorizationHeader: Map[String, String],

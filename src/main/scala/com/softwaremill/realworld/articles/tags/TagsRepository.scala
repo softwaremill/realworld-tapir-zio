@@ -16,7 +16,7 @@ class TagsRepository(quill: Quill.Sqlite[SnakeCase]):
 
   private inline def queryTags = quote(querySchema[TagRow](entity = "tags_articles"))
 
-  def listTags: ZIO[Any, SQLException, List[TagRow]] = run(queryTags)
+  def listTags: ZIO[Any, SQLException, List[String]] = run(queryTags).map(_.map(_.tag))
 
   def deleteTagsByArticleId(articleId: Int): Task[Long] =
     run(queryTags.filter(_.articleId == lift(articleId)).delete)

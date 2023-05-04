@@ -14,32 +14,44 @@ import scala.util.chaining.*
 
 case class Followers(userId: Int, followerId: Int)
 
+case class UserRow(
+    userId: Int,
+    email: String,
+    username: String,
+    password: String,
+    bio: Option[String],
+    image: Option[String]
+)
+
 class UsersRepository(quill: Quill.Sqlite[SnakeCase]):
   import quill.*
 
   private inline def queryUser = quote(querySchema[UserRow](entity = "users"))
 
-  def findById(id: Int): Task[Option[UserRow]] =
-    run(queryUser.filter(_.userId == lift(id))).map(_.headOption)
-
-  def findByEmail(email: String): IO[Exception, Option[UserRow]] =
-    run( // TODO hm should I add additional DTO or returning row from repo in this case is OK?
-      for {
-        ur <- queryUser if ur.email == lift(email)
-      } yield ur
-    )
+  def findUserByEmail(email: String): IO[Exception, Option[User]] =
+    run(queryUser.filter(ur => ur.email == lift(email)))
       .map(_.headOption)
+      .map(_.map(user))
 
-  def findByUsername(username: String): IO[Exception, Option[UserRow]] =
-    run(queryUser.filter(u => u.username == lift(username))).map(_.headOption)
+  def findUserWithIdByUsername(username: String): IO[Exception, Option[(User, Int)]] =
+    run(queryUser.filter(ur => ur.username == lift(username)))
+      .map(_.headOption)
+      .map(_.map(userRow => (user(userRow), userRow.userId)))
 
-  def findUserWithPasswordByEmail(email: String): IO[Exception, Option[UserWithPassword]] = run(
-    for {
-      ur <- queryUser if ur.email == lift(email)
-    } yield ur
-  )
-    .map(_.headOption)
-    .map(_.map(UserWithPassword.fromRow))
+  def findUserIdByEmail(email: String): IO[Exception, Option[Int]] =
+    run(queryUser.filter(ur => ur.email == lift(email)))
+      .map(_.headOption)
+      .map(_.map(_.userId))
+
+  def findUserIdByUsername(username: String): IO[Exception, Option[Int]] =
+    run(queryUser.filter(ur => ur.username == lift(username)))
+      .map(_.headOption)
+      .map(_.map(_.userId))
+
+  def findUserWithPasswordByEmail(email: String): IO[Exception, Option[UserWithPassword]] =
+    run(queryUser.filter(ur => ur.email == lift(email)))
+      .map(_.headOption)
+      .map(_.map(userWithPassword))
 
   def add(user: UserRegisterData): Task[Unit] = run(
     queryUser
@@ -71,21 +83,36 @@ class UsersRepository(quill: Quill.Sqlite[SnakeCase]):
     transaction {
       run(update)
         .flatMap(_ => run(read))
-        .map(_.map(User.fromRow))
+        .map(_.map(user))
     }
   }
 
-  def follow(followedId: Int, followerId: Int): ZIO[Any, SQLException, Long] = run {
+  def follow(followedId: Int, followerId: Int): IO[SQLException, Long] = run {
     query[Followers].insert(_.userId -> lift(followedId), _.followerId -> lift(followerId)).onConflictIgnore
   }
 
-  def unfollow(followedId: Int, followerId: Int): ZIO[Any, SQLException, Long] = run {
+  def unfollow(followedId: Int, followerId: Int): IO[SQLException, Long] = run {
     query[Followers].filter(f => (f.userId == lift(followedId)) && (f.followerId == lift(followerId))).delete
   }
 
-  def isFollowing(followedId: Int, followerId: Int): ZIO[Any, SQLException, Boolean] = run {
+  def isFollowing(followedId: Int, followerId: Int): IO[SQLException, Boolean] = run {
     query[Followers].filter(_.userId == lift(followedId)).filter(_.followerId == lift(followerId)).map(_ => 1).nonEmpty
   }
+
+  private def user(userRow: UserRow): User =
+    User(
+      email = userRow.email,
+      token = None,
+      username = userRow.username,
+      bio = userRow.bio,
+      image = userRow.image
+    )
+
+  private def userWithPassword(userRow: UserRow): UserWithPassword =
+    UserWithPassword(
+      user = user(userRow),
+      hashedPassword = userRow.password
+    )
 
   private def mapUniqueConstraintViolationError[R, A](task: RIO[R, A]): RIO[R, A] = task.mapError {
     case e: SQLiteException if e.getResultCode == SQLITE_CONSTRAINT_UNIQUE =>
@@ -94,6 +121,5 @@ class UsersRepository(quill: Quill.Sqlite[SnakeCase]):
   }
 
 object UsersRepository:
-
   val live: ZLayer[Quill.Sqlite[SnakeCase], Nothing, UsersRepository] =
     ZLayer.fromFunction(new UsersRepository(_))

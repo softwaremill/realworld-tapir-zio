@@ -14,10 +14,10 @@ import zio.{RIO, Random, ZIO, ZLayer}
 
 object UserRepositoryTestSupport:
 
-  def callFindByEmail(email: String): ZIO[UsersRepository, Exception, Option[UserRow]] = {
+  def callFindByEmail(email: String): ZIO[UsersRepository, Exception, Option[User]] = {
     for {
       repo <- ZIO.service[UsersRepository]
-      result <- repo.findByEmail(email)
+      result <- repo.findUserByEmail(email)
     } yield result
   }
 
@@ -54,12 +54,11 @@ object UserRepositoryTestSupport:
 
   def checkUserFound(email: String): ZIO[UsersRepository, Exception, TestResult] = {
     for {
-      userRowOpt <- callFindByEmail(email)
-    } yield zio.test.assert(userRowOpt)(
+      userOpt <- callFindByEmail(email)
+    } yield zio.test.assert(userOpt)(
       isSome(
-        (hasField("email", _.email, equalTo("jake@example.com")): Assertion[UserRow]) &&
+        (hasField("email", _.email, equalTo("jake@example.com")): Assertion[User]) &&
           hasField("username", _.username, equalTo("jake")) &&
-          hasField("password", _.password, isNonEmptyString) &&
           hasField("bio", _.bio, isNone) &&
           hasField("image", _.image, isNone)
       )
@@ -98,12 +97,11 @@ object UserRepositoryTestSupport:
   def checkUserAdd(userRegisterData: UserRegisterData): ZIO[UsersRepository, Throwable, TestResult] = {
     for {
       _ <- callUserAdd(userRegisterData)
-      userRowOpt <- callFindByEmail(userRegisterData.email)
-    } yield zio.test.assert(userRowOpt) {
+      userOpt <- callFindByEmail(userRegisterData.email)
+    } yield zio.test.assert(userOpt) {
       isSome(
-        (hasField("email", _.email, equalTo("test@test.com")): Assertion[UserRow]) &&
+        (hasField("email", _.email, equalTo("test@test.com")): Assertion[User]) &&
           hasField("username", _.username, equalTo("tested")) &&
-          hasField("password", _.password, isNonEmptyString) &&
           hasField("bio", _.bio, isNone) &&
           hasField("image", _.image, isNone)
       )
@@ -116,8 +114,8 @@ object UserRepositoryTestSupport:
   ): ZIO[UsersRepository, Throwable, TestResult] = {
     for {
       _ <- callUserAdd(userRegisterData)
-      userRowOpt <- callUpdateByEmail(userUpdateData, userRegisterData.email)
-    } yield zio.test.assert(userRowOpt) {
+      userOpt <- callUpdateByEmail(userUpdateData, userRegisterData.email)
+    } yield zio.test.assert(userOpt) {
       isSome {
         hasField[User, Option[String]](
           "bio",
@@ -147,8 +145,8 @@ object UserRepositoryTestSupport:
   ): ZIO[UsersRepository, Throwable, TestResult] = {
     for {
       _ <- callUserAdd(userRegisterData)
-      userRowOpt <- callUpdateByEmail(userUpdateData, userRegisterData.email)
-    } yield zio.test.assert(userRowOpt) {
+      userOpt <- callUpdateByEmail(userUpdateData, userRegisterData.email)
+    } yield zio.test.assert(userOpt) {
       isSome {
         hasField[User, Option[String]](
           "bio",

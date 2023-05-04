@@ -14,7 +14,7 @@ class TagsServerEndpoints(tagsEndpoints: TagsEndpoints, tagsService: TagsService
   val getTagsServerEndpoint: ZServerEndpoint[Any, Any] = tagsEndpoints.getTagsEndpoint
     .zServerLogic(_ =>
       tagsService.getAllTags
-        .map(foundTags => TagsListResponse(tags = foundTags.map(_.tag)))
+        .map(foundTags => TagsListResponse(tags = foundTags))
         .logError
         .pipe(defaultErrorsMappings)
     )

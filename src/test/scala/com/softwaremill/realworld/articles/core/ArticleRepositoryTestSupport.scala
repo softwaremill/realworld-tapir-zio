@@ -5,7 +5,7 @@ import com.softwaremill.realworld.articles.core.api.ArticleCreateData
 import com.softwaremill.realworld.articles.core.{Article, ArticleAuthor, ArticlesFilters, ArticlesRepository}
 import com.softwaremill.realworld.common.Exceptions.AlreadyInUse
 import com.softwaremill.realworld.common.Pagination
-import com.softwaremill.realworld.users.{Profile, UserRow, UsersRepository}
+import com.softwaremill.realworld.users.{Profile, User, UsersRepository}
 import sttp.client3.testing.SttpBackendStub
 import sttp.client3.{HttpError, Response, ResponseException, UriContext, basicRequest}
 import sttp.tapir.EndpointOutput.StatusCode
@@ -62,10 +62,10 @@ object ArticleRepositoryTestSupport:
     } yield result
   }
 
-  def callFindUserByEmail(email: String): ZIO[UsersRepository, Exception, Option[UserRow]] = {
+  def callFindUserIdByEmail(email: String): ZIO[UsersRepository, Exception, Option[Int]] = {
     for {
       repo <- ZIO.service[UsersRepository]
-      result <- repo.findByEmail(email)
+      result <- repo.findUserIdByEmail(email)
     } yield result
   }
 
@@ -95,7 +95,7 @@ object ArticleRepositoryTestSupport:
   ): ZIO[ArticlesRepository with UsersRepository, Object, TestResult] = {
 
     assertZIO((for {
-      userId <- callFindUserByEmail(userEmail).someOrFail(s"User $userEmail doesn't exist").map(_.userId)
+      userId <- callFindUserIdByEmail(userEmail).someOrFail(s"User $userEmail doesn't exist")
       articleId <- callCreateArticle(articleCreateData, userId)
     } yield articleId).exit)(
       failsCause(
@@ -342,7 +342,7 @@ object ArticleRepositoryTestSupport:
   ): ZIO[ArticlesRepository with UsersRepository, Object, TestResult] = {
 
     for {
-      userId <- callFindUserByEmail(userEmail).someOrFail(s"User $userEmail doesn't exist").map(_.userId)
+      userId <- callFindUserIdByEmail(userEmail).someOrFail(s"User $userEmail doesn't exist")
       _ <- callCreateArticle(articleCreateData, userId)
       article <- callFindBySlug(slug)
     } yield zio.test.assert(article) {
