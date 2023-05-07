@@ -22,10 +22,10 @@ import scala.util.chaining.*
 class ArticlesServerEndpoints(articlesEndpoints: ArticlesEndpoints, articlesService: ArticlesService):
 
   val listArticlesServerEndpoint: ZServerEndpoint[Any, Any] = articlesEndpoints.listArticlesEndpoint
-    .serverLogic(_ =>
+    .serverLogic(sessionOpt =>
       (filters, pagination) =>
         articlesService
-          .list(filters, pagination)
+          .list(filters, pagination, sessionOpt.map(_.email))
           .map(articles => ArticlesListResponse(articles = articles, articlesCount = articles.size))
           .logError
           .pipe(defaultErrorsMappings)

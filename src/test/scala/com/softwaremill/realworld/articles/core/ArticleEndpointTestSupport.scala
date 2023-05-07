@@ -308,7 +308,7 @@ object ArticleEndpointTestSupport:
                 && hasField("description", _.description, equalTo("So toothless"))
                 && hasField("body", _.body, equalTo("Its a dragon"))
                 && hasField("tagList", _.tagList, equalTo(List("dragons", "goats", "training")))
-                && hasField("favorited", _.favorited, isFalse)
+                && hasField("favorited", _.favorited, isTrue)
                 && hasField("favoritesCount", _.favoritesCount, equalTo(1))
                 && hasField("author", _.author, hasField("username", _.username, equalTo("jake")): Assertion[ArticleAuthor])
             )
@@ -364,7 +364,7 @@ object ArticleEndpointTestSupport:
                 && hasField("description", _.description, equalTo("Ever wonder how?"))
                 && hasField("body", _.body, equalTo("It takes a Jacobian"))
                 && hasField("tagList", _.tagList, equalTo(List("dragons", "training")))
-                && hasField("favorited", _.favorited, isFalse)
+                && hasField("favorited", _.favorited, if (authorizationHeaderOpt.isDefined) isTrue else isFalse)
                 && hasField("favoritesCount", _.favoritesCount, equalTo(2))
                 && hasField("author", _.author, hasField("username", _.username, equalTo("jake")): Assertion[ArticleAuthor])
             ) &&
@@ -412,7 +412,7 @@ object ArticleEndpointTestSupport:
                 && hasField("description", _.description, equalTo("Ever wonder how?"))
                 && hasField("body", _.body, equalTo("It takes a Jacobian"))
                 && hasField("tagList", _.tagList, equalTo(List("dragons", "training")))
-                && hasField("favorited", _.favorited, isFalse)
+                && hasField("favorited", _.favorited, isTrue)
                 && hasField("favoritesCount", _.favoritesCount, equalTo(2))
                 && hasField("author", _.author, hasField("username", _.username, equalTo("jake")): Assertion[ArticleAuthor])
             ) &&
@@ -422,7 +422,7 @@ object ArticleEndpointTestSupport:
                   && hasField("description", _.description, equalTo("So toothless"))
                   && hasField("body", _.body, equalTo("Its a dragon"))
                   && hasField("tagList", _.tagList, equalTo(List("dragons", "goats", "training")))
-                  && hasField("favorited", _.favorited, isFalse)
+                  && hasField("favorited", _.favorited, isTrue)
                   && hasField("favoritesCount", _.favoritesCount, equalTo(1))
                   && hasField("author", _.author, hasField("username", _.username, equalTo("jake")): Assertion[ArticleAuthor])
               ) &&

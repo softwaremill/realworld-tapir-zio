@@ -1,14 +1,12 @@
 package com.softwaremill.realworld.articles.comments
 
-import com.softwaremill.realworld.articles.core.{ArticleRow, ArticlesRepository}
+import com.softwaremill.realworld.articles.core.{ArticleFavoriteRow, ArticleRow, ArticlesRepository}
 import io.getquill.*
 import io.getquill.jdbczio.*
 import zio.{Task, ZLayer}
 
 import java.time.Instant
 
-case class CommentRow(commentId: Int, articleId: Int, createdAt: Instant, updatedAt: Instant, authorId: Int, body: String)
-case class ProfileRow(userId: Int, username: String, bio: Option[String], image: Option[String])
 case class ArticleRow(
     articleId: Int,
     slug: String,
@@ -19,13 +17,17 @@ case class ArticleRow(
     updatedAt: Instant,
     authorId: Int
 )
+case class CommentRow(commentId: Int, articleId: Int, createdAt: Instant, updatedAt: Instant, authorId: Int, body: String)
+case class FollowerRow(userId: Int, followerId: Int)
+case class ProfileRow(userId: Int, username: String, bio: Option[String], image: Option[String])
 
 class CommentsRepository(quill: Quill.Sqlite[SnakeCase]):
   import quill.*
 
   private inline def queryArticle = quote(querySchema[ArticleRow](entity = "articles"))
-  private inline def queryProfile = quote(querySchema[ProfileRow](entity = "users"))
   private inline def queryComment = quote(querySchema[CommentRow](entity = "comments_articles"))
+  private inline def queryFavoriteArticle = quote(querySchema[ArticleFavoriteRow](entity = "favorites_articles"))
+  private inline def queryProfile = quote(querySchema[ProfileRow](entity = "users"))
 
   def addComment(articleId: Int, authorId: Int, comment: String): Task[Index] = {
     val now = Instant.now()
@@ -78,6 +80,7 @@ class CommentsRepository(quill: Quill.Sqlite[SnakeCase]):
       for {
         cr <- queryComment if cr.articleId == lift(articleId)
         ar <- queryProfile.leftJoin(ar => ar.userId == cr.authorId)
+//        fr <- queryFollower.leftJoin(fr => fr.userId == ar.userId).map(x => x.)
       } yield (cr, ar)
     )
       .map(_.flatMap(comment))
@@ -101,6 +104,10 @@ class CommentsRepository(quill: Quill.Sqlite[SnakeCase]):
       )
     )
   }
+
+//  private def isFollowing(followedId: Int, followerId: Int): Task[Boolean] = run {
+//    queryFollower.filter(_.userId == lift(followedId)).filter(_.followerId == lift(followerId)).map(_ => 1).nonEmpty
+//  }
 
 object CommentsRepository:
   val live: ZLayer[Quill.Sqlite[SnakeCase], Nothing, CommentsRepository] =

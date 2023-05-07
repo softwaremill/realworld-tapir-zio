@@ -21,8 +21,8 @@ class ArticlesService(
     commentsRepository: CommentsRepository
 ):
 
-  def list(filters: ArticlesFilters, pagination: Pagination): IO[SQLException, List[Article]] = articlesRepository
-    .list(filters, pagination)
+  def list(filters: ArticlesFilters, pagination: Pagination, emailOpt: Option[String]): IO[SQLException, List[Article]] = articlesRepository
+    .list(filters, pagination, emailOpt)
 
   def listArticlesByFollowedUsers(
       pagination: Pagination,
@@ -31,7 +31,7 @@ class ArticlesService(
     for {
       userId <- userIdByEmail(email)
       foundArticles <- articlesRepository
-        .listArticlesByFollowedUsers(pagination, userId)
+        .listArticlesByFollowedUsers(pagination, userId, email)
     } yield foundArticles
 
   def findBySlugAsSeenBy(slug: String, email: String): Task[Article] = articlesRepository
