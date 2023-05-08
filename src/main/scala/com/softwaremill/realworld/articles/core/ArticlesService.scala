@@ -21,8 +21,15 @@ class ArticlesService(
     commentsRepository: CommentsRepository
 ):
 
-  def list(filters: ArticlesFilters, pagination: Pagination, emailOpt: Option[String]): IO[SQLException, List[Article]] = articlesRepository
-    .list(filters, pagination, emailOpt)
+  def list(filters: ArticlesFilters, pagination: Pagination, emailOpt: Option[String]): Task[List[Article]] =
+    emailOpt match
+      case Some(email) =>
+        userIdByEmail(email)
+          .flatMap(userId =>
+            articlesRepository
+              .list(filters, pagination, Some(userId, email))
+          )
+      case None => articlesRepository.list(filters, pagination, None)
 
   def listArticlesByFollowedUsers(
       pagination: Pagination,
@@ -31,12 +38,16 @@ class ArticlesService(
     for {
       userId <- userIdByEmail(email)
       foundArticles <- articlesRepository
-        .listArticlesByFollowedUsers(pagination, userId, email)
+        .listArticlesByFollowedUsers(pagination, (userId, email))
     } yield foundArticles
 
-  def findBySlugAsSeenBy(slug: String, email: String): Task[Article] = articlesRepository
-    .findBySlugAsSeenBy(slug, email)
-    .someOrFail(NotFound(ArticleNotFoundMessage(slug)))
+  def findBySlug(slug: String, email: String): Task[Article] =
+    for {
+      userId <- userIdByEmail(email)
+      foundArticle <- articlesRepository
+        .findBySlug(slug, (userId, email))
+        .someOrFail(NotFound(ArticleNotFoundMessage(slug)))
+    } yield foundArticle
 
   def create(createData: ArticleCreateData, email: String): Task[Article] =
     for {
@@ -45,7 +56,7 @@ class ArticlesService(
       _ <- ZIO.foreach(createData.tagList) { tagList =>
         ZIO.foreach(tagList)(tag => articlesRepository.addTag(tag, articleId))
       }
-      articleData <- findBySlugAsSeenBy(articleId, email)
+      articleData <- findBySlug(articlesRepository.convertToSlug(createData.title), (userId, email))
     } yield articleData
 
   def delete(slug: String, email: String): Task[Unit] = for {
@@ -65,7 +76,7 @@ class ArticlesService(
     for {
       userId <- userIdByEmail(email)
       oldArticle <- articlesRepository
-        .findBySlugAsSeenBy(slug.trim.toLowerCase, email)
+        .findBySlug(slug.trim.toLowerCase, (userId, email))
         .someOrFail(NotFound(ArticleNotFoundMessage(slug)))
       oldArticleUserId <- userIdByUsername(oldArticle.author.username)
       _ <- ZIO
@@ -82,7 +93,7 @@ class ArticlesService(
       .findArticleIdBySlug(slug)
       .someOrFail(Exceptions.NotFound(ArticleNotFoundMessage(slug)))
     _ <- articlesRepository.makeFavorite(articleId, userId)
-    articleData <- findBySlugAsSeenBy(slug, email)
+    articleData <- findBySlug(slug, (userId, email))
   } yield articleData
 
   def removeFavorite(slug: String, email: String): Task[Article] = for {
@@ -91,7 +102,7 @@ class ArticlesService(
       .findArticleIdBySlug(slug)
       .someOrFail(Exceptions.NotFound(ArticleNotFoundMessage(slug)))
     _ <- articlesRepository.removeFavorite(articleId, userId)
-    articleData <- findBySlugAsSeenBy(slug, email)
+    articleData <- findBySlug(slug, (userId, email))
   } yield articleData
 
   private def updateArticleData(articleData: Article, updatedData: ArticleUpdateData): Article = {
@@ -107,9 +118,11 @@ class ArticlesService(
       updatedAt = Instant.now()
     )
   }
-  private def findBySlugAsSeenBy(articleId: Int, email: String): Task[Article] = articlesRepository
-    .findBySlugAsSeenBy(articleId, email)
-    .someOrFail(NotFound(ArticleNotFoundMessage(s"$articleId")))
+
+  private def findBySlug(slug: String, viewerData: (Int, String)): Task[Article] =
+    articlesRepository
+      .findBySlug(slug, viewerData)
+      .someOrFail(NotFound(ArticleNotFoundMessage(slug)))
 
   private def userIdByEmail(email: String): Task[Int] =
     usersRepository.findUserIdByEmail(email).someOrFail(NotFound(UserWithEmailNotFoundMessage(email)))

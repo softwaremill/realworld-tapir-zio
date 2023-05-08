@@ -35,6 +35,7 @@ object ArticleDbTestSupport:
       userId1 <- userRepo.findUserIdByEmail(exampleUser1.email).someOrFail(s"User with email ${exampleUser1.email} doesn't exist.")
       userId2 <- userRepo.findUserIdByEmail(exampleUser2.email).someOrFail(s"User with email ${exampleUser2.email} doesn't exist.")
       _ <- userRepo.follow(userId1, userId2)
+      _ <- userRepo.follow(userId2, userId1)
       _ <- articleRepo.add(exampleArticle1, userId1)
       _ <- articleRepo.add(exampleArticle2, userId1)
       _ <- articleRepo.add(exampleArticle3, userId2)
@@ -90,6 +91,13 @@ object ArticleDbTestSupport:
   }
 
   def prepareDataForArticleCreation = {
+    for {
+      userRepo <- ZIO.service[UsersRepository]
+      _ <- userRepo.add(exampleUser1)
+    } yield ()
+  }
+
+  def prepareDataForListingEmptyList = {
     for {
       userRepo <- ZIO.service[UsersRepository]
       _ <- userRepo.add(exampleUser1)

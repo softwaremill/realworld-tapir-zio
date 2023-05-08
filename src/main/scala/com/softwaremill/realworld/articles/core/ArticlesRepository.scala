@@ -54,14 +54,17 @@ class ArticlesRepository(quill: Quill.Sqlite[SnakeCase]):
   }
 
   // Todo Improve queries, reduce duplicate code, check if it possible to change this huge sql query
-  def list(filters: ArticlesFilters, pagination: Pagination, viewerEmailOpt: Option[String]): IO[SQLException, List[Article]] = {
+  def list(filters: ArticlesFilters, pagination: Pagination, viewerDataOpt: Option[(Int, String)]): IO[SQLException, List[Article]] = {
     val tagFilter = filters.tag.getOrElse("")
     val authorFilter = filters.author.getOrElse("")
     val favoritedFilter = filters.favorited.getOrElse("")
-    val viewerEmail = viewerEmailOpt.getOrElse("")
 
-    run(for {
-      ar <- sql"""
+    viewerDataOpt match
+      case Some(viewerData) =>
+        val (viewerId, viewerEmail) = viewerData
+
+        run(for {
+          ar <- sql"""
                      SELECT a.article_id, a.slug, a.title, a.description, a.body, a.created_at, a.updated_at, a.author_id
                      FROM articles a
                      LEFT JOIN users authors ON authors.user_id = a.author_id
@@ -73,31 +76,63 @@ class ArticlesRepository(quill: Quill.Sqlite[SnakeCase]):
                           AND (${lift(authorFilter)} = '' OR ${lift(authorFilter)} = authors.username)
                      GROUP BY a.slug, a.title, a.description, a.body, a.created_at, a.updated_at, a.author_id
                    """
-        .as[Query[ArticleRow]]
-        .drop(lift(pagination.offset))
-        .take(lift(pagination.limit))
-        .sortBy(ar => ar.slug)
-      pr <- queryProfile.join(pr => ar.authorId == pr.userId)
-      tr <- queryTagArticle
-        .groupByMap(_.articleId)(atr => (atr.articleId, tagsConcat(atr.tag)))
-        .leftJoin(a => a._1 == ar.articleId)
-      fr <- queryFavoriteArticle
-        .groupByMap(_.articleId)(fr => (fr.articleId, count(fr.profileId)))
-        .leftJoin(f => f._1 == ar.articleId)
-      isFavorite = queryUser
-        .join(queryFavoriteArticle)
-        .on((u, f) => u.email == lift(viewerEmail) && (f.articleId == ar.articleId) && (f.profileId == u.userId))
-        .map(_ => 1)
-        .nonEmpty
-    } yield (ar, pr, tr.map(_._2), fr.map(_._2), isFavorite))
-      .map(_.map(article))
+            .as[Query[ArticleRow]]
+            .drop(lift(pagination.offset))
+            .take(lift(pagination.limit))
+            .sortBy(ar => ar.slug)
+          pr <- queryProfile.join(pr => ar.authorId == pr.userId)
+          tr <- queryTagArticle
+            .groupByMap(_.articleId)(atr => (atr.articleId, tagsConcat(atr.tag)))
+            .leftJoin(a => a._1 == ar.articleId)
+          fr <- queryFavoriteArticle
+            .groupByMap(_.articleId)(fr => (fr.articleId, count(fr.profileId)))
+            .leftJoin(f => f._1 == ar.articleId)
+          isFavorite = queryUser
+            .join(queryFavoriteArticle)
+            .on((u, f) => u.email == lift(viewerEmail) && (f.articleId == ar.articleId) && (f.profileId == u.userId))
+            .map(_ => 1)
+            .nonEmpty
+          isFollowing = queryFollower
+            .filter(f => (f.userId == pr.userId) && (f.followerId == lift(viewerId)))
+            .map(_ => 1)
+            .nonEmpty
+        } yield (ar, pr, tr.map(_._2), fr.map(_._2), isFavorite, isFollowing))
+          .map(_.map(article))
+
+      case None =>
+        run(for {
+          ar <- sql"""
+                   SELECT a.article_id, a.slug, a.title, a.description, a.body, a.created_at, a.updated_at, a.author_id
+                   FROM articles a
+                   LEFT JOIN users authors ON authors.user_id = a.author_id
+                   LEFT JOIN favorites_articles fa ON fa.article_id = a.article_id
+                   LEFT JOIN users fu ON fu.user_id = fa.profile_id
+                   LEFT JOIN tags_articles ta ON a.article_id = ta.article_id
+                   WHERE (${lift(tagFilter)} = '' OR ${lift(tagFilter)} = ta.tag)
+                        AND (${lift(favoritedFilter)} = '' OR ${lift(favoritedFilter)} = fu.username)
+                        AND (${lift(authorFilter)} = '' OR ${lift(authorFilter)} = authors.username)
+                   GROUP BY a.slug, a.title, a.description, a.body, a.created_at, a.updated_at, a.author_id
+                 """
+            .as[Query[ArticleRow]]
+            .drop(lift(pagination.offset))
+            .take(lift(pagination.limit))
+            .sortBy(ar => ar.slug)
+          pr <- queryProfile.join(pr => ar.authorId == pr.userId)
+          tr <- queryTagArticle
+            .groupByMap(_.articleId)(atr => (atr.articleId, tagsConcat(atr.tag)))
+            .leftJoin(a => a._1 == ar.articleId)
+          fr <- queryFavoriteArticle
+            .groupByMap(_.articleId)(fr => (fr.articleId, count(fr.profileId)))
+            .leftJoin(f => f._1 == ar.articleId)
+        } yield (ar, pr, tr.map(_._2), fr.map(_._2), false, false))
+          .map(_.map(article))
   }
 
   def listArticlesByFollowedUsers(
       pagination: Pagination,
-      viewerId: Int,
-      viewerEmail: String
+      viewerData: (Int, String)
   ): IO[SQLException, List[Article]] = {
+    val (viewerId, viewerEmail) = viewerData
 
     run(for {
       ar <- sql"""
@@ -121,11 +156,16 @@ class ArticlesRepository(quill: Quill.Sqlite[SnakeCase]):
         .on((u, f) => u.email == lift(viewerEmail) && (f.articleId == ar.articleId) && (f.profileId == u.userId))
         .map(_ => 1)
         .nonEmpty
-    } yield (ar, pr, tr.map(_._2), fr.map(_._2), isFavorite))
+      isFollowing = queryFollower
+        .filter(f => (f.userId == pr.userId) && (f.followerId == lift(viewerId)))
+        .map(_ => 1)
+        .nonEmpty
+    } yield (ar, pr, tr.map(_._2), fr.map(_._2), isFavorite, isFollowing))
       .map(_.map(article))
   }
+  def findBySlug(slug: String, viewerData: (Int, String)): IO[SQLException, Option[Article]] = {
+    val (viewerId, viewerEmail) = viewerData
 
-  def findBySlug(slug: String, viewerEmail: String): IO[SQLException, Option[Article]] =
     run(for {
       ar <- queryArticle if ar.slug == lift(slug)
       pr <- queryProfile.join(pr => ar.authorId == pr.userId)
@@ -140,47 +180,14 @@ class ArticlesRepository(quill: Quill.Sqlite[SnakeCase]):
         .on((u, f) => u.email == lift(viewerEmail) && (f.articleId == ar.articleId) && (f.profileId == u.userId))
         .map(_ => 1)
         .nonEmpty
-    } yield (ar, pr, tr.map(_._2), fr.map(_._2), isFavorite))
-      .map(_.headOption)
-      .map(_.map(article))
-
-  def findBySlugAsSeenBy(slug: String, viewerEmail: String): IO[SQLException, Option[Article]] =
-    run(for {
-      ar <- queryArticle if ar.slug == lift(slug)
-      pr <- queryProfile.join(pr => ar.authorId == pr.userId)
-      tr <- queryTagArticle
-        .groupByMap(_.articleId)(atr => (atr.articleId, tagsConcat(atr.tag)))
-        .leftJoin(a => a._1 == ar.articleId)
-      fr <- queryFavoriteArticle
-        .groupByMap(_.articleId)(fr => (fr.articleId, count(fr.profileId)))
-        .leftJoin(f => f._1 == ar.articleId)
-      isFavorite = queryUser
-        .join(queryFavoriteArticle)
-        .on((u, f) => u.email == lift(viewerEmail) && (f.articleId == ar.articleId) && (f.profileId == u.userId))
+      isFollowing = queryFollower
+        .filter(f => (f.userId == pr.userId) && (f.followerId == lift(viewerId)))
         .map(_ => 1)
         .nonEmpty
-    } yield (ar, pr, tr.map(_._2), fr.map(_._2), isFavorite))
+    } yield (ar, pr, tr.map(_._2), fr.map(_._2), isFavorite, isFollowing))
       .map(_.headOption)
       .map(_.map(article))
-
-  def findBySlugAsSeenBy(articleId: Int, viewerEmail: String): IO[SQLException, Option[Article]] =
-    run(for {
-      ar <- queryArticle if ar.articleId == lift(articleId)
-      pr <- queryProfile.join(pr => ar.authorId == pr.userId)
-      tr <- queryTagArticle
-        .groupByMap(_.articleId)(atr => (atr.articleId, tagsConcat(atr.tag)))
-        .leftJoin(a => a._1 == ar.articleId)
-      fr <- queryFavoriteArticle
-        .groupByMap(_.articleId)(fr => (fr.articleId, count(fr.profileId)))
-        .leftJoin(f => f._1 == ar.articleId)
-      isFavorite = queryUser
-        .join(queryFavoriteArticle)
-        .on((u, f) => u.email == lift(viewerEmail) && (f.articleId == ar.articleId) && (f.profileId == u.userId))
-        .map(_ => 1)
-        .nonEmpty
-    } yield (ar, pr, tr.map(_._2), fr.map(_._2), isFavorite))
-      .map(_.headOption)
-      .map(_.map(article))
+  }
 
   def findArticleIdBySlug(slug: String): IO[SQLException, Option[Int]] =
     run(
@@ -210,7 +217,7 @@ class ArticlesRepository(quill: Quill.Sqlite[SnakeCase]):
     run(
       queryArticle
         .insert(
-          _.slug -> lift(createData.title.trim.toLowerCase.replace(" ", "-")),
+          _.slug -> lift(convertToSlug(createData.title)),
           _.title -> lift(createData.title.trim),
           _.description -> lift(createData.description),
           _.body -> lift(createData.body),
@@ -250,10 +257,12 @@ class ArticlesRepository(quill: Quill.Sqlite[SnakeCase]):
     queryFavoriteArticle.filter(a => (a.profileId == lift(userId)) && (a.articleId == lift(articleId))).delete
   )
 
+  val convertToSlug = (title: String) => title.trim.toLowerCase.replace(" ", "-")
+
   private def explodeTags(tags: String): List[String] = tags.split("\\|").toList
 
-  private def article(tuple: (ArticleRow, ProfileRow, Option[String], Option[Int], Boolean)): Article = {
-    val (ar, pr, tags, favorites, isFavorite) = tuple
+  private def article(tuple: (ArticleRow, ProfileRow, Option[String], Option[Int], Boolean, Boolean)): Article = {
+    val (ar, pr, tags, favorites, isFavorite, isFollowing) = tuple
     Article(
       slug = ar.slug,
       title = ar.title,
@@ -264,8 +273,7 @@ class ArticlesRepository(quill: Quill.Sqlite[SnakeCase]):
       updatedAt = ar.updatedAt,
       favorited = isFavorite,
       favoritesCount = favorites.getOrElse(0),
-      // TODO implement "following" (after authentication is ready)
-      author = ArticleAuthor(pr.username, Option(pr.bio), Option(pr.image), following = false)
+      author = ArticleAuthor(pr.username, Option(pr.bio), Option(pr.image), following = isFollowing)
     )
   }
 

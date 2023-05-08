@@ -14,17 +14,18 @@ import zio.test.*
 
 object ArticlesRepositorySpec extends ZIOSpecDefault:
 
+  // TODO should i use named parameters everywhere?
   override def spec = suite("article repository tests")(
     suite("list articles")(
       suite("with empty db")(
         test("with no filters") {
-          checkIfArticleListIsEmpty(filters = ArticlesFilters.empty, pagination = Pagination(20, 0), viewerEmailOpt = None)
+          checkIfArticleListIsEmpty(filters = ArticlesFilters.empty, pagination = Pagination(20, 0), viewerDataOpt = None)
         },
         test("with filters") {
           checkIfArticleListIsEmpty(
             filters = ArticlesFilters(Some("dragon"), Some("John"), Some("Ron")),
             pagination = Pagination(20, 0),
-            viewerEmailOpt = None
+            viewerDataOpt = None
           )
         }
       ),
@@ -32,13 +33,13 @@ object ArticlesRepositorySpec extends ZIOSpecDefault:
         test("with small pagination") {
           for {
             _ <- prepareDataForListingArticles
-            result <- listArticlesWithSmallPagination(filters = ArticlesFilters.empty, pagination = Pagination(1, 1), viewerEmailOpt = None)
+            result <- listArticlesWithSmallPagination(filters = ArticlesFilters.empty, pagination = Pagination(1, 1), viewerDataOpt = None)
           } yield result
         },
         test("with big pagination") {
           for {
             _ <- prepareDataForListingArticles
-            result <- listArticlesWithBigPagination(filters = ArticlesFilters.empty, pagination = Pagination(20, 0), viewerEmailOpt = None)
+            result <- listArticlesWithBigPagination(filters = ArticlesFilters.empty, pagination = Pagination(20, 0), viewerDataOpt = None)
           } yield result
         },
         test("with tag filter") {
@@ -47,7 +48,7 @@ object ArticlesRepositorySpec extends ZIOSpecDefault:
             result <- listArticlesWithTagFilter(
               filters = ArticlesFilters.withTag("dragons"),
               pagination = Pagination(20, 0),
-              viewerEmailOpt = None
+              viewerDataOpt = None
             )
           } yield result
         },
@@ -57,7 +58,7 @@ object ArticlesRepositorySpec extends ZIOSpecDefault:
             result <- listArticlesWithFavoritedTagFilter(
               filters = ArticlesFilters.withFavorited("jake"),
               pagination = Pagination(20, 0),
-              viewerEmailOpt = None
+              viewerDataOpt = None
             )
           } yield result
         },
@@ -67,7 +68,7 @@ object ArticlesRepositorySpec extends ZIOSpecDefault:
             result <- listArticlesWithAuthorFilter(
               filters = ArticlesFilters.withAuthor("john"),
               pagination = Pagination(20, 0),
-              viewerEmailOpt = None
+              viewerDataOpt = None
             )
           } yield result
         }
@@ -77,19 +78,19 @@ object ArticlesRepositorySpec extends ZIOSpecDefault:
       test("find by slug") {
         for {
           _ <- prepareDataForListingArticles
-          result <- findArticleBySlug(slug = "how-to-train-your-dragon", viewerEmail = exampleUser1.email)
+          result <- findArticleBySlug(slug = "how-to-train-your-dragon", viewerData = (2, exampleUser2.email))
         } yield result
       },
       test("find article - check article not found") {
         for {
           _ <- prepareDataForListingArticles
-          result <- checkArticleNotFound(slug = "non-existing-article-slug", viewerEmail = exampleUser1.email)
+          result <- checkArticleNotFound(slug = "non-existing-article-slug", viewerData = (1, exampleUser1.email))
         } yield result
       },
       test("find article by slug as seen by user that marked it as favorite") {
         for {
           _ <- prepareDataForListingArticles
-          result <- findBySlugAsSeenBy(slug = "how-to-train-your-dragon-2", viewerEmail = exampleUser2.email)
+          result <- findBySlugAsSeenBy(slug = "how-to-train-your-dragon-2", viewerData = (2, exampleUser2.email))
         } yield result
       }
     ),
@@ -97,7 +98,7 @@ object ArticlesRepositorySpec extends ZIOSpecDefault:
       test("add tag") {
         for {
           _ <- prepareDataForListingArticles
-          result <- addAndCheckTag(newTag = "new-tag", articleSlug = "how-to-train-your-dragon", viewerEmail = exampleUser1.email)
+          result <- addAndCheckTag(newTag = "new-tag", articleSlug = "how-to-train-your-dragon", viewerData = (1, exampleUser1.email))
         } yield result
       },
       test("add tag - check other article is untouched") {
@@ -107,7 +108,7 @@ object ArticlesRepositorySpec extends ZIOSpecDefault:
             newTag = "new-tag",
             articleSlugToChange = "how-to-train-your-dragon",
             articleSlugWithoutChange = "how-to-train-your-dragon-2",
-            viewerEmail = exampleUser1.email
+            viewerData = (1, exampleUser1.email)
           )
         } yield result
       }
@@ -125,7 +126,7 @@ object ArticlesRepositorySpec extends ZIOSpecDefault:
               tagList = None
             ),
             userEmail = exampleUser1.email,
-            viewerEmail = exampleUser1.email
+            viewerData = (1, exampleUser1.email)
           )
         } yield result
       },
@@ -152,7 +153,7 @@ object ArticlesRepositorySpec extends ZIOSpecDefault:
             updatedTitle = "Updated article under test",
             updatedDescription = "What a nice updated day!",
             updatedBody = "Updating scala code is quite challenging pleasure",
-            viewerEmail = exampleUser1.email
+            viewerData = (1, exampleUser1.email)
           )
         } yield result
       },
@@ -165,7 +166,7 @@ object ArticlesRepositorySpec extends ZIOSpecDefault:
             updatedTitle = "How to train your dragon 2",
             updatedDescription = "What a nice updated day!",
             updatedBody = "Updating scala code is quite challenging pleasure",
-            viewerEmail = exampleUser1.email
+            viewerData = (1, exampleUser1.email)
           )
         } yield result
       }

@@ -45,7 +45,7 @@ class ArticlesServerEndpoints(articlesEndpoints: ArticlesEndpoints, articlesServ
     .serverLogic(session =>
       slug =>
         articlesService
-          .findBySlugAsSeenBy(slug, session.email)
+          .findBySlug(slug, session.email)
           .logError
           .pipe(defaultErrorsMappings)
           .map(ArticleResponse.apply)

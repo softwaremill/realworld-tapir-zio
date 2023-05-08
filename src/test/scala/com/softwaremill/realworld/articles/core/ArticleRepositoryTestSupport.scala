@@ -23,25 +23,18 @@ object ArticleRepositoryTestSupport:
   def callListArticles(
       filters: ArticlesFilters,
       pagination: Pagination,
-      viewerEmailOpt: Option[String]
+      viewerDataOpt: Option[(Int, String)]
   ): ZIO[ArticlesRepository, SQLException, List[Article]] = {
     for {
       repo <- ZIO.service[ArticlesRepository]
-      result <- repo.list(filters, pagination, viewerEmailOpt)
+      result <- repo.list(filters, pagination, viewerDataOpt)
     } yield result
   }
 
-  def callFindBySlug(slug: String, viewerEmail: String): ZIO[ArticlesRepository, SQLException, Option[Article]] = {
+  def callFindBySlug(slug: String, viewerData: (Int, String)): ZIO[ArticlesRepository, SQLException, Option[Article]] = {
     for {
       repo <- ZIO.service[ArticlesRepository]
-      result <- repo.findBySlug(slug, viewerEmail)
-    } yield result
-  }
-
-  def callFindBySlugAsSeenBy(slug: String, viewerEmail: String): ZIO[ArticlesRepository, SQLException, Option[Article]] = {
-    for {
-      repo <- ZIO.service[ArticlesRepository]
-      result <- repo.findBySlugAsSeenBy(slug, viewerEmail)
+      result <- repo.findBySlug(slug, viewerData)
     } yield result
   }
 
@@ -83,19 +76,19 @@ object ArticleRepositoryTestSupport:
   def checkIfArticleListIsEmpty(
       filters: ArticlesFilters,
       pagination: Pagination,
-      viewerEmailOpt: Option[String]
+      viewerDataOpt: Option[(Int, String)]
   ): ZIO[ArticlesRepository, SQLException, TestResult] = {
     for {
-      result <- callListArticles(filters, pagination, viewerEmailOpt)
+      result <- callListArticles(filters, pagination, viewerDataOpt)
     } yield zio.test.assert(result)(isEmpty)
   }
 
   def checkArticleNotFound(
       slug: String,
-      viewerEmail: String
+      viewerData: (Int, String)
   ): ZIO[ArticlesRepository, SQLException, TestResult] = {
 
-    assertZIO(callFindBySlug(slug, viewerEmail))(isNone)
+    assertZIO(callFindBySlug(slug, viewerData))(isNone)
   }
 
   def checkIfArticleAlreadyExistsInCreate(
@@ -119,7 +112,7 @@ object ArticleRepositoryTestSupport:
       updatedTitle: String,
       updatedDescription: String,
       updatedBody: String,
-      viewerEmail: String
+      viewerData: (Int, String)
   ): ZIO[ArticlesRepository with UsersRepository, Object, TestResult] = {
 
     assertZIO((for {
@@ -137,7 +130,7 @@ object ArticleRepositoryTestSupport:
         author = null
       )
       _ <- callUpdateArticle(articleUpdateData, articleId)
-      article <- callFindBySlug(articleUpdateData.slug, viewerEmail)
+      article <- callFindBySlug(articleUpdateData.slug, viewerData)
     } yield article).exit)(
       failsCause(
         containsCause(Cause.fail(AlreadyInUse(message = "Article name already exists")))
@@ -148,10 +141,10 @@ object ArticleRepositoryTestSupport:
   def listArticlesWithSmallPagination(
       filters: ArticlesFilters,
       pagination: Pagination,
-      viewerEmailOpt: Option[String]
+      viewerDataOpt: Option[(Int, String)]
   ): ZIO[ArticlesRepository, SQLException, TestResult] = {
     for {
-      articlesList <- callListArticles(filters, pagination, viewerEmailOpt)
+      articlesList <- callListArticles(filters, pagination, viewerDataOpt)
     } yield zio.test.assert(articlesList)(
       hasSize(equalTo(1)) &&
         exists(
@@ -162,7 +155,15 @@ object ArticleRepositoryTestSupport:
             && hasField("tagList", _.tagList, equalTo(List("dragons", "goats", "training")))
             && hasField("favorited", _.favorited, isFalse)
             && hasField("favoritesCount", _.favoritesCount, equalTo(1))
-            && hasField("author", _.author, hasField("username", _.username, equalTo("jake")): Assertion[ArticleAuthor])
+            && hasField(
+              "author",
+              _.author,
+              (hasField("username", _.username, equalTo("jake")): Assertion[ArticleAuthor]) && hasField(
+                "following",
+                _.following,
+                isFalse
+              )
+            )
         )
     )
   }
@@ -170,10 +171,10 @@ object ArticleRepositoryTestSupport:
   def listArticlesWithBigPagination(
       filters: ArticlesFilters,
       pagination: Pagination,
-      viewerEmailOpt: Option[String]
+      viewerDataOpt: Option[(Int, String)]
   ): ZIO[ArticlesRepository, SQLException, TestResult] = {
     for {
-      articlesList <- callListArticles(filters, pagination, viewerEmailOpt)
+      articlesList <- callListArticles(filters, pagination, viewerDataOpt)
     } yield zio.test.assert(articlesList)(
       hasSize(equalTo(3)) &&
         exists(
@@ -184,7 +185,15 @@ object ArticleRepositoryTestSupport:
             && hasField("tagList", _.tagList, equalTo(List("dragons", "training")))
             && hasField("favorited", _.favorited, isFalse)
             && hasField("favoritesCount", _.favoritesCount, equalTo(2))
-            && hasField("author", _.author, hasField("username", _.username, equalTo("jake")): Assertion[ArticleAuthor])
+            && hasField(
+              "author",
+              _.author,
+              (hasField("username", _.username, equalTo("jake")): Assertion[ArticleAuthor]) && hasField(
+                "following",
+                _.following,
+                isFalse
+              )
+            )
         ) &&
         exists(
           (hasField("slug", _.slug, equalTo("how-to-train-your-dragon-2")): Assertion[Article])
@@ -194,7 +203,15 @@ object ArticleRepositoryTestSupport:
             && hasField("tagList", _.tagList, equalTo(List("dragons", "goats", "training")))
             && hasField("favorited", _.favorited, isFalse)
             && hasField("favoritesCount", _.favoritesCount, equalTo(1))
-            && hasField("author", _.author, hasField("username", _.username, equalTo("jake")): Assertion[ArticleAuthor])
+            && hasField(
+              "author",
+              _.author,
+              (hasField("username", _.username, equalTo("jake")): Assertion[ArticleAuthor]) && hasField(
+                "following",
+                _.following,
+                isFalse
+              )
+            )
         ) &&
         exists(
           (hasField("slug", _.slug, equalTo("how-to-train-your-dragon-3")): Assertion[Article])
@@ -204,7 +221,15 @@ object ArticleRepositoryTestSupport:
             && hasField("tagList", _.tagList, equalTo(List()))
             && hasField("favorited", _.favorited, isFalse)
             && hasField("favoritesCount", _.favoritesCount, equalTo(0))
-            && hasField("author", _.author, hasField("username", _.username, equalTo("john")): Assertion[ArticleAuthor])
+            && hasField(
+              "author",
+              _.author,
+              (hasField("username", _.username, equalTo("john")): Assertion[ArticleAuthor]) && hasField(
+                "following",
+                _.following,
+                isFalse
+              )
+            )
         )
     )
   }
@@ -212,10 +237,10 @@ object ArticleRepositoryTestSupport:
   def listArticlesWithTagFilter(
       filters: ArticlesFilters,
       pagination: Pagination,
-      viewerEmailOpt: Option[String]
+      viewerDataOpt: Option[(Int, String)]
   ): ZIO[ArticlesRepository, SQLException, TestResult] = {
     for {
-      articlesList <- callListArticles(filters, pagination, viewerEmailOpt)
+      articlesList <- callListArticles(filters, pagination, viewerDataOpt)
     } yield zio.test.assert(articlesList)(
       hasSize(equalTo(2)) &&
         exists(
@@ -226,7 +251,15 @@ object ArticleRepositoryTestSupport:
             && hasField("tagList", _.tagList, equalTo(List("dragons", "training")))
             && hasField("favorited", _.favorited, isFalse)
             && hasField("favoritesCount", _.favoritesCount, equalTo(2))
-            && hasField("author", _.author, hasField("username", _.username, equalTo("jake")): Assertion[ArticleAuthor])
+            && hasField(
+              "author",
+              _.author,
+              (hasField("username", _.username, equalTo("jake")): Assertion[ArticleAuthor]) && hasField(
+                "following",
+                _.following,
+                isFalse
+              )
+            )
         ) &&
         exists(
           (hasField("slug", _.slug, equalTo("how-to-train-your-dragon-2")): Assertion[Article])
@@ -236,7 +269,15 @@ object ArticleRepositoryTestSupport:
             && hasField("tagList", _.tagList, equalTo(List("dragons", "goats", "training")))
             && hasField("favorited", _.favorited, isFalse)
             && hasField("favoritesCount", _.favoritesCount, equalTo(1))
-            && hasField("author", _.author, hasField("username", _.username, equalTo("jake")): Assertion[ArticleAuthor])
+            && hasField(
+              "author",
+              _.author,
+              (hasField("username", _.username, equalTo("jake")): Assertion[ArticleAuthor]) && hasField(
+                "following",
+                _.following,
+                isFalse
+              )
+            )
         )
     )
   }
@@ -244,10 +285,10 @@ object ArticleRepositoryTestSupport:
   def listArticlesWithFavoritedTagFilter(
       filters: ArticlesFilters,
       pagination: Pagination,
-      viewerEmailOpt: Option[String]
+      viewerDataOpt: Option[(Int, String)]
   ): ZIO[ArticlesRepository, SQLException, TestResult] = {
     for {
-      articlesList <- callListArticles(filters, pagination, viewerEmailOpt)
+      articlesList <- callListArticles(filters, pagination, viewerDataOpt)
     } yield zio.test.assert(articlesList)(
       hasSize(equalTo(1)) &&
         exists(
@@ -258,7 +299,15 @@ object ArticleRepositoryTestSupport:
             && hasField("tagList", _.tagList, equalTo(List("dragons", "training")))
             && hasField("favorited", _.favorited, isFalse)
             && hasField("favoritesCount", _.favoritesCount, equalTo(2))
-            && hasField("author", _.author, hasField("username", _.username, equalTo("jake")): Assertion[ArticleAuthor])
+            && hasField(
+              "author",
+              _.author,
+              (hasField("username", _.username, equalTo("jake")): Assertion[ArticleAuthor]) && hasField(
+                "following",
+                _.following,
+                isFalse
+              )
+            )
         )
     )
   }
@@ -266,10 +315,10 @@ object ArticleRepositoryTestSupport:
   def listArticlesWithAuthorFilter(
       filters: ArticlesFilters,
       pagination: Pagination,
-      viewerEmailOpt: Option[String]
+      viewerDataOpt: Option[(Int, String)]
   ): ZIO[ArticlesRepository, SQLException, TestResult] = {
     for {
-      articlesList <- callListArticles(filters, pagination, viewerEmailOpt)
+      articlesList <- callListArticles(filters, pagination, viewerDataOpt)
     } yield zio.test.assert(articlesList)(
       hasSize(equalTo(1)) &&
         exists(
@@ -280,18 +329,26 @@ object ArticleRepositoryTestSupport:
             && hasField("tagList", _.tagList, equalTo(List()))
             && hasField("favorited", _.favorited, isFalse)
             && hasField("favoritesCount", _.favoritesCount, equalTo(0))
-            && hasField("author", _.author, hasField("username", _.username, equalTo("john")): Assertion[ArticleAuthor])
+            && hasField(
+              "author",
+              _.author,
+              (hasField("username", _.username, equalTo("john")): Assertion[ArticleAuthor]) && hasField(
+                "following",
+                _.following,
+                isFalse
+              )
+            )
         )
     )
   }
 
   def findArticleBySlug(
       slug: String,
-      viewerEmail: String
+      viewerData: (Int, String)
   ): ZIO[ArticlesRepository, SQLException, TestResult] = {
 
     assertZIO(
-      callFindBySlug(slug, viewerEmail)
+      callFindBySlug(slug, viewerData)
     )(
       isSome(
         (hasField("slug", _.slug, equalTo("how-to-train-your-dragon")): Assertion[Article])
@@ -301,18 +358,26 @@ object ArticleRepositoryTestSupport:
           && hasField("tagList", _.tagList, equalTo(List("dragons", "training")))
           && hasField("favorited", _.favorited, isTrue)
           && hasField("favoritesCount", _.favoritesCount, equalTo(2))
-          && hasField("author", _.author, hasField("username", _.username, equalTo("jake")): Assertion[ArticleAuthor])
+          && hasField(
+            "author",
+            _.author,
+            (hasField("username", _.username, equalTo("jake")): Assertion[ArticleAuthor]) && hasField(
+              "following",
+              _.following,
+              isTrue
+            )
+          )
       )
     )
   }
 
   def findBySlugAsSeenBy(
       slug: String,
-      viewerEmail: String
+      viewerData: (Int, String)
   ): ZIO[ArticlesRepository, SQLException, TestResult] = {
 
     assertZIO(
-      callFindBySlugAsSeenBy(slug, viewerEmail)
+      callFindBySlug(slug, viewerData)
     )(
       isSome(
         (hasField("slug", _.slug, equalTo("how-to-train-your-dragon-2")): Assertion[Article])
@@ -322,7 +387,15 @@ object ArticleRepositoryTestSupport:
           && hasField("tagList", _.tagList, equalTo(List("dragons", "goats", "training")))
           && hasField("favorited", _.favorited, isTrue)
           && hasField("favoritesCount", _.favoritesCount, equalTo(1))
-          && hasField("author", _.author, hasField("username", _.username, equalTo("jake")): Assertion[ArticleAuthor])
+          && hasField(
+            "author",
+            _.author,
+            (hasField("username", _.username, equalTo("jake")): Assertion[ArticleAuthor]) && hasField(
+              "following",
+              _.following,
+              isTrue
+            )
+          )
       )
     )
   }
@@ -330,13 +403,13 @@ object ArticleRepositoryTestSupport:
   def addAndCheckTag(
       newTag: String,
       articleSlug: String,
-      viewerEmail: String
+      viewerData: (Int, String)
   ): ZIO[ArticlesRepository, Object, TestResult] = {
 
     for {
       articleId <- callFindArticleIdBySlug(articleSlug).someOrFail(s"Article $articleSlug doesn't exist")
       _ <- callAddTag(newTag, articleId)
-      updatedArticle <- callFindBySlug(articleSlug, viewerEmail).map(_.get.tagList)
+      updatedArticle <- callFindBySlug(articleSlug, viewerData).map(_.get.tagList)
     } yield zio.test.assert(updatedArticle)(contains(newTag))
   }
 
@@ -344,13 +417,13 @@ object ArticleRepositoryTestSupport:
       newTag: String,
       articleSlugToChange: String,
       articleSlugWithoutChange: String,
-      viewerEmail: String
+      viewerData: (Int, String)
   ): ZIO[ArticlesRepository, Object, TestResult] = {
 
     for {
       articleToChangeId <- callFindArticleIdBySlug(articleSlugToChange).someOrFail(s"Article $articleSlugToChange doesn't exist")
       _ <- callAddTag(newTag, articleToChangeId)
-      articleWithoutChange <- callFindBySlug(articleSlugWithoutChange, viewerEmail)
+      articleWithoutChange <- callFindBySlug(articleSlugWithoutChange, viewerData)
         .someOrFail(s"Article $articleSlugWithoutChange doesn't exist")
         .map(_.tagList)
     } yield zio.test.assert(articleWithoutChange)(hasNoneOf(newTag))
@@ -360,13 +433,13 @@ object ArticleRepositoryTestSupport:
       slug: String,
       articleCreateData: ArticleCreateData,
       userEmail: String,
-      viewerEmail: String
+      viewerData: (Int, String)
   ): ZIO[ArticlesRepository with UsersRepository, Object, TestResult] = {
 
     for {
       userId <- callFindUserIdByEmail(userEmail).someOrFail(s"User $userEmail doesn't exist")
       _ <- callCreateArticle(articleCreateData, userId)
-      article <- callFindBySlug(slug, viewerEmail)
+      article <- callFindBySlug(slug, viewerData)
     } yield zio.test.assert(article) {
       isSome(
         (hasField("slug", _.slug, equalTo("new-article-under-test")): Assertion[Article])
@@ -376,7 +449,15 @@ object ArticleRepositoryTestSupport:
           && hasField("tagList", _.tagList, equalTo(Nil))
           && hasField("favorited", _.favorited, isFalse)
           && hasField("favoritesCount", _.favoritesCount, equalTo(0))
-          && hasField("author", _.author, hasField("username", _.username, equalTo("jake")): Assertion[ArticleAuthor])
+          && hasField(
+            "author",
+            _.author,
+            (hasField("username", _.username, equalTo("jake")): Assertion[ArticleAuthor]) && hasField(
+              "following",
+              _.following,
+              isFalse
+            )
+          )
       )
     }
   }
@@ -387,7 +468,7 @@ object ArticleRepositoryTestSupport:
       updatedTitle: String,
       updatedDescription: String,
       updatedBody: String,
-      viewerEmail: String
+      viewerData: (Int, String)
   ): ZIO[ArticlesRepository with UsersRepository, Object, TestResult] = {
 
     for {
@@ -405,7 +486,7 @@ object ArticleRepositoryTestSupport:
         author = null
       )
       _ <- callUpdateArticle(articleUpdateData, articleId)
-      article <- callFindBySlug(articleUpdateData.slug, viewerEmail)
+      article <- callFindBySlug(articleUpdateData.slug, viewerData)
     } yield zio.test.assert(article) {
       isSome(
         (hasField("slug", _.slug, equalTo("updated-article-under-test")): Assertion[Article])
