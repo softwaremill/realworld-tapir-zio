@@ -53,138 +53,67 @@ class ArticlesRepository(quill: Quill.Sqlite[SnakeCase]):
     sql"GROUP_CONCAT(($str), '|')".pure.as[String]
   }
 
-  // Todo Improve queries, reduce duplicate code, check if it possible to change this huge sql query
   def list(filters: ArticlesFilters, pagination: Pagination, viewerDataOpt: Option[(Int, String)]): IO[SQLException, List[Article]] = {
     val tagFilter = filters.tag.getOrElse("")
     val authorFilter = filters.author.getOrElse("")
     val favoritedFilter = filters.favorited.getOrElse("")
 
-    viewerDataOpt match
+    val articleRow: Quoted[Query[ArticleRow]] = quote {
+      sql"""
+               SELECT a.article_id, a.slug, a.title, a.description, a.body, a.created_at, a.updated_at, a.author_id
+               FROM articles a
+               LEFT JOIN users authors ON authors.user_id = a.author_id
+               LEFT JOIN favorites_articles fa ON fa.article_id = a.article_id
+               LEFT JOIN users fu ON fu.user_id = fa.profile_id
+               LEFT JOIN tags_articles ta ON a.article_id = ta.article_id
+               WHERE (${lift(tagFilter)} = '' OR ${lift(tagFilter)} = ta.tag)
+                    AND (${lift(favoritedFilter)} = '' OR ${lift(favoritedFilter)} = fu.username)
+                    AND (${lift(authorFilter)} = '' OR ${lift(authorFilter)} = authors.username)
+               GROUP BY a.slug, a.title, a.description, a.body, a.created_at, a.updated_at, a.author_id
+             """
+        .as[Query[ArticleRow]]
+        .drop(lift(pagination.offset))
+        .take(lift(pagination.limit))
+        .sortBy(ar => ar.slug)
+    }
+
+    val articleQuery = viewerDataOpt match
       case Some(viewerData) =>
-        val (viewerId, viewerEmail) = viewerData
-
-        run(for {
-          ar <- sql"""
-                     SELECT a.article_id, a.slug, a.title, a.description, a.body, a.created_at, a.updated_at, a.author_id
-                     FROM articles a
-                     LEFT JOIN users authors ON authors.user_id = a.author_id
-                     LEFT JOIN favorites_articles fa ON fa.article_id = a.article_id
-                     LEFT JOIN users fu ON fu.user_id = fa.profile_id
-                     LEFT JOIN tags_articles ta ON a.article_id = ta.article_id
-                     WHERE (${lift(tagFilter)} = '' OR ${lift(tagFilter)} = ta.tag)
-                          AND (${lift(favoritedFilter)} = '' OR ${lift(favoritedFilter)} = fu.username)
-                          AND (${lift(authorFilter)} = '' OR ${lift(authorFilter)} = authors.username)
-                     GROUP BY a.slug, a.title, a.description, a.body, a.created_at, a.updated_at, a.author_id
-                   """
-            .as[Query[ArticleRow]]
-            .drop(lift(pagination.offset))
-            .take(lift(pagination.limit))
-            .sortBy(ar => ar.slug)
-          pr <- queryProfile.join(pr => ar.authorId == pr.userId)
-          tr <- queryTagArticle
-            .groupByMap(_.articleId)(atr => (atr.articleId, tagsConcat(atr.tag)))
-            .leftJoin(a => a._1 == ar.articleId)
-          fr <- queryFavoriteArticle
-            .groupByMap(_.articleId)(fr => (fr.articleId, count(fr.profileId)))
-            .leftJoin(f => f._1 == ar.articleId)
-          isFavorite = queryUser
-            .join(queryFavoriteArticle)
-            .on((u, f) => u.email == lift(viewerEmail) && (f.articleId == ar.articleId) && (f.profileId == u.userId))
-            .map(_ => 1)
-            .nonEmpty
-          isFollowing = queryFollower
-            .filter(f => (f.userId == pr.userId) && (f.followerId == lift(viewerId)))
-            .map(_ => 1)
-            .nonEmpty
-        } yield (ar, pr, tr.map(_._2), fr.map(_._2), isFavorite, isFollowing))
-          .map(_.map(article))
-
+        buildArticleQueryWithFavoriteAndFollowing(articleRow, viewerData)
       case None =>
-        run(for {
-          ar <- sql"""
-                   SELECT a.article_id, a.slug, a.title, a.description, a.body, a.created_at, a.updated_at, a.author_id
-                   FROM articles a
-                   LEFT JOIN users authors ON authors.user_id = a.author_id
-                   LEFT JOIN favorites_articles fa ON fa.article_id = a.article_id
-                   LEFT JOIN users fu ON fu.user_id = fa.profile_id
-                   LEFT JOIN tags_articles ta ON a.article_id = ta.article_id
-                   WHERE (${lift(tagFilter)} = '' OR ${lift(tagFilter)} = ta.tag)
-                        AND (${lift(favoritedFilter)} = '' OR ${lift(favoritedFilter)} = fu.username)
-                        AND (${lift(authorFilter)} = '' OR ${lift(authorFilter)} = authors.username)
-                   GROUP BY a.slug, a.title, a.description, a.body, a.created_at, a.updated_at, a.author_id
-                 """
-            .as[Query[ArticleRow]]
-            .drop(lift(pagination.offset))
-            .take(lift(pagination.limit))
-            .sortBy(ar => ar.slug)
-          pr <- queryProfile.join(pr => ar.authorId == pr.userId)
-          tr <- queryTagArticle
-            .groupByMap(_.articleId)(atr => (atr.articleId, tagsConcat(atr.tag)))
-            .leftJoin(a => a._1 == ar.articleId)
-          fr <- queryFavoriteArticle
-            .groupByMap(_.articleId)(fr => (fr.articleId, count(fr.profileId)))
-            .leftJoin(f => f._1 == ar.articleId)
-        } yield (ar, pr, tr.map(_._2), fr.map(_._2), false, false))
-          .map(_.map(article))
+        buildArticleQuery(articleRow)
+
+    run(articleQuery).map(_.map(article))
   }
 
   def listArticlesByFollowedUsers(
       pagination: Pagination,
       viewerData: (Int, String)
   ): IO[SQLException, List[Article]] = {
-    val (viewerId, viewerEmail) = viewerData
+    val (viewerId, _) = viewerData
 
-    run(for {
-      ar <- sql"""
-                     SELECT DISTINCT * FROM articles a
-                     WHERE a.author_id IN (SELECT f.user_id FROM followers f
-                                           WHERE f.follower_id = ${lift(viewerId)})
-                   """
+    val articleRow: Quoted[Query[ArticleRow]] = quote {
+      sql"""
+               SELECT DISTINCT * FROM articles a
+               WHERE a.author_id IN (SELECT f.user_id FROM followers f
+                                     WHERE f.follower_id = ${lift(viewerId)})
+             """
         .as[Query[ArticleRow]]
         .drop(lift(pagination.offset))
         .take(lift(pagination.limit))
         .sortBy(ar => ar.slug)
-      pr <- queryProfile.join(pr => ar.authorId == pr.userId)
-      tr <- queryTagArticle
-        .groupByMap(_.articleId)(atr => (atr.articleId, tagsConcat(atr.tag)))
-        .leftJoin(a => a._1 == ar.articleId)
-      fr <- queryFavoriteArticle
-        .groupByMap(_.articleId)(fr => (fr.articleId, count(fr.profileId)))
-        .leftJoin(f => f._1 == ar.articleId)
-      isFavorite = queryUser
-        .join(queryFavoriteArticle)
-        .on((u, f) => u.email == lift(viewerEmail) && (f.articleId == ar.articleId) && (f.profileId == u.userId))
-        .map(_ => 1)
-        .nonEmpty
-      isFollowing = queryFollower
-        .filter(f => (f.userId == pr.userId) && (f.followerId == lift(viewerId)))
-        .map(_ => 1)
-        .nonEmpty
-    } yield (ar, pr, tr.map(_._2), fr.map(_._2), isFavorite, isFollowing))
-      .map(_.map(article))
-  }
-  def findBySlug(slug: String, viewerData: (Int, String)): IO[SQLException, Option[Article]] = {
-    val (viewerId, viewerEmail) = viewerData
+    }
 
-    run(for {
-      ar <- queryArticle if ar.slug == lift(slug)
-      pr <- queryProfile.join(pr => ar.authorId == pr.userId)
-      tr <- queryTagArticle
-        .groupByMap(_.articleId)(atr => (atr.articleId, tagsConcat(atr.tag)))
-        .leftJoin(a => a._1 == ar.articleId)
-      fr <- queryFavoriteArticle
-        .groupByMap(_.articleId)(fr => (fr.articleId, count(fr.profileId)))
-        .leftJoin(f => f._1 == ar.articleId)
-      isFavorite = queryUser
-        .join(queryFavoriteArticle)
-        .on((u, f) => u.email == lift(viewerEmail) && (f.articleId == ar.articleId) && (f.profileId == u.userId))
-        .map(_ => 1)
-        .nonEmpty
-      isFollowing = queryFollower
-        .filter(f => (f.userId == pr.userId) && (f.followerId == lift(viewerId)))
-        .map(_ => 1)
-        .nonEmpty
-    } yield (ar, pr, tr.map(_._2), fr.map(_._2), isFavorite, isFollowing))
+    val articleQuery = buildArticleQueryWithFavoriteAndFollowing(articleRow, viewerData)
+
+    run(articleQuery).map(_.map(article))
+  }
+
+  def findBySlug(slug: String, viewerData: (Int, String)): IO[SQLException, Option[Article]] = {
+    val articleRow: Quoted[EntityQuery[ArticleRow]] = quote { queryArticle.filter(ar => ar.slug == lift(slug)) }
+    val articleQuery = buildArticleQueryWithFavoriteAndFollowing(articleRow, viewerData)
+
+    run(articleQuery)
       .map(_.headOption)
       .map(_.map(article))
   }
@@ -275,6 +204,40 @@ class ArticlesRepository(quill: Quill.Sqlite[SnakeCase]):
       favoritesCount = favorites.getOrElse(0),
       author = ArticleAuthor(pr.username, Option(pr.bio), Option(pr.image), following = isFollowing)
     )
+  }
+
+  private def buildArticleQuery(arq: Quoted[Query[ArticleRow]]) = {
+    quote {
+      for {
+        ar <- arq
+        pr <- queryProfile.join(pr => ar.authorId == pr.userId)
+        tr <- queryTagArticle
+          .groupByMap(_.articleId)(atr => (atr.articleId, tagsConcat(atr.tag)))
+          .leftJoin(a => a._1 == ar.articleId)
+        fr <- queryFavoriteArticle
+          .groupByMap(_.articleId)(fr => (fr.articleId, count(fr.profileId)))
+          .leftJoin(f => f._1 == ar.articleId)
+      } yield (ar, pr, tr.map(_._2), fr.map(_._2), false, false)
+    }
+  }
+
+  private def buildArticleQueryWithFavoriteAndFollowing(arq: Quoted[Query[ArticleRow]], viewerData: (Int, String)) = {
+    val (viewerId, viewerEmail) = viewerData
+
+    quote {
+      for {
+        tuple <- buildArticleQuery(arq)
+        isFavorite = queryUser
+          .join(queryFavoriteArticle)
+          .on((u, f) => u.email == lift(viewerEmail) && (f.articleId == tuple._1.articleId) && (f.profileId == u.userId))
+          .map(_ => 1)
+          .nonEmpty
+        isFollowing = queryFollower
+          .filter(f => (f.userId == tuple._2.userId) && (f.followerId == lift(viewerId)))
+          .map(_ => 1)
+          .nonEmpty
+      } yield (tuple._1, tuple._2, tuple._3, tuple._4, isFavorite, isFollowing)
+    }
   }
 
   private def mapUniqueConstraintViolationError[R, A](task: RIO[R, A]): RIO[R, A] = task.mapError {
