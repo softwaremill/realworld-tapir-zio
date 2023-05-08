@@ -18,7 +18,7 @@ class CommentsService(
     userId <- userIdByEmail(email)
     articleId <- articleIdBySlug(slug)
     commentId <- commentsRepository.addComment(articleId, userId, comment)
-    comment <- commentsRepository.findComment(commentId).someOrFail(NotFound(CommentNotFoundMessage(commentId)))
+    comment <- commentsRepository.findComment(commentId, userId).someOrFail(NotFound(CommentNotFoundMessage(commentId)))
   } yield comment
 
   def deleteComment(slug: String, email: String, commentId: Int): Task[Unit] = for {
@@ -33,11 +33,21 @@ class CommentsService(
     _ <- commentsRepository.deleteComment(commentId)
   } yield ()
 
-  def getCommentsFromArticle(slug: String): Task[List[Comment]] =
-    for {
-      articleId <- articleIdBySlug(slug)
-      commentList <- commentsRepository.findComments(articleId)
-    } yield commentList
+  def getCommentsFromArticle(slug: String, emailOpt: Option[String]): Task[List[Comment]] = {
+    emailOpt match
+      case Some(email) =>
+        for {
+          userId <- userIdByEmail(email)
+          articleId <- articleIdBySlug(slug)
+          commentList <- commentsRepository.findComments(articleId, Option(userId))
+        } yield commentList
+
+      case None =>
+        for {
+          articleId <- articleIdBySlug(slug)
+          commentList <- commentsRepository.findComments(articleId, None)
+        } yield commentList
+  }
 
   private def userIdByEmail(email: String): Task[Int] =
     usersRepository.findUserIdByEmail(email).someOrFail(NotFound(UserNotFoundMessage(email)))
