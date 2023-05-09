@@ -21,10 +21,7 @@ import sttp.tapir.server.ziohttp.{ZioHttpInterpreter, ZioHttpServerOptions}
 import zio.*
 import zio.Cause.Die
 import zio.http.*
-import zio.http.Server.ErrorCallback
-import zio.http.logging.Logger
 import zio.http.netty.server.NettyDriver
-import zio.http.service.Logging
 import zio.logging.LogFormat
 import zio.logging.backend.SLF4J
 
@@ -44,7 +41,8 @@ object Main extends ZIOAppDefault:
       migrator <- ZIO.service[DbMigrator]
       _ <- migrator.migrate()
       endpoints <- ZIO.service[Endpoints]
-      actualPort <- Server.install(ZioHttpInterpreter(options).toApp(endpoints.endpoints))
+      httpApp = ZioHttpInterpreter(options).toHttp(endpoints.endpoints)
+      actualPort <- Server.install(httpApp.withDefaultErrorResponse)
       _ <- Console.printLine(s"Application realworld-tapir-zio started")
       _ <- Console.printLine(s"Go to http://localhost:$actualPort/docs to open SwaggerUI")
       _ <- ZIO.never
@@ -74,7 +72,6 @@ object Main extends ZIOAppDefault:
         TagsServerEndpoints.live,
         TagsService.live,
         TagsRepository.live,
-        ServerConfig.live(ServerConfig.default.port(port)),
-        Server.live
+        Server.defaultWithPort(port)
       )
       .exitCode
