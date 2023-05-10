@@ -140,7 +140,7 @@ class ArticlesRepository(quill: Quill.Sqlite[SnakeCase]):
     val tags = createData.tagList.getOrElse(Nil)
 
     val addArticle = quote {
-      queryArticle.dynamic
+      queryArticle
         .insert(
           _.slug -> lift(convertToSlug(createData.title)),
           _.title -> lift(createData.title.trim),
@@ -153,19 +153,16 @@ class ArticlesRepository(quill: Quill.Sqlite[SnakeCase]):
         .returning[Int](_.articleId)
     }
 
-    def addTag(tag: String, articleId: Int) =
+    def addTags(tags: List[String], articleId: Int) =
       quote {
-        queryTagArticle.dynamic
-          .insert(
-            _.tag -> lift(tag),
-            _.articleId -> lift(articleId)
-          )
+        liftQuery(tags).foreach(tag => queryTagArticle.insertValue(ArticleTagRow(tag, lift(articleId))))
       }
 
     transaction {
       run(addArticle)
         .pipe(mapUniqueConstraintViolationError)
-        .flatMap(articleId => ZIO.foreach(tags)(tag => run(addTag(tag, articleId))).unit)
+        .flatMap(articleId => run(addTags(tags, articleId)))
+        .unit
     }
   }
 
