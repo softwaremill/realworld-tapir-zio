@@ -39,6 +39,14 @@ case class UserRow(
     bio: Option[String],
     image: Option[String]
 )
+case class ArticleQueryBuildSupport(
+    articleRow: ArticleRow,
+    profileRow: ProfileRow,
+    tagsOpt: Option[String],
+    favoritedCountOpt: Option[Int],
+    isFavorite: Boolean,
+    isFollowing: Boolean
+)
 
 class ArticlesRepository(quill: Quill.Sqlite[SnakeCase]):
   import quill.*
@@ -186,25 +194,23 @@ class ArticlesRepository(quill: Quill.Sqlite[SnakeCase]):
     queryFavoriteArticle.filter(a => (a.profileId == lift(userId)) && (a.articleId == lift(articleId))).delete
   )
 
-  val convertToSlug = (title: String) => title.trim.toLowerCase.replace(" ", "-")
+  val convertToSlug: String => String = (title: String) => title.trim.toLowerCase.replace(" ", "-")
 
   private def explodeTags(tags: String): List[String] = tags.split("\\|").toList
 
-  private def article(tuple: (ArticleRow, ProfileRow, Option[String], Option[Int], Boolean, Boolean)): Article = {
-    val (ar, pr, tags, favorites, isFavorite, isFollowing) = tuple
+  private def article(as: ArticleQueryBuildSupport): Article =
     Article(
-      slug = ar.slug,
-      title = ar.title,
-      description = ar.description,
-      body = ar.body,
-      tagList = tags.map(explodeTags).map(_.sorted).getOrElse(List()),
-      createdAt = ar.createdAt,
-      updatedAt = ar.updatedAt,
-      favorited = isFavorite,
-      favoritesCount = favorites.getOrElse(0),
-      author = ArticleAuthor(pr.username, Option(pr.bio), Option(pr.image), following = isFollowing)
+      slug = as.articleRow.slug,
+      title = as.articleRow.title,
+      description = as.articleRow.description,
+      body = as.articleRow.body,
+      tagList = as.tagsOpt.map(explodeTags).map(_.sorted).getOrElse(List()),
+      createdAt = as.articleRow.createdAt,
+      updatedAt = as.articleRow.updatedAt,
+      favorited = as.isFavorite,
+      favoritesCount = as.favoritedCountOpt.getOrElse(0),
+      author = ArticleAuthor(as.profileRow.username, Option(as.profileRow.bio), Option(as.profileRow.image), following = as.isFollowing)
     )
-  }
 
   private def buildArticleQuery(arq: Quoted[Query[ArticleRow]]) = {
     quote {
@@ -217,7 +223,14 @@ class ArticlesRepository(quill: Quill.Sqlite[SnakeCase]):
         fr <- queryFavoriteArticle
           .groupByMap(_.articleId)(fr => (fr.articleId, count(fr.profileId)))
           .leftJoin(f => f._1 == ar.articleId)
-      } yield (ar, pr, tr.map(_._2), fr.map(_._2), false, false)
+      } yield ArticleQueryBuildSupport(
+        articleRow = ar,
+        profileRow = pr,
+        tagsOpt = tr.map(_._2),
+        favoritedCountOpt = fr.map(_._2),
+        isFavorite = false,
+        isFollowing = false
+      )
     }
   }
 
@@ -226,17 +239,24 @@ class ArticlesRepository(quill: Quill.Sqlite[SnakeCase]):
 
     quote {
       for {
-        tuple <- buildArticleQuery(arq)
+        as <- buildArticleQuery(arq)
         isFavorite = queryUser
           .join(queryFavoriteArticle)
-          .on((u, f) => u.email == lift(viewerEmail) && (f.articleId == tuple._1.articleId) && (f.profileId == u.userId))
+          .on((u, f) => u.email == lift(viewerEmail) && (f.articleId == as.articleRow.articleId) && (f.profileId == u.userId))
           .map(_ => 1)
           .nonEmpty
         isFollowing = queryFollower
-          .filter(f => (f.userId == tuple._2.userId) && (f.followerId == lift(viewerId)))
+          .filter(f => (f.userId == as.profileRow.userId) && (f.followerId == lift(viewerId)))
           .map(_ => 1)
           .nonEmpty
-      } yield (tuple._1, tuple._2, tuple._3, tuple._4, isFavorite, isFollowing)
+      } yield ArticleQueryBuildSupport(
+        articleRow = as.articleRow,
+        profileRow = as.profileRow,
+        tagsOpt = as.tagsOpt,
+        favoritedCountOpt = as.favoritedCountOpt,
+        isFavorite = isFavorite,
+        isFollowing = isFollowing
+      )
     }
   }
 
