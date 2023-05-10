@@ -94,25 +94,6 @@ object ArticlesRepositorySpec extends ZIOSpecDefault:
         } yield result
       }
     ),
-    suite("add and update tags")(
-      test("add tag") {
-        for {
-          _ <- prepareDataForListingArticles
-          result <- addAndCheckTag(newTag = "new-tag", articleSlug = "how-to-train-your-dragon", viewerData = (1, exampleUser1.email))
-        } yield result
-      },
-      test("add tag - check other article is untouched") {
-        for {
-          _ <- prepareDataForListingArticles
-          result <- addTagAndCheckIfOtherArticleIsUntouched(
-            newTag = "new-tag",
-            articleSlugToChange = "how-to-train-your-dragon",
-            articleSlugWithoutChange = "how-to-train-your-dragon-2",
-            viewerData = (1, exampleUser1.email)
-          )
-        } yield result
-      }
-    ),
     suite("create and update article")(
       test("create article") {
         for {

@@ -45,17 +45,10 @@ object ArticleRepositoryTestSupport:
     } yield result
   }
 
-  def callAddTag(newtTag: String, articleId: Int): ZIO[ArticlesRepository, Exception, Unit] = {
+  def callCreateArticle(articleCreateData: ArticleCreateData, userId: Int): ZIO[ArticlesRepository, Throwable, Unit] = {
     for {
       repo <- ZIO.service[ArticlesRepository]
-      result <- repo.addTag(newtTag, articleId)
-    } yield result
-  }
-
-  def callCreateArticle(articleCreateData: ArticleCreateData, userId: Int): ZIO[ArticlesRepository, Throwable, Int] = {
-    for {
-      repo <- ZIO.service[ArticlesRepository]
-      result <- repo.add(articleCreateData, userId)
+      result <- repo.addArticleTransaction(articleCreateData, userId)
     } yield result
   }
 
@@ -98,8 +91,8 @@ object ArticleRepositoryTestSupport:
 
     assertZIO((for {
       userId <- callFindUserIdByEmail(userEmail).someOrFail(s"User $userEmail doesn't exist")
-      articleId <- callCreateArticle(articleCreateData, userId)
-    } yield articleId).exit)(
+      _ <- callCreateArticle(articleCreateData, userId)
+    } yield ()).exit)(
       failsCause(
         containsCause(Cause.fail(AlreadyInUse(message = "Article name already exists")))
       )
@@ -398,35 +391,6 @@ object ArticleRepositoryTestSupport:
           )
       )
     )
-  }
-
-  def addAndCheckTag(
-      newTag: String,
-      articleSlug: String,
-      viewerData: (Int, String)
-  ): ZIO[ArticlesRepository, Object, TestResult] = {
-
-    for {
-      articleId <- callFindArticleIdBySlug(articleSlug).someOrFail(s"Article $articleSlug doesn't exist")
-      _ <- callAddTag(newTag, articleId)
-      updatedArticle <- callFindBySlug(articleSlug, viewerData).map(_.get.tagList)
-    } yield zio.test.assert(updatedArticle)(contains(newTag))
-  }
-
-  def addTagAndCheckIfOtherArticleIsUntouched(
-      newTag: String,
-      articleSlugToChange: String,
-      articleSlugWithoutChange: String,
-      viewerData: (Int, String)
-  ): ZIO[ArticlesRepository, Object, TestResult] = {
-
-    for {
-      articleToChangeId <- callFindArticleIdBySlug(articleSlugToChange).someOrFail(s"Article $articleSlugToChange doesn't exist")
-      _ <- callAddTag(newTag, articleToChangeId)
-      articleWithoutChange <- callFindBySlug(articleSlugWithoutChange, viewerData)
-        .someOrFail(s"Article $articleSlugWithoutChange doesn't exist")
-        .map(_.tagList)
-    } yield zio.test.assert(articleWithoutChange)(hasNoneOf(newTag))
   }
 
   def createAndCheckArticle(

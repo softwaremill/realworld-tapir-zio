@@ -47,9 +47,6 @@ class CommentsRepository(quill: Quill.Sqlite[SnakeCase]):
   def deleteComment(commentId: Int): Task[Long] =
     run(queryComment.filter(_.commentId == lift(commentId)).delete)
 
-  def deleteCommentsByArticleId(articleId: Int): Task[Long] =
-    run(queryComment.filter(_.articleId == lift(articleId)).delete)
-
   def findArticleAndAuthorIdsFromComment(commentId: Int): Task[Option[(Int, Int)]] =
     run(
       for {

@@ -263,8 +263,6 @@ object ArticlesEndpointsSpec extends ZIOSpecDefault:
     BaseEndpoints.live,
     UsersRepository.live,
     ArticlesRepository.live,
-    CommentsRepository.live,
-    TagsRepository.live,
     ArticlesService.live,
     ArticlesEndpoints.live,
     ArticlesServerEndpoints.live,

@@ -18,9 +18,6 @@ class TagsRepository(quill: Quill.Sqlite[SnakeCase]):
 
   def listTags: ZIO[Any, SQLException, List[String]] = run(queryTags).map(_.map(_.tag))
 
-  def deleteTagsByArticleId(articleId: Int): Task[Long] =
-    run(queryTags.filter(_.articleId == lift(articleId)).delete)
-
 object TagsRepository:
   val live: ZLayer[Quill.Sqlite[SnakeCase], Nothing, TagsRepository] =
     ZLayer.fromFunction(new TagsRepository(_))

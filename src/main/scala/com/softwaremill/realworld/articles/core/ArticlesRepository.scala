@@ -29,6 +29,7 @@ case class ArticleRow(
     updatedAt: Instant,
     authorId: Int
 )
+case class CommentRow(commentId: Int, articleId: Int, createdAt: Instant, updatedAt: Instant, authorId: Int, body: String)
 case class FollowerRow(userId: Int, followerId: Int)
 case class ProfileRow(userId: Int, username: String, bio: String, image: String)
 case class UserRow(
@@ -44,10 +45,11 @@ class ArticlesRepository(quill: Quill.Sqlite[SnakeCase]):
   import quill.*
 
   private inline def queryArticle = quote(querySchema[ArticleRow](entity = "articles"))
-  private inline def queryTagArticle = quote(querySchema[ArticleTagRow](entity = "tags_articles"))
+  private inline def queryComment = quote(querySchema[CommentRow](entity = "comments_articles"))
   private inline def queryFavoriteArticle = quote(querySchema[ArticleFavoriteRow](entity = "favorites_articles"))
   private inline def queryFollower = quote(querySchema[FollowerRow](entity = "followers"))
   private inline def queryProfile = quote(querySchema[ProfileRow](entity = "users"))
+  private inline def queryTagArticle = quote(querySchema[ArticleTagRow](entity = "tags_articles"))
   private inline def queryUser = quote(querySchema[UserRow](entity = "users"))
   private inline def tagsConcat: Quoted[String => String] = quote { (str: String) =>
     sql"GROUP_CONCAT(($str), '|')".pure.as[String]
@@ -133,18 +135,12 @@ class ArticlesRepository(quill: Quill.Sqlite[SnakeCase]):
           .map(ar => (ar.articleId, ar.authorId))
       )
 
-  def addTag(tag: String, articleId: Int): IO[Exception, Unit] = run(
-    queryTagArticle
-      .insert(
-        _.tag -> lift(tag),
-        _.articleId -> lift(articleId)
-      )
-  ).unit
-
-  def add(createData: ArticleCreateData, userId: Int): Task[Int] = {
+  def addArticleTransaction(createData: ArticleCreateData, userId: Int): Task[Unit] = {
     val now = Instant.now()
-    run(
-      queryArticle
+    val tags = createData.tagList.getOrElse(Nil)
+
+    val addArticle = quote {
+      queryArticle.dynamic
         .insert(
           _.slug -> lift(convertToSlug(createData.title)),
           _.title -> lift(createData.title.trim),
@@ -154,16 +150,38 @@ class ArticlesRepository(quill: Quill.Sqlite[SnakeCase]):
           _.updatedAt -> lift(now),
           _.authorId -> lift(userId)
         )
-        .returning(_.articleId)
-    )
-      .pipe(mapUniqueConstraintViolationError)
+        .returning[Int](_.articleId)
+    }
+
+    def addTag(tag: String, articleId: Int) =
+      quote {
+        queryTagArticle.dynamic
+          .insert(
+            _.tag -> lift(tag),
+            _.articleId -> lift(articleId)
+          )
+      }
+
+    transaction {
+      run(addArticle)
+        .pipe(mapUniqueConstraintViolationError)
+        .flatMap(articleId => ZIO.foreach(tags)(tag => run(addTag(tag, articleId))).unit)
+    }
   }
 
-  def deleteArticle(articleId: Int): Task[Long] =
-    run(queryArticle.filter(_.articleId == lift(articleId)).delete)
+  def deleteArticleTransaction(articleId: Int): Task[Long] = {
+    val deleteComments = queryComment.dynamic.filter(_.commentId == lift(articleId)).delete
+    val deleteFavorites = queryFavoriteArticle.dynamic.filter(_.articleId == lift(articleId)).delete
+    val deleteTags = queryTagArticle.dynamic.filter(_.articleId == lift(articleId)).delete
+    val deleteArticle = queryArticle.dynamic.filter(_.articleId == lift(articleId)).delete
 
-  def deleteFavoritesByArticleId(articleId: Int): Task[Long] =
-    run(queryFavoriteArticle.filter(_.articleId == lift(articleId)).delete)
+    transaction {
+      run(deleteComments).unit
+        .flatMap(_ => run(deleteFavorites).unit)
+        .flatMap(_ => run(deleteTags).unit)
+        .flatMap(_ => run(deleteArticle))
+    }
+  }
 
   def updateById(updateData: Article, articleId: Int): Task[Unit] = run(
     queryArticle
@@ -186,7 +204,7 @@ class ArticlesRepository(quill: Quill.Sqlite[SnakeCase]):
     queryFavoriteArticle.filter(a => (a.profileId == lift(userId)) && (a.articleId == lift(articleId))).delete
   )
 
-  val convertToSlug = (title: String) => title.trim.toLowerCase.replace(" ", "-")
+  val convertToSlug: String => String = (title: String) => title.trim.toLowerCase.replace(" ", "-")
 
   private def explodeTags(tags: String): List[String] = tags.split("\\|").toList
 

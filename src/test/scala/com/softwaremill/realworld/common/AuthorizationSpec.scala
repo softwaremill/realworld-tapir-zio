@@ -249,6 +249,5 @@ object AuthorizationSpec extends ZIOSpecDefault:
     CommentsEndpoints.live,
     CommentsServerEndpoints.live,
     BaseEndpoints.live,
-    TagsRepository.live,
     testDbLayer
   )

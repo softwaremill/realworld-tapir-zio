@@ -582,7 +582,7 @@ object ArticleEndpointTestSupport:
             && hasField("title", _.title, equalTo("How to train your dragon 2"))
             && hasField("description", _.description, equalTo("So toothless"))
             && hasField("body", _.body, equalTo("Its a dragon"))
-            && hasField("tagList", _.tagList, equalTo(Nil))
+            && hasField("tagList", _.tagList, equalTo(List("dragons", "goats", "training")))
             && hasField("favorited", _.favorited, isFalse)
             && hasField("favoritesCount", _.favoritesCount, equalTo(0))
             && hasField(
@@ -616,7 +616,7 @@ object ArticleEndpointTestSupport:
             && hasField("title", _.title, equalTo("Updated slug"))
             && hasField("description", _.description, equalTo("updated description"))
             && hasField("body", _.body, equalTo("updated body"))
-            && hasField("tagList", _.tagList, equalTo(Nil))
+            && hasField("tagList", _.tagList, equalTo(List("dragons", "training")))
             && hasField("favorited", _.favorited, isFalse)
             && hasField("favoritesCount", _.favoritesCount, equalTo(0))
             && hasField(
