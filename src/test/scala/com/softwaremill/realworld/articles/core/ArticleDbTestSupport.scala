@@ -8,7 +8,7 @@ import zio.ZIO
 
 object ArticleDbTestSupport:
 
-  private def prepareTags(articleRepo: ArticlesRepository, article1Id: Int, article2Id: Int) = {
+  private def prepareTags(articleRepo: ArticlesRepository, article1Id: Int, article2Id: Int) =
     for {
       _ <- articleRepo.addTag("dragons", article1Id)
       _ <- articleRepo.addTag("training", article1Id)
@@ -16,17 +16,15 @@ object ArticleDbTestSupport:
       _ <- articleRepo.addTag("goats", article2Id)
       _ <- articleRepo.addTag("training", article2Id)
     } yield ()
-  }
 
-  private def prepareFavorites(articleRepo: ArticlesRepository, article1Id: Int, article2Id: Int, user1Id: Int, user2Id: Int) = {
+  private def prepareFavorites(articleRepo: ArticlesRepository, article1Id: Int, article2Id: Int, user1Id: Int, user2Id: Int) =
     for {
       _ <- articleRepo.makeFavorite(article1Id, user1Id)
       _ <- articleRepo.makeFavorite(article1Id, user2Id)
       _ <- articleRepo.makeFavorite(article2Id, user2Id)
     } yield ()
-  }
 
-  def prepareDataForListingArticles = {
+  def prepareDataForListingArticles =
     for {
       articleRepo <- ZIO.service[ArticlesRepository]
       userRepo <- ZIO.service[UsersRepository]
@@ -44,9 +42,8 @@ object ArticleDbTestSupport:
       _ <- prepareTags(articleRepo, articleId1, articleId2)
       _ <- prepareFavorites(articleRepo, articleId1, articleId2, userId1, userId2)
     } yield ()
-  }
 
-  def prepareDataForFeedingArticles = {
+  def prepareDataForFeedingArticles =
     for {
       articleRepo <- ZIO.service[ArticlesRepository]
       userRepo <- ZIO.service[UsersRepository]
@@ -71,9 +68,8 @@ object ArticleDbTestSupport:
       _ <- prepareTags(articleRepo, articleId1, articleId2)
       _ <- prepareFavorites(articleRepo, articleId1, articleId2, userId1, userId2)
     } yield ()
-  }
 
-  def prepareDataForGettingArticle = {
+  def prepareDataForGettingArticle =
     for {
       articleRepo <- ZIO.service[ArticlesRepository]
       userRepo <- ZIO.service[UsersRepository]
@@ -88,23 +84,14 @@ object ArticleDbTestSupport:
       _ <- prepareTags(articleRepo, articleId1, articleId2)
       _ <- prepareFavorites(articleRepo, articleId1, articleId2, userId1, userId2)
     } yield ()
-  }
 
-  def prepareDataForArticleCreation = {
-    for {
-      userRepo <- ZIO.service[UsersRepository]
-      _ <- userRepo.add(exampleUser1)
-    } yield ()
-  }
+  def prepareDataForArticleCreation =
+    ZIO.service[UsersRepository].flatMap(_.add(exampleUser1))
 
-  def prepareDataForListingEmptyList = {
-    for {
-      userRepo <- ZIO.service[UsersRepository]
-      _ <- userRepo.add(exampleUser1)
-    } yield ()
-  }
+  def prepareDataForListingEmptyList =
+    ZIO.service[UsersRepository].flatMap(_.add(exampleUser1))
 
-  def prepareDataForCreatingNameConflict = {
+  def prepareDataForCreatingNameConflict =
     for {
       articleRepo <- ZIO.service[ArticlesRepository]
       userRepo <- ZIO.service[UsersRepository]
@@ -112,9 +99,8 @@ object ArticleDbTestSupport:
       userId1 <- userRepo.findUserIdByEmail(exampleUser1.email).someOrFail(s"User with email ${exampleUser1.email} doesn't exist.")
       _ <- articleRepo.add(exampleArticle2, userId1)
     } yield ()
-  }
 
-  def prepareDataForArticleDeletion = {
+  def prepareDataForArticleDeletion =
     for {
       articleRepo <- ZIO.service[ArticlesRepository]
       userRepo <- ZIO.service[UsersRepository]
@@ -124,9 +110,8 @@ object ArticleDbTestSupport:
       _ <- articleRepo.add(exampleArticle2, userId1)
       _ <- articleRepo.add(exampleArticle3, userId1)
     } yield ()
-  }
 
-  def prepareDataForArticleUpdating = {
+  def prepareDataForArticleUpdating =
     for {
       articleRepo <- ZIO.service[ArticlesRepository]
       userRepo <- ZIO.service[UsersRepository]
@@ -134,9 +119,8 @@ object ArticleDbTestSupport:
       userId1 <- userRepo.findUserIdByEmail(exampleUser1.email).someOrFail(s"User with email ${exampleUser1.email} doesn't exist.")
       _ <- articleRepo.add(exampleArticle1, userId1)
     } yield ()
-  }
 
-  def prepareDataForUpdatingNameConflict = {
+  def prepareDataForUpdatingNameConflict =
     for {
       articleRepo <- ZIO.service[ArticlesRepository]
       userRepo <- ZIO.service[UsersRepository]
@@ -145,4 +129,3 @@ object ArticleDbTestSupport:
       _ <- articleRepo.add(exampleArticle1, userId1)
       _ <- articleRepo.add(exampleArticle2, userId1)
     } yield ()
-  }

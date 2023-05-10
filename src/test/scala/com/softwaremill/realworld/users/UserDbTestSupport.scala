@@ -3,15 +3,10 @@ package com.softwaremill.realworld.users
 import com.softwaremill.realworld.utils.DbData.*
 import zio.ZIO
 object UserDbTestSupport:
+  def prepareBasicUsersData =
+    ZIO.service[UsersRepository].flatMap(_.add(exampleUser1))
 
-  def prepareBasicUsersData = {
-    for {
-      userRepo <- ZIO.service[UsersRepository]
-      _ <- userRepo.add(exampleUser1)
-    } yield ()
-  }
-
-  def prepareBasicProfileData = {
+  def prepareBasicProfileData =
     for {
       userRepo <- ZIO.service[UsersRepository]
       _ <- userRepo.add(exampleUser1)
@@ -20,4 +15,3 @@ object UserDbTestSupport:
       userId2 <- userRepo.findUserIdByEmail(exampleUser2.email).someOrFail(s"User with email ${exampleUser2.email} doesn't exist.")
       _ <- userRepo.follow(userId1, userId2)
     } yield ()
-  }
