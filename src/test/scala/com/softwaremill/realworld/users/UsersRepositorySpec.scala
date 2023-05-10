@@ -13,13 +13,27 @@ object UsersRepositorySpec extends ZIOSpecDefault:
       test("user not found") {
         for {
           _ <- prepareBasicUsersData
-          result <- checkUserNotFound("notExisting@example.com")
+          result <- checkUserNotFoundByEmail("notExisting@example.com")
         } yield result
       },
       test("user found") {
         for {
           _ <- prepareBasicUsersData
-          result <- checkUserFound("jake@example.com")
+          result <- checkUserFoundByEmail("jake@example.com")
+        } yield result
+      }
+    ),
+    suite("find user by username")(
+      test("user not found") {
+        for {
+          _ <- prepareBasicUsersData
+          result <- checkUserNotFoundByUsername("notExisting")
+        } yield result
+      },
+      test("user found") {
+        for {
+          _ <- prepareBasicUsersData
+          result <- checkUserFoundByUsername("jake")
         } yield result
       }
     ),
