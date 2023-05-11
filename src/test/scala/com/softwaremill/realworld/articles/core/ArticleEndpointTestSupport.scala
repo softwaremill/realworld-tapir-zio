@@ -282,7 +282,15 @@ object ArticleEndpointTestSupport:
                 && hasField("tagList", _.tagList, equalTo(List("dragons", "goats", "training")))
                 && hasField("favorited", _.favorited, isFalse)
                 && hasField("favoritesCount", _.favoritesCount, equalTo(1))
-                && hasField("author", _.author, hasField("username", _.username, equalTo("jake")): Assertion[ArticleAuthor])
+                && hasField(
+                  "author",
+                  _.author,
+                  (hasField("username", _.username, equalTo("jake")): Assertion[ArticleAuthor]) && hasField(
+                    "following",
+                    _.following,
+                    isFalse
+                  )
+                )
             )
           )
       )
@@ -308,9 +316,17 @@ object ArticleEndpointTestSupport:
                 && hasField("description", _.description, equalTo("So toothless"))
                 && hasField("body", _.body, equalTo("Its a dragon"))
                 && hasField("tagList", _.tagList, equalTo(List("dragons", "goats", "training")))
-                && hasField("favorited", _.favorited, isFalse)
+                && hasField("favorited", _.favorited, isTrue)
                 && hasField("favoritesCount", _.favoritesCount, equalTo(1))
-                && hasField("author", _.author, hasField("username", _.username, equalTo("jake")): Assertion[ArticleAuthor])
+                && hasField(
+                  "author",
+                  _.author,
+                  (hasField("username", _.username, equalTo("jake")): Assertion[ArticleAuthor]) && hasField(
+                    "following",
+                    _.following,
+                    isTrue
+                  )
+                )
             )
           )
       )
@@ -338,7 +354,15 @@ object ArticleEndpointTestSupport:
                 && hasField("tagList", _.tagList, equalTo(List("dragons", "goats", "training")))
                 && hasField("favorited", _.favorited, isFalse)
                 && hasField("favoritesCount", _.favoritesCount, equalTo(1))
-                && hasField("author", _.author, hasField("username", _.username, equalTo("jake")): Assertion[ArticleAuthor])
+                && hasField(
+                  "author",
+                  _.author,
+                  (hasField("username", _.username, equalTo("jake")): Assertion[ArticleAuthor]) && hasField(
+                    "following",
+                    _.following,
+                    isFalse
+                  )
+                )
             )
           )
       )
@@ -364,9 +388,17 @@ object ArticleEndpointTestSupport:
                 && hasField("description", _.description, equalTo("Ever wonder how?"))
                 && hasField("body", _.body, equalTo("It takes a Jacobian"))
                 && hasField("tagList", _.tagList, equalTo(List("dragons", "training")))
-                && hasField("favorited", _.favorited, isFalse)
+                && hasField("favorited", _.favorited, if (authorizationHeaderOpt.isDefined) isTrue else isFalse)
                 && hasField("favoritesCount", _.favoritesCount, equalTo(2))
-                && hasField("author", _.author, hasField("username", _.username, equalTo("jake")): Assertion[ArticleAuthor])
+                && hasField(
+                  "author",
+                  _.author,
+                  (hasField("username", _.username, equalTo("jake")): Assertion[ArticleAuthor]) && hasField(
+                    "following",
+                    _.following,
+                    isFalse
+                  )
+                )
             ) &&
               exists(
                 (hasField("slug", _.slug, equalTo("how-to-train-your-dragon-2")): Assertion[Article])
@@ -376,7 +408,15 @@ object ArticleEndpointTestSupport:
                   && hasField("tagList", _.tagList, equalTo(List("dragons", "goats", "training")))
                   && hasField("favorited", _.favorited, isFalse)
                   && hasField("favoritesCount", _.favoritesCount, equalTo(1))
-                  && hasField("author", _.author, hasField("username", _.username, equalTo("jake")): Assertion[ArticleAuthor])
+                  && hasField(
+                    "author",
+                    _.author,
+                    (hasField("username", _.username, equalTo("jake")): Assertion[ArticleAuthor]) && hasField(
+                      "following",
+                      _.following,
+                      isFalse
+                    )
+                  )
               ) &&
               exists(
                 (hasField("slug", _.slug, equalTo("how-to-train-your-dragon-3")): Assertion[Article])
@@ -386,7 +426,15 @@ object ArticleEndpointTestSupport:
                   && hasField("tagList", _.tagList, equalTo(List()))
                   && hasField("favorited", _.favorited, isFalse)
                   && hasField("favoritesCount", _.favoritesCount, equalTo(0))
-                  && hasField("author", _.author, hasField("username", _.username, equalTo("john")): Assertion[ArticleAuthor])
+                  && hasField(
+                    "author",
+                    _.author,
+                    (hasField("username", _.username, equalTo("john")): Assertion[ArticleAuthor]) && hasField(
+                      "following",
+                      _.following,
+                      if (authorizationHeaderOpt.isDefined) isTrue else isFalse
+                    )
+                  )
               )
           )
       )
@@ -412,9 +460,17 @@ object ArticleEndpointTestSupport:
                 && hasField("description", _.description, equalTo("Ever wonder how?"))
                 && hasField("body", _.body, equalTo("It takes a Jacobian"))
                 && hasField("tagList", _.tagList, equalTo(List("dragons", "training")))
-                && hasField("favorited", _.favorited, isFalse)
+                && hasField("favorited", _.favorited, isTrue)
                 && hasField("favoritesCount", _.favoritesCount, equalTo(2))
-                && hasField("author", _.author, hasField("username", _.username, equalTo("jake")): Assertion[ArticleAuthor])
+                && hasField(
+                  "author",
+                  _.author,
+                  (hasField("username", _.username, equalTo("jake")): Assertion[ArticleAuthor]) && hasField(
+                    "following",
+                    _.following,
+                    isTrue
+                  )
+                )
             ) &&
               exists(
                 (hasField("slug", _.slug, equalTo("how-to-train-your-dragon-2")): Assertion[Article])
@@ -422,9 +478,17 @@ object ArticleEndpointTestSupport:
                   && hasField("description", _.description, equalTo("So toothless"))
                   && hasField("body", _.body, equalTo("Its a dragon"))
                   && hasField("tagList", _.tagList, equalTo(List("dragons", "goats", "training")))
-                  && hasField("favorited", _.favorited, isFalse)
+                  && hasField("favorited", _.favorited, isTrue)
                   && hasField("favoritesCount", _.favoritesCount, equalTo(1))
-                  && hasField("author", _.author, hasField("username", _.username, equalTo("jake")): Assertion[ArticleAuthor])
+                  && hasField(
+                    "author",
+                    _.author,
+                    (hasField("username", _.username, equalTo("jake")): Assertion[ArticleAuthor]) && hasField(
+                      "following",
+                      _.following,
+                      isTrue
+                    )
+                  )
               ) &&
               exists(
                 (hasField("slug", _.slug, equalTo("how-to-train-your-dragon-5")): Assertion[Article])
@@ -434,7 +498,15 @@ object ArticleEndpointTestSupport:
                   && hasField("tagList", _.tagList, equalTo(List()))
                   && hasField("favorited", _.favorited, isFalse)
                   && hasField("favoritesCount", _.favoritesCount, equalTo(0))
-                  && hasField("author", _.author, hasField("username", _.username, equalTo("bill")): Assertion[ArticleAuthor])
+                  && hasField(
+                    "author",
+                    _.author,
+                    (hasField("username", _.username, equalTo("bill")): Assertion[ArticleAuthor]) && hasField(
+                      "following",
+                      _.following,
+                      isTrue
+                    )
+                  )
               )
           )
       )
@@ -479,7 +551,15 @@ object ArticleEndpointTestSupport:
             && hasField("tagList", _.tagList, equalTo(List("dragons", "goats", "training")))
             && hasField("favorited", _.favorited, isFalse)
             && hasField("favoritesCount", _.favoritesCount, equalTo(1))
-            && hasField("author", _.author, hasField("username", _.username, equalTo("john")): Assertion[ArticleAuthor])
+            && hasField(
+              "author",
+              _.author,
+              (hasField("username", _.username, equalTo("john")): Assertion[ArticleAuthor]) && hasField(
+                "following",
+                _.following,
+                isFalse
+              )
+            )
         )
       )
     )
@@ -505,7 +585,15 @@ object ArticleEndpointTestSupport:
             && hasField("tagList", _.tagList, equalTo(Nil))
             && hasField("favorited", _.favorited, isFalse)
             && hasField("favoritesCount", _.favoritesCount, equalTo(0))
-            && hasField("author", _.author, hasField("username", _.username, equalTo("jake")): Assertion[ArticleAuthor])
+            && hasField(
+              "author",
+              _.author,
+              (hasField("username", _.username, equalTo("jake")): Assertion[ArticleAuthor]) && hasField(
+                "following",
+                _.following,
+                isFalse
+              )
+            )
         )
       )
     )
@@ -531,7 +619,15 @@ object ArticleEndpointTestSupport:
             && hasField("tagList", _.tagList, equalTo(Nil))
             && hasField("favorited", _.favorited, isFalse)
             && hasField("favoritesCount", _.favoritesCount, equalTo(0))
-            && hasField("author", _.author, hasField("username", _.username, equalTo("jake")): Assertion[ArticleAuthor])
+            && hasField(
+              "author",
+              _.author,
+              (hasField("username", _.username, equalTo("jake")): Assertion[ArticleAuthor]) && hasField(
+                "following",
+                _.following,
+                isFalse
+              )
+            )
         )
       )
     )

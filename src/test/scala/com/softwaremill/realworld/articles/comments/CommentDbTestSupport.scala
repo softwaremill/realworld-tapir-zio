@@ -8,7 +8,7 @@ import zio.ZIO
 
 object CommentDbTestSupport:
 
-  def prepareDataForCommentsNotFound = {
+  def prepareDataForCommentsNotFound =
     for {
       articleRepo <- ZIO.service[ArticlesRepository]
       userRepo <- ZIO.service[UsersRepository]
@@ -16,9 +16,8 @@ object CommentDbTestSupport:
       userId1 <- userRepo.findUserIdByEmail(exampleUser1.email).someOrFail(s"User with email ${exampleUser1.email} doesn't exist.")
       _ <- articleRepo.add(exampleArticle2, userId1)
     } yield ()
-  }
 
-  def prepareDataForCommentsList = {
+  def prepareDataForCommentsList =
     for {
       articleRepo <- ZIO.service[ArticlesRepository]
       userRepo <- ZIO.service[UsersRepository]
@@ -29,14 +28,14 @@ object CommentDbTestSupport:
       userId1 <- userRepo.findUserIdByEmail(exampleUser1.email).someOrFail(s"User with email ${exampleUser1.email} doesn't exist.")
       userId2 <- userRepo.findUserIdByEmail(exampleUser2.email).someOrFail(s"User with email ${exampleUser2.email} doesn't exist.")
       userId4 <- userRepo.findUserIdByEmail(exampleUser4.email).someOrFail(s"User with email ${exampleUser4.email} doesn't exist.")
+      _ <- userRepo.follow(userId1, userId2)
       _ <- articleRepo.add(exampleArticle3, userId2)
       articleId3 <- articleRepo.findArticleIdBySlug(exampleArticle3Slug).someOrFail(s"Article $exampleArticle3Slug doesn't exist")
       _ <- commentRepo.addComment(articleId3, userId1, "Thank you so much!")
       _ <- commentRepo.addComment(articleId3, userId4, "Great article!")
     } yield ()
-  }
 
-  def prepareDataForCommentsRemoving = {
+  def prepareDataForCommentsRemoving =
     for {
       articleRepo <- ZIO.service[ArticlesRepository]
       userRepo <- ZIO.service[UsersRepository]
@@ -55,9 +54,8 @@ object CommentDbTestSupport:
       _ <- commentRepo.addComment(articleId4, userId3, "Amazing article!")
       _ <- commentRepo.addComment(articleId4, userId4, "Not bad.")
     } yield ()
-  }
 
-  def prepareDataForCommentsCreation = {
+  def prepareDataForCommentsCreation =
     for {
       articleRepo <- ZIO.service[ArticlesRepository]
       userRepo <- ZIO.service[UsersRepository]
@@ -65,4 +63,3 @@ object CommentDbTestSupport:
       userId4 <- userRepo.findUserIdByEmail(exampleUser4.email).someOrFail(s"User with email ${exampleUser4.email} doesn't exist.")
       _ <- articleRepo.add(exampleArticle6, userId4)
     } yield ()
-  }

@@ -33,10 +33,10 @@ class CommentsServerEndpoints(commentsService: CommentsService, commentsEndpoint
     )
 
   val getCommentsFromArticleServerEndpoint: ZServerEndpoint[Any, Any] = commentsEndpoints.getCommentsFromArticleEndpoint
-    .serverLogic(_ =>
+    .serverLogic(sessionOpt =>
       slug =>
         commentsService
-          .getCommentsFromArticle(slug)
+          .getCommentsFromArticle(slug, sessionOpt.map(_.email))
           .map(foundComments => CommentsListResponse(comments = foundComments))
           .pipe(defaultErrorsMappings)
     )

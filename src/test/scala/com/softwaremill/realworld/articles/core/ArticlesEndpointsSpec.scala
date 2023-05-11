@@ -25,6 +25,7 @@ object ArticlesEndpointsSpec extends ZIOSpecDefault:
       suite("with auth header")(
         test("return empty list") {
           for {
+            _ <- prepareDataForListingEmptyList
             authHeader <- getValidAuthorizationHeader()
             result <- checkIfArticleListIsEmpty(authorizationHeaderOpt = Some(authHeader), uri = uri"http://test.com/api/articles")
           } yield result
@@ -161,6 +162,7 @@ object ArticlesEndpointsSpec extends ZIOSpecDefault:
     suite("check articles get")(
       test("article not exists") {
         for {
+          _ <- prepareDataForGettingArticle
           authHeader <- getValidAuthorizationHeader()
           result <- checkIfNonExistentArticleErrorOccur(
             authorizationHeader = authHeader,

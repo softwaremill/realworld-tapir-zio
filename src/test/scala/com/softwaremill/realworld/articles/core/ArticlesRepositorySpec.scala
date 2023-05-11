@@ -7,52 +7,69 @@ import com.softwaremill.realworld.articles.core.api.ArticleCreateData
 import com.softwaremill.realworld.articles.core.{ArticlesFilters, ArticlesRepository}
 import com.softwaremill.realworld.common.Pagination
 import com.softwaremill.realworld.users.UsersRepository
-import com.softwaremill.realworld.utils.DbData.exampleUser1
+import com.softwaremill.realworld.utils.DbData.{exampleUser1, exampleUser2}
 import com.softwaremill.realworld.utils.TestUtils.*
 import sttp.client3.UriContext
 import zio.test.*
 
 object ArticlesRepositorySpec extends ZIOSpecDefault:
 
+  // TODO should i use named parameters everywhere?
   override def spec = suite("article repository tests")(
     suite("list articles")(
       suite("with empty db")(
         test("with no filters") {
-          checkIfArticleListIsEmpty(ArticlesFilters.empty, Pagination(20, 0))
+          checkIfArticleListIsEmpty(filters = ArticlesFilters.empty, pagination = Pagination(20, 0), viewerDataOpt = None)
         },
         test("with filters") {
-          checkIfArticleListIsEmpty(ArticlesFilters(Some("dragon"), Some("John"), Some("Ron")), Pagination(20, 0))
+          checkIfArticleListIsEmpty(
+            filters = ArticlesFilters(Some("dragon"), Some("John"), Some("Ron")),
+            pagination = Pagination(20, 0),
+            viewerDataOpt = None
+          )
         }
       ),
       suite("with populated db")(
         test("with small pagination") {
           for {
             _ <- prepareDataForListingArticles
-            result <- listArticlesWithSmallPagination(ArticlesFilters.empty, Pagination(1, 1))
+            result <- listArticlesWithSmallPagination(filters = ArticlesFilters.empty, pagination = Pagination(1, 1), viewerDataOpt = None)
           } yield result
         },
         test("with big pagination") {
           for {
             _ <- prepareDataForListingArticles
-            result <- listArticlesWithBigPagination(ArticlesFilters.empty, Pagination(20, 0))
+            result <- listArticlesWithBigPagination(filters = ArticlesFilters.empty, pagination = Pagination(20, 0), viewerDataOpt = None)
           } yield result
         },
         test("with tag filter") {
           for {
             _ <- prepareDataForListingArticles
-            result <- listArticlesWithTagFilter(ArticlesFilters.withTag("dragons"), Pagination(20, 0))
+            result <- listArticlesWithTagFilter(
+              filters = ArticlesFilters.withTag("dragons"),
+              pagination = Pagination(20, 0),
+              viewerDataOpt = None
+            )
           } yield result
         },
         test("with favorited filter") {
           for {
             _ <- prepareDataForListingArticles
-            result <- listArticlesWithFavoritedTagFilter(ArticlesFilters.withFavorited("jake"), Pagination(20, 0))
+            result <- listArticlesWithFavoritedTagFilter(
+              filters = ArticlesFilters.withFavorited("jake"),
+              pagination = Pagination(20, 0),
+              viewerDataOpt = None
+            )
           } yield result
         },
         test("with author filter") {
           for {
             _ <- prepareDataForListingArticles
-            result <- listArticlesWithAuthorFilter(ArticlesFilters.withAuthor("john"), Pagination(20, 0))
+            result <- listArticlesWithAuthorFilter(
+              filters = ArticlesFilters.withAuthor("john"),
+              pagination = Pagination(20, 0),
+              viewerDataOpt = None
+            )
           } yield result
         }
       )
@@ -61,19 +78,19 @@ object ArticlesRepositorySpec extends ZIOSpecDefault:
       test("find by slug") {
         for {
           _ <- prepareDataForListingArticles
-          result <- findArticleBySlug("how-to-train-your-dragon")
+          result <- findArticleBySlug(slug = "how-to-train-your-dragon", viewerData = (2, exampleUser2.email))
         } yield result
       },
       test("find article - check article not found") {
         for {
           _ <- prepareDataForListingArticles
-          result <- checkArticleNotFound("non-existing-article-slug")
+          result <- checkArticleNotFound(slug = "non-existing-article-slug", viewerData = (1, exampleUser1.email))
         } yield result
       },
       test("find article by slug as seen by user that marked it as favorite") {
         for {
           _ <- prepareDataForListingArticles
-          result <- findBySlugAsSeenBy(slug = "how-to-train-your-dragon-2", viewerEmail = "jake@example.com")
+          result <- findBySlugAsSeenBy(slug = "how-to-train-your-dragon-2", viewerData = (2, exampleUser2.email))
         } yield result
       }
     ),
@@ -81,7 +98,7 @@ object ArticlesRepositorySpec extends ZIOSpecDefault:
       test("add tag") {
         for {
           _ <- prepareDataForListingArticles
-          result <- addAndCheckTag(newTag = "new-tag", articleSlug = "how-to-train-your-dragon")
+          result <- addAndCheckTag(newTag = "new-tag", articleSlug = "how-to-train-your-dragon", viewerData = (1, exampleUser1.email))
         } yield result
       },
       test("add tag - check other article is untouched") {
@@ -90,7 +107,8 @@ object ArticlesRepositorySpec extends ZIOSpecDefault:
           result <- addTagAndCheckIfOtherArticleIsUntouched(
             newTag = "new-tag",
             articleSlugToChange = "how-to-train-your-dragon",
-            articleSlugWithoutChange = "how-to-train-your-dragon-2"
+            articleSlugWithoutChange = "how-to-train-your-dragon-2",
+            viewerData = (1, exampleUser1.email)
           )
         } yield result
       }
@@ -107,7 +125,8 @@ object ArticlesRepositorySpec extends ZIOSpecDefault:
               body = "Writing scala code is quite challenging pleasure",
               tagList = None
             ),
-            userEmail = exampleUser1.email
+            userEmail = exampleUser1.email,
+            viewerData = (1, exampleUser1.email)
           )
         } yield result
       },
@@ -133,7 +152,8 @@ object ArticlesRepositorySpec extends ZIOSpecDefault:
             updatedSlug = "updated-article-under-test",
             updatedTitle = "Updated article under test",
             updatedDescription = "What a nice updated day!",
-            updatedBody = "Updating scala code is quite challenging pleasure"
+            updatedBody = "Updating scala code is quite challenging pleasure",
+            viewerData = (1, exampleUser1.email)
           )
         } yield result
       },
@@ -145,7 +165,8 @@ object ArticlesRepositorySpec extends ZIOSpecDefault:
             updatedSlug = "how-to-train-your-dragon-2",
             updatedTitle = "How to train your dragon 2",
             updatedDescription = "What a nice updated day!",
-            updatedBody = "Updating scala code is quite challenging pleasure"
+            updatedBody = "Updating scala code is quite challenging pleasure",
+            viewerData = (1, exampleUser1.email)
           )
         } yield result
       }

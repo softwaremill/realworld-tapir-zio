@@ -8,7 +8,7 @@ import zio.ZIO
 
 object TagDbTestSupport:
 
-  private def prepareTags(articleRepo: ArticlesRepository, article1Id: Int, article2Id: Int) = {
+  private def prepareTags(articleRepo: ArticlesRepository, article1Id: Int, article2Id: Int) =
     for {
       _ <- articleRepo.addTag("dragons", article1Id)
       _ <- articleRepo.addTag("training", article1Id)
@@ -16,9 +16,8 @@ object TagDbTestSupport:
       _ <- articleRepo.addTag("goats", article2Id)
       _ <- articleRepo.addTag("training", article2Id)
     } yield ()
-  }
 
-  def prepareBasicTagsData = {
+  def prepareBasicTagsData =
     for {
       articleRepo <- ZIO.service[ArticlesRepository]
       userRepo <- ZIO.service[UsersRepository]
@@ -32,4 +31,3 @@ object TagDbTestSupport:
       articleId2 <- articleRepo.findArticleIdBySlug(exampleArticle2Slug).someOrFail(s"Article $exampleArticle2Slug doesn't exist")
       _ <- prepareTags(articleRepo, articleId1, articleId2)
     } yield ()
-  }

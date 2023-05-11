@@ -135,7 +135,15 @@ object CommentTestSupport:
           "comment",
           _.comment,
           (hasField("body", _.body, equalTo("Amazing article!")): Assertion[Comment]) &&
-            hasField("author", _.author, hasField("username", _.username, equalTo("michael")): Assertion[CommentAuthor])
+            hasField(
+              "author",
+              _.author,
+              (hasField("username", _.username, equalTo("michael")): Assertion[CommentAuthor]) && hasField(
+                "following",
+                _.following,
+                isFalse
+              )
+            )
         )
       )
     }
@@ -156,11 +164,27 @@ object CommentTestSupport:
           hasSize(equalTo(2)) &&
             exists(
               (hasField("body", _.body, equalTo("Thank you so much!")): Assertion[Comment]) &&
-                hasField("author", _.author, hasField("username", _.username, equalTo("jake")): Assertion[CommentAuthor])
+                hasField(
+                  "author",
+                  _.author,
+                  (hasField("username", _.username, equalTo("jake")): Assertion[CommentAuthor]) && hasField(
+                    "following",
+                    _.following,
+                    if (authorizationHeaderOpt.isDefined) isTrue else isFalse
+                  )
+                )
             ) &&
             exists(
               (hasField("body", _.body, equalTo("Great article!")): Assertion[Comment]) &&
-                hasField("author", _.author, hasField("username", _.username, equalTo("michael")): Assertion[CommentAuthor])
+                hasField(
+                  "author",
+                  _.author,
+                  (hasField("username", _.username, equalTo("michael")): Assertion[CommentAuthor]) && hasField(
+                    "following",
+                    _.following,
+                    isFalse
+                  )
+                )
             )
         )
       )
@@ -182,7 +206,15 @@ object CommentTestSupport:
           hasSize(equalTo(1)) &&
             exists(
               (hasField("body", _.body, equalTo("Not bad.")): Assertion[Comment]) &&
-                hasField("author", _.author, hasField("username", _.username, equalTo("michael")): Assertion[CommentAuthor])
+                hasField(
+                  "author",
+                  _.author,
+                  (hasField("username", _.username, equalTo("michael")): Assertion[CommentAuthor]) && hasField(
+                    "following",
+                    _.following,
+                    isFalse
+                  )
+                )
             )
         )
       )
