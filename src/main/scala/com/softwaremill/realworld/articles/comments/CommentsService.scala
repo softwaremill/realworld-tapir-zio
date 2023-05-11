@@ -13,28 +13,28 @@ class CommentsService(
     articlesRepository: ArticlesRepository
 ):
 
-  def addComment(slug: String, session: UserSession, comment: String): Task[Comment] = for {
+  def addComment(slug: String, userId: Int, comment: String): Task[Comment] = for {
     articleId <- articleIdBySlug(slug)
-    commentId <- commentsRepository.addComment(articleId, session.userId, comment)
-    comment <- commentsRepository.findComment(commentId, session.userId).someOrFail(NotFound(CommentNotFoundMessage(commentId)))
+    commentId <- commentsRepository.addComment(articleId, userId, comment)
+    comment <- commentsRepository.findComment(commentId, userId).someOrFail(NotFound(CommentNotFoundMessage(commentId)))
   } yield comment
 
-  def deleteComment(slug: String, session: UserSession, commentId: Int): Task[Unit] = for {
+  def deleteComment(slug: String, userId: Int, commentId: Int): Task[Unit] = for {
     articleId <- articleIdBySlug(slug)
     tupleWithIds <- commentsRepository
       .findArticleAndAuthorIdsFromComment(commentId)
       .someOrFail(NotFound(ArticleAndAuthorIdsNotFoundMessage(commentId)))
     (commentAuthorId, commentArticleId) = tupleWithIds
-    _ <- ZIO.fail(Unauthorized(CommentCannotBeRemoveMessage)).when(session.userId != commentAuthorId)
+    _ <- ZIO.fail(Unauthorized(CommentCannotBeRemoveMessage)).when(userId != commentAuthorId)
     _ <- ZIO.fail(BadRequest(CommentNotLinkedToSlugMessage(commentId, slug))).when(articleId != commentArticleId)
     _ <- commentsRepository.deleteComment(commentId)
   } yield ()
 
-  def getCommentsFromArticle(slug: String, sessionOpt: Option[UserSession]): Task[List[Comment]] =
+  def getCommentsFromArticle(slug: String, userIdOpt: Option[Int]): Task[List[Comment]] =
     articleIdBySlug(slug).flatMap(articleId =>
-      sessionOpt match {
-        case Some(session) => commentsRepository.findComments(articleId, Some(session.userId))
-        case None          => commentsRepository.findComments(articleId, None)
+      userIdOpt match {
+        case Some(userId) => commentsRepository.findComments(articleId, Some(userId))
+        case None         => commentsRepository.findComments(articleId, None)
       }
     )
 

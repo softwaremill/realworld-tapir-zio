@@ -21,70 +21,71 @@ class ArticlesService(
     commentsRepository: CommentsRepository
 ):
 
-  def list(filters: ArticlesFilters, pagination: Pagination, sessionOpt: Option[UserSession]): Task[List[Article]] =
-    sessionOpt match
-      case Some(session) => articlesRepository.list(filters, pagination, Some((session.userId, session.userEmail)))
-      case None          => articlesRepository.list(filters, pagination, None)
+  def list(filters: ArticlesFilters, pagination: Pagination, userDataOpt: Option[(Int, String)]): Task[List[Article]] =
+    userDataOpt match
+      case Some(userData) => articlesRepository.list(filters, pagination, Some(userData))
+      case None           => articlesRepository.list(filters, pagination, None)
 
   def listArticlesByFollowedUsers(
       pagination: Pagination,
-      session: UserSession
+      userId: Int,
+      userEmail: String
   ): Task[List[Article]] =
     articlesRepository
-      .listArticlesByFollowedUsers(pagination, (session.userId, session.userEmail))
+      .listArticlesByFollowedUsers(pagination, userId, userEmail)
 
-  def findBySlug(slug: String, session: UserSession): Task[Article] =
+  def findBySlug(slug: String, userId: Int, userEmail: String): Task[Article] =
     articlesRepository
-      .findBySlug(slug, (session.userId, session.userEmail))
+      .findBySlug(slug, userId, userEmail)
       .someOrFail(NotFound(ArticleNotFoundMessage(slug)))
 
-  def create(createData: ArticleCreateData, session: UserSession): Task[Article] = for {
-    articleId <- articlesRepository.add(createData, session.userId)
+  def create(createData: ArticleCreateData, userId: Int, userEmail: String): Task[Article] = for {
+    articleId <- articlesRepository.add(createData, userId)
     _ <- ZIO.foreach(createData.tagList) { tagList =>
       ZIO.foreach(tagList)(tag => articlesRepository.addTag(tag, articleId))
     }
-    articleData <- findBySlug(articlesRepository.convertToSlug(createData.title), (session.userId, session.userEmail))
+    articleData <- findBySlug(articlesRepository.convertToSlug(createData.title), userId, userEmail)
   } yield articleData
 
-  def delete(slug: String, session: UserSession): Task[Unit] = for {
+  def delete(slug: String, userId: Int): Task[Unit] = for {
     tupleWithIds <- articlesRepository
       .findArticleAndAuthorIdsBySlug(slug)
       .someOrFail(NotFound(ArticleAndAuthorIdsNotFoundMessage(slug)))
     (articleId, authorId) = tupleWithIds
-    _ <- ZIO.fail(Unauthorized(ArticleCannotBeRemovedMessage)).when(session.userId != authorId)
+    _ <- ZIO.fail(Unauthorized(ArticleCannotBeRemovedMessage)).when(userId != authorId)
     _ <- commentsRepository.deleteCommentsByArticleId(articleId)
     _ <- articlesRepository.deleteFavoritesByArticleId(articleId)
     _ <- tagsRepository.deleteTagsByArticleId(articleId)
     _ <- articlesRepository.deleteArticle(articleId)
   } yield ()
 
-  def update(articleUpdateData: ArticleUpdateData, slug: String, session: UserSession): Task[Article] = for {
+  def update(articleUpdateData: ArticleUpdateData, slug: String, userId: Int, userEmail: String): Task[Article] = for {
     oldArticle <- articlesRepository
-      .findBySlug(slug.trim.toLowerCase, (session.userId, session.userEmail))
+      .findBySlug(slug.trim.toLowerCase, userId, userEmail)
       .someOrFail(NotFound(ArticleNotFoundMessage(slug)))
     oldArticleUserId <- userIdByUsername(oldArticle.author.username)
     _ <- ZIO
       .fail(Unauthorized(ArticleCannotBeUpdatedMessage))
-      .when(session.userId != oldArticleUserId)
+      .when(userId != oldArticleUserId)
     updatedArticle = updateArticleData(oldArticle, articleUpdateData)
     articleId <- articlesRepository.findArticleIdBySlug(slug).someOrFail(NotFound(ArticleNotFoundMessage(slug)))
     _ <- articlesRepository.updateById(updatedArticle, articleId)
   } yield updatedArticle
 
-  def makeFavorite(slug: String, session: UserSession): Task[Article] = for {
+  def makeFavorite(slug: String, userId: Int, userEmail: String): Task[Article] = for {
     articleId <- articlesRepository
       .findArticleIdBySlug(slug)
       .someOrFail(Exceptions.NotFound(ArticleNotFoundMessage(slug)))
-    _ <- articlesRepository.makeFavorite(articleId, session.userId)
-    articleData <- findBySlug(slug, (session.userId, session.userEmail))
+    _ <- articlesRepository.makeFavorite(articleId, userId)
+    articleData <- findBySlug(slug, userId, userEmail)
   } yield articleData
 
-  def removeFavorite(slug: String, session: UserSession): Task[Article] = for {
+  def removeFavorite(slug: String, userId: Int, userEmail: String): Task[Article] = for {
     articleId <- articlesRepository
       .findArticleIdBySlug(slug)
       .someOrFail(Exceptions.NotFound(ArticleNotFoundMessage(slug)))
-    _ <- articlesRepository.removeFavorite(articleId, session.userId)
-    articleData <- findBySlug(slug, (session.userId, session.userEmail))
+    _ <- articlesRepository.removeFavorite(articleId, userId)
+    articleData <- findBySlug(slug, userId, userEmail)
   } yield articleData
 
   private def updateArticleData(articleData: Article, updatedData: ArticleUpdateData): Article =
@@ -99,11 +100,6 @@ class ArticlesService(
       body = updatedData.body.getOrElse(articleData.body),
       updatedAt = Instant.now()
     )
-
-  private def findBySlug(slug: String, viewerData: (Int, String)): Task[Article] =
-    articlesRepository
-      .findBySlug(slug, viewerData)
-      .someOrFail(NotFound(ArticleNotFoundMessage(slug)))
 
   private def userIdByUsername(username: String): Task[Int] =
     usersRepository.findUserIdByUsername(username).someOrFail(NotFound(UserWithUsernameNotFoundMessage(username)))

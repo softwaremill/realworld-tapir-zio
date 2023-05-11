@@ -78,19 +78,19 @@ object ArticlesRepositorySpec extends ZIOSpecDefault:
       test("find by slug") {
         for {
           _ <- prepareDataForListingArticles
-          result <- findArticleBySlug(slug = "how-to-train-your-dragon", viewerData = (2, exampleUser2.email))
+          result <- findArticleBySlug(slug = "how-to-train-your-dragon", viewerId = 2, viewerEmail = exampleUser2.email)
         } yield result
       },
       test("find article - check article not found") {
         for {
           _ <- prepareDataForListingArticles
-          result <- checkArticleNotFound(slug = "non-existing-article-slug", viewerData = (1, exampleUser1.email))
+          result <- checkArticleNotFound(slug = "non-existing-article-slug", viewerId = 1, viewerEmail = exampleUser1.email)
         } yield result
       },
       test("find article by slug as seen by user that marked it as favorite") {
         for {
           _ <- prepareDataForListingArticles
-          result <- findBySlugAsSeenBy(slug = "how-to-train-your-dragon-2", viewerData = (2, exampleUser2.email))
+          result <- findBySlugAsSeenBy(slug = "how-to-train-your-dragon-2", viewerId = 2, viewerEmail = exampleUser2.email)
         } yield result
       }
     ),
@@ -98,7 +98,12 @@ object ArticlesRepositorySpec extends ZIOSpecDefault:
       test("add tag") {
         for {
           _ <- prepareDataForListingArticles
-          result <- addAndCheckTag(newTag = "new-tag", articleSlug = "how-to-train-your-dragon", viewerData = (1, exampleUser1.email))
+          result <- addAndCheckTag(
+            newTag = "new-tag",
+            articleSlug = "how-to-train-your-dragon",
+            viewerId = 1,
+            viewerEmail = exampleUser1.email
+          )
         } yield result
       },
       test("add tag - check other article is untouched") {
@@ -108,7 +113,8 @@ object ArticlesRepositorySpec extends ZIOSpecDefault:
             newTag = "new-tag",
             articleSlugToChange = "how-to-train-your-dragon",
             articleSlugWithoutChange = "how-to-train-your-dragon-2",
-            viewerData = (1, exampleUser1.email)
+            viewerId = 1,
+            viewerEmail = exampleUser1.email
           )
         } yield result
       }
@@ -126,7 +132,8 @@ object ArticlesRepositorySpec extends ZIOSpecDefault:
               tagList = None
             ),
             userEmail = exampleUser1.email,
-            viewerData = (1, exampleUser1.email)
+            viewerId = 1,
+            viewerEmail = exampleUser1.email
           )
         } yield result
       },
@@ -153,7 +160,8 @@ object ArticlesRepositorySpec extends ZIOSpecDefault:
             updatedTitle = "Updated article under test",
             updatedDescription = "What a nice updated day!",
             updatedBody = "Updating scala code is quite challenging pleasure",
-            viewerData = (1, exampleUser1.email)
+            viewerId = 1,
+            viewerEmail = exampleUser1.email
           )
         } yield result
       },
@@ -166,7 +174,8 @@ object ArticlesRepositorySpec extends ZIOSpecDefault:
             updatedTitle = "How to train your dragon 2",
             updatedDescription = "What a nice updated day!",
             updatedBody = "Updating scala code is quite challenging pleasure",
-            viewerData = (1, exampleUser1.email)
+            viewerId = 1,
+            viewerEmail = exampleUser1.email
           )
         } yield result
       }

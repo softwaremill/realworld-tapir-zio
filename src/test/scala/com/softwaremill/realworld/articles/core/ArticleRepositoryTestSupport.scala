@@ -31,10 +31,10 @@ object ArticleRepositoryTestSupport:
     } yield result
   }
 
-  def callFindBySlug(slug: String, viewerData: (Int, String)): ZIO[ArticlesRepository, SQLException, Option[Article]] = {
+  def callFindBySlug(slug: String, viewerId: Int, viewerEmail: String): ZIO[ArticlesRepository, SQLException, Option[Article]] = {
     for {
       repo <- ZIO.service[ArticlesRepository]
-      result <- repo.findBySlug(slug, viewerData)
+      result <- repo.findBySlug(slug, viewerId, viewerEmail)
     } yield result
   }
 
@@ -85,10 +85,11 @@ object ArticleRepositoryTestSupport:
 
   def checkArticleNotFound(
       slug: String,
-      viewerData: (Int, String)
+      viewerId: Int,
+      viewerEmail: String
   ): ZIO[ArticlesRepository, SQLException, TestResult] = {
 
-    assertZIO(callFindBySlug(slug, viewerData))(isNone)
+    assertZIO(callFindBySlug(slug, viewerId, viewerEmail))(isNone)
   }
 
   def checkIfArticleAlreadyExistsInCreate(
@@ -112,7 +113,8 @@ object ArticleRepositoryTestSupport:
       updatedTitle: String,
       updatedDescription: String,
       updatedBody: String,
-      viewerData: (Int, String)
+      viewerId: Int,
+      viewerEmail: String
   ): ZIO[ArticlesRepository with UsersRepository, Object, TestResult] = {
 
     assertZIO((for {
@@ -130,7 +132,7 @@ object ArticleRepositoryTestSupport:
         author = null
       )
       _ <- callUpdateArticle(articleUpdateData, articleId)
-      article <- callFindBySlug(articleUpdateData.slug, viewerData)
+      article <- callFindBySlug(articleUpdateData.slug, viewerId, viewerEmail)
     } yield article).exit)(
       failsCause(
         containsCause(Cause.fail(AlreadyInUse(message = "Article name already exists")))
@@ -344,11 +346,12 @@ object ArticleRepositoryTestSupport:
 
   def findArticleBySlug(
       slug: String,
-      viewerData: (Int, String)
+      viewerId: Int,
+      viewerEmail: String
   ): ZIO[ArticlesRepository, SQLException, TestResult] = {
 
     assertZIO(
-      callFindBySlug(slug, viewerData)
+      callFindBySlug(slug, viewerId, viewerEmail)
     )(
       isSome(
         (hasField("slug", _.slug, equalTo("how-to-train-your-dragon")): Assertion[Article])
@@ -373,11 +376,12 @@ object ArticleRepositoryTestSupport:
 
   def findBySlugAsSeenBy(
       slug: String,
-      viewerData: (Int, String)
+      viewerId: Int,
+      viewerEmail: String
   ): ZIO[ArticlesRepository, SQLException, TestResult] = {
 
     assertZIO(
-      callFindBySlug(slug, viewerData)
+      callFindBySlug(slug, viewerId, viewerEmail)
     )(
       isSome(
         (hasField("slug", _.slug, equalTo("how-to-train-your-dragon-2")): Assertion[Article])
@@ -403,13 +407,14 @@ object ArticleRepositoryTestSupport:
   def addAndCheckTag(
       newTag: String,
       articleSlug: String,
-      viewerData: (Int, String)
+      viewerId: Int,
+      viewerEmail: String
   ): ZIO[ArticlesRepository, Object, TestResult] = {
 
     for {
       articleId <- callFindArticleIdBySlug(articleSlug).someOrFail(s"Article $articleSlug doesn't exist")
       _ <- callAddTag(newTag, articleId)
-      updatedArticle <- callFindBySlug(articleSlug, viewerData).map(_.get.tagList)
+      updatedArticle <- callFindBySlug(articleSlug, viewerId, viewerEmail).map(_.get.tagList)
     } yield zio.test.assert(updatedArticle)(contains(newTag))
   }
 
@@ -417,13 +422,14 @@ object ArticleRepositoryTestSupport:
       newTag: String,
       articleSlugToChange: String,
       articleSlugWithoutChange: String,
-      viewerData: (Int, String)
+      viewerId: Int,
+      viewerEmail: String
   ): ZIO[ArticlesRepository, Object, TestResult] = {
 
     for {
       articleToChangeId <- callFindArticleIdBySlug(articleSlugToChange).someOrFail(s"Article $articleSlugToChange doesn't exist")
       _ <- callAddTag(newTag, articleToChangeId)
-      articleWithoutChange <- callFindBySlug(articleSlugWithoutChange, viewerData)
+      articleWithoutChange <- callFindBySlug(articleSlugWithoutChange, viewerId, viewerEmail)
         .someOrFail(s"Article $articleSlugWithoutChange doesn't exist")
         .map(_.tagList)
     } yield zio.test.assert(articleWithoutChange)(hasNoneOf(newTag))
@@ -433,13 +439,14 @@ object ArticleRepositoryTestSupport:
       slug: String,
       articleCreateData: ArticleCreateData,
       userEmail: String,
-      viewerData: (Int, String)
+      viewerId: Int,
+      viewerEmail: String
   ): ZIO[ArticlesRepository with UsersRepository, Object, TestResult] = {
 
     for {
       userId <- callFindUserIdByEmail(userEmail).someOrFail(s"User $userEmail doesn't exist")
       _ <- callCreateArticle(articleCreateData, userId)
-      article <- callFindBySlug(slug, viewerData)
+      article <- callFindBySlug(slug, viewerId, viewerEmail)
     } yield zio.test.assert(article) {
       isSome(
         (hasField("slug", _.slug, equalTo("new-article-under-test")): Assertion[Article])
@@ -468,7 +475,8 @@ object ArticleRepositoryTestSupport:
       updatedTitle: String,
       updatedDescription: String,
       updatedBody: String,
-      viewerData: (Int, String)
+      viewerId: Int,
+      viewerEmail: String
   ): ZIO[ArticlesRepository with UsersRepository, Object, TestResult] = {
 
     for {
@@ -486,7 +494,7 @@ object ArticleRepositoryTestSupport:
         author = null
       )
       _ <- callUpdateArticle(articleUpdateData, articleId)
-      article <- callFindBySlug(articleUpdateData.slug, viewerData)
+      article <- callFindBySlug(articleUpdateData.slug, viewerId, viewerEmail)
     } yield zio.test.assert(article) {
       isSome(
         (hasField("slug", _.slug, equalTo("updated-article-under-test")): Assertion[Article])

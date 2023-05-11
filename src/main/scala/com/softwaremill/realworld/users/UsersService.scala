@@ -12,9 +12,9 @@ import javax.sql.DataSource
 
 class UsersService(authService: AuthService, usersRepository: UsersRepository):
 
-  def get(session: UserSession): IO[Exception, User] = usersRepository
-    .findUserByEmail(session.userEmail)
-    .someOrFail(NotFound(UserWithEmailNotFoundMessage(session.userEmail)))
+  def get(userEmail: String): IO[Exception, User] = usersRepository
+    .findUserByEmail(userEmail)
+    .someOrFail(NotFound(UserWithEmailNotFoundMessage(userEmail)))
 
   // TODO username should also be checked (in database is unique)
   def register(user: UserRegisterData): IO[Throwable, UserResponse] = {
@@ -52,40 +52,40 @@ class UsersService(authService: AuthService, usersRepository: UsersRepository):
     } yield userWithPassword.user.copy(token = Some(jwt))
   }
 
-  def update(updateData: UserUpdateData, session: UserSession): IO[Throwable, User] = for {
+  def update(updateData: UserUpdateData, userEmail: String): IO[Throwable, User] = for {
     oldUser <- usersRepository
-      .findUserWithPasswordByEmail(session.userEmail)
-      .someOrFail(NotFound(UserWithEmailNotFoundMessage(session.userEmail)))
+      .findUserWithPasswordByEmail(userEmail)
+      .someOrFail(NotFound(UserWithEmailNotFoundMessage(userEmail)))
     password <- updateData.password
       .map(newPassword => authService.encryptPassword(newPassword))
       .getOrElse(ZIO.succeed(oldUser.hashedPassword))
     updatedUser <- usersRepository
       .updateByEmail(
         updateData.update(oldUser.copy(hashedPassword = password)),
-        session.userEmail
+        userEmail
       )
-      .someOrFail(NotFound(UserWithEmailNotFoundMessage(session.userEmail)))
+      .someOrFail(NotFound(UserWithEmailNotFoundMessage(userEmail)))
   } yield updatedUser
 
-  def getProfile(username: String, session: UserSession): Task[ProfileResponse] = for {
+  def getProfile(username: String, followerId: Int): Task[ProfileResponse] = for {
     userWithIdTuple <- getUserWithIdByUsername(username)
-    (user, userId) = userWithIdTuple
-    profile <- getProfileData(user, userId, Some(session.userId))
+    (followed, followedId) = userWithIdTuple
+    profile <- getProfileData(followed, followedId, Some(followerId))
   } yield ProfileResponse(profile)
 
-  def follow(username: String, session: UserSession): Task[ProfileResponse] = for {
+  def follow(username: String, followerId: Int): Task[ProfileResponse] = for {
     userWithIdTuple <- getUserWithIdByUsername(username)
-    (user, userId) = userWithIdTuple
-    _ <- ZIO.fail(BadRequest(CannotFollowYourselfMessage)).when(userId == session.userId)
-    _ <- usersRepository.follow(userId, session.userId)
-    profile <- getProfileData(user, userId, Some(session.userId))
+    (followed, followedId) = userWithIdTuple
+    _ <- ZIO.fail(BadRequest(CannotFollowYourselfMessage)).when(followedId == followerId)
+    _ <- usersRepository.follow(followedId, followerId)
+    profile <- getProfileData(followed, followedId, Some(followerId))
   } yield ProfileResponse(profile)
 
-  def unfollow(username: String, session: UserSession): Task[ProfileResponse] = for {
+  def unfollow(username: String, followerId: Int): Task[ProfileResponse] = for {
     userWithIdTuple <- getUserWithIdByUsername(username)
-    (user, userId) = userWithIdTuple
-    _ <- usersRepository.unfollow(userId, session.userId)
-    profile <- getProfileData(user, userId, Some(session.userId))
+    (followed, followedId) = userWithIdTuple
+    _ <- usersRepository.unfollow(followedId, followerId)
+    profile <- getProfileData(followed, followedId, Some(followerId))
   } yield ProfileResponse(profile)
 
   private def userWithToken(email: String, username: String, jwt: String): User =
