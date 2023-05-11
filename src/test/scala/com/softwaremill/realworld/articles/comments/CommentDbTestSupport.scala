@@ -8,7 +8,7 @@ import zio.ZIO
 
 object CommentDbTestSupport:
 
-  def prepareDataForCommentsNotFound = {
+  def prepareDataForCommentsNotFound =
     for {
       articleRepo <- ZIO.service[ArticlesRepository]
       userRepo <- ZIO.service[UsersRepository]
@@ -16,9 +16,8 @@ object CommentDbTestSupport:
       userId1 <- userRepo.findUserIdByEmail(exampleUser1.email).someOrFail(s"User with email ${exampleUser1.email} doesn't exist.")
       _ <- articleRepo.addArticleTransaction(exampleArticle2, userId1)
     } yield ()
-  }
 
-  def prepareDataForCommentsList = {
+  def prepareDataForCommentsList =
     for {
       articleRepo <- ZIO.service[ArticlesRepository]
       userRepo <- ZIO.service[UsersRepository]
@@ -35,9 +34,8 @@ object CommentDbTestSupport:
       _ <- commentRepo.addComment(articleId3, userId1, "Thank you so much!")
       _ <- commentRepo.addComment(articleId3, userId4, "Great article!")
     } yield ()
-  }
 
-  def prepareDataForCommentsRemoving = {
+  def prepareDataForCommentsRemoving =
     for {
       articleRepo <- ZIO.service[ArticlesRepository]
       userRepo <- ZIO.service[UsersRepository]
@@ -56,9 +54,8 @@ object CommentDbTestSupport:
       _ <- commentRepo.addComment(articleId4, userId3, "Amazing article!")
       _ <- commentRepo.addComment(articleId4, userId4, "Not bad.")
     } yield ()
-  }
 
-  def prepareDataForCommentsCreation = {
+  def prepareDataForCommentsCreation =
     for {
       articleRepo <- ZIO.service[ArticlesRepository]
       userRepo <- ZIO.service[UsersRepository]
@@ -66,4 +63,3 @@ object CommentDbTestSupport:
       userId4 <- userRepo.findUserIdByEmail(exampleUser4.email).someOrFail(s"User with email ${exampleUser4.email} doesn't exist.")
       _ <- articleRepo.addArticleTransaction(exampleArticle6, userId4)
     } yield ()
-  }

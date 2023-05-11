@@ -8,7 +8,7 @@ import zio.ZIO
 
 object TagDbTestSupport:
 
-  def prepareBasicTagsData = {
+  def prepareBasicTagsData =
     for {
       articleRepo <- ZIO.service[ArticlesRepository]
       userRepo <- ZIO.service[UsersRepository]
@@ -19,4 +19,3 @@ object TagDbTestSupport:
       _ <- articleRepo.addArticleTransaction(exampleArticle1, userId1)
       _ <- articleRepo.addArticleTransaction(exampleArticle2, userId2)
     } yield ()
-  }
