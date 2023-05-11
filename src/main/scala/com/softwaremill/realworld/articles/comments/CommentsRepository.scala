@@ -103,16 +103,15 @@ class CommentsRepository(quill: Quill.Sqlite[SnakeCase]):
       )
     )
 
-  private def buildCommentQuery(crq: Quoted[Query[CommentRow]]) = {
+  private def buildCommentQuery(crq: Quoted[Query[CommentRow]]) =
     quote {
       for {
         cr <- crq
         pr <- queryProfile.join(ar => ar.userId == cr.authorId)
       } yield CommentQueryBuildSupport(commentRow = cr, profileRow = pr, isFollowing = false)
     }
-  }
 
-  private def buildCommentQueryWithFollowing(crq: Quoted[Query[CommentRow]], viewerId: Int) = {
+  private def buildCommentQueryWithFollowing(crq: Quoted[Query[CommentRow]], viewerId: Int) =
     quote {
       for {
         cs <- buildCommentQuery(crq)
@@ -122,7 +121,6 @@ class CommentsRepository(quill: Quill.Sqlite[SnakeCase]):
           .nonEmpty
       } yield CommentQueryBuildSupport(cs.commentRow, cs.profileRow, isFollowing)
     }
-  }
 
 object CommentsRepository:
   val live: ZLayer[Quill.Sqlite[SnakeCase], Nothing, CommentsRepository] =

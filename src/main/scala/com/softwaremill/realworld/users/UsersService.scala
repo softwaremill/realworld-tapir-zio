@@ -2,7 +2,7 @@ package com.softwaremill.realworld.users
 
 import com.softwaremill.realworld.auth.AuthService
 import com.softwaremill.realworld.common.Exceptions.{AlreadyInUse, BadRequest, NotFound, Unauthorized}
-import com.softwaremill.realworld.common.{Exceptions, Pagination}
+import com.softwaremill.realworld.common.{Exceptions, Pagination, UserSession}
 import com.softwaremill.realworld.users.UsersService.*
 import com.softwaremill.realworld.users.api.*
 import zio.{Console, IO, Task, ZIO, ZLayer}
@@ -12,9 +12,9 @@ import javax.sql.DataSource
 
 class UsersService(authService: AuthService, usersRepository: UsersRepository):
 
-  def get(email: String): IO[Exception, User] = usersRepository
-    .findUserByEmail(email)
-    .someOrFail(NotFound(UserWithEmailNotFoundMessage(email)))
+  def get(session: UserSession): IO[Exception, User] = usersRepository
+    .findUserByEmail(session.userEmail)
+    .someOrFail(NotFound(UserWithEmailNotFoundMessage(session.userEmail)))
 
   // TODO username should also be checked (in database is unique)
   def register(user: UserRegisterData): IO[Throwable, UserResponse] = {
@@ -52,47 +52,43 @@ class UsersService(authService: AuthService, usersRepository: UsersRepository):
     } yield userWithPassword.user.copy(token = Some(jwt))
   }
 
-  def update(updateData: UserUpdateData, email: String): IO[Throwable, User] =
-    for {
-      oldUser <- usersRepository
-        .findUserWithPasswordByEmail(email)
-        .someOrFail(NotFound(UserWithEmailNotFoundMessage(email)))
-      password <- updateData.password
-        .map(newPassword => authService.encryptPassword(newPassword))
-        .getOrElse(ZIO.succeed(oldUser.hashedPassword))
-      updatedUser <- usersRepository
-        .updateByEmail(
-          updateData.update(oldUser.copy(hashedPassword = password)),
-          email
-        )
-        .someOrFail(NotFound(UserWithEmailNotFoundMessage(email)))
-    } yield updatedUser
+  def update(updateData: UserUpdateData, session: UserSession): IO[Throwable, User] = for {
+    oldUser <- usersRepository
+      .findUserWithPasswordByEmail(session.userEmail)
+      .someOrFail(NotFound(UserWithEmailNotFoundMessage(session.userEmail)))
+    password <- updateData.password
+      .map(newPassword => authService.encryptPassword(newPassword))
+      .getOrElse(ZIO.succeed(oldUser.hashedPassword))
+    updatedUser <- usersRepository
+      .updateByEmail(
+        updateData.update(oldUser.copy(hashedPassword = password)),
+        session.userEmail
+      )
+      .someOrFail(NotFound(UserWithEmailNotFoundMessage(session.userEmail)))
+  } yield updatedUser
 
-  def getProfile(username: String, viewerEmail: String): Task[ProfileResponse] = for {
+  def getProfile(username: String, session: UserSession): Task[ProfileResponse] = for {
     userWithIdTuple <- getUserWithIdByUsername(username)
     (user, userId) = userWithIdTuple
-    viewerId <- getFollowerIdByEmail(viewerEmail)
-    profile <- getProfileData(user, userId, Some(viewerId))
+    profile <- getProfileData(user, userId, Some(session.userId))
   } yield ProfileResponse(profile)
 
-  def follow(username: String, followerEmail: String): Task[ProfileResponse] = for {
+  def follow(username: String, session: UserSession): Task[ProfileResponse] = for {
     userWithIdTuple <- getUserWithIdByUsername(username)
     (user, userId) = userWithIdTuple
-    followerId <- getFollowerIdByEmail(followerEmail)
-    _ <- ZIO.fail(BadRequest(CannotFollowYourselfMessage)).when(userId == followerId)
-    _ <- usersRepository.follow(userId, followerId)
-    profile <- getProfileData(user, userId, Some(followerId))
+    _ <- ZIO.fail(BadRequest(CannotFollowYourselfMessage)).when(userId == session.userId)
+    _ <- usersRepository.follow(userId, session.userId)
+    profile <- getProfileData(user, userId, Some(session.userId))
   } yield ProfileResponse(profile)
 
-  def unfollow(username: String, followerEmail: String): Task[ProfileResponse] = for {
+  def unfollow(username: String, session: UserSession): Task[ProfileResponse] = for {
     userWithIdTuple <- getUserWithIdByUsername(username)
     (user, userId) = userWithIdTuple
-    followerId <- getFollowerIdByEmail(followerEmail)
-    _ <- usersRepository.unfollow(userId, followerId)
-    profile <- getProfileData(user, userId, Some(followerId))
+    _ <- usersRepository.unfollow(userId, session.userId)
+    profile <- getProfileData(user, userId, Some(session.userId))
   } yield ProfileResponse(profile)
 
-  private def userWithToken(email: String, username: String, jwt: String): User = {
+  private def userWithToken(email: String, username: String, jwt: String): User =
     User(
       email,
       Some(jwt),
@@ -100,14 +96,10 @@ class UsersService(authService: AuthService, usersRepository: UsersRepository):
       Option.empty[String],
       Option.empty[String]
     )
-  }
 
   private def getUserWithIdByUsername(username: String): Task[(User, Int)] = usersRepository
     .findUserWithIdByUsername(username)
     .someOrFail(NotFound(UserWithUsernameNotFoundMessage(username)))
-
-  private def getFollowerIdByEmail(email: String): Task[Int] =
-    usersRepository.findUserIdByEmail(email).someOrFail(NotFound(UserWithEmailNotFoundMessage(email)))
 
   private def getProfileData(user: User, userId: Int, asSeenByUserWithIdOpt: Option[Int]): Task[Profile] =
     asSeenByUserWithIdOpt match

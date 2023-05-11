@@ -39,7 +39,7 @@ class UsersServerEndpoints(usersService: UsersService, userEndpoints: UsersEndpo
     .serverLogic(session =>
       _ =>
         usersService
-          .get(session.userEmail)
+          .get(session)
           .logError
           .mapError {
             case e: Exceptions.NotFound => NotFound(e.message)
@@ -52,7 +52,7 @@ class UsersServerEndpoints(usersService: UsersService, userEndpoints: UsersEndpo
     .serverLogic(session =>
       data =>
         usersService
-          .update(data.user, session.userEmail)
+          .update(data.user, session)
           .logError
           .pipe(defaultErrorsMappings)
           .map(UserResponse.apply)
@@ -61,21 +61,21 @@ class UsersServerEndpoints(usersService: UsersService, userEndpoints: UsersEndpo
   val getProfileServerEndpoint: ZServerEndpoint[Any, Any] = userEndpoints.getProfileEndpoint
     .serverLogic { session => username =>
       usersService
-        .getProfile(username, session.userEmail)
+        .getProfile(username, session)
         .pipe(defaultErrorsMappings)
     }
 
   val followUserServerEndpoint: ZServerEndpoint[Any, Any] = userEndpoints.followUserEndpoint
     .serverLogic { session => username =>
       usersService
-        .follow(username, session.userEmail)
+        .follow(username, session)
         .pipe(defaultErrorsMappings)
     }
 
   val unfollowUserServerEndpoint: ZServerEndpoint[Any, Any] = userEndpoints.unfollowUserEndpoint
     .serverLogic { session => username =>
       usersService
-        .unfollow(username, session.userEmail)
+        .unfollow(username, session)
         .pipe(defaultErrorsMappings)
     }
 

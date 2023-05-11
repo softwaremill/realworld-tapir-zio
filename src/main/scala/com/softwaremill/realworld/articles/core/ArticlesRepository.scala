@@ -212,7 +212,7 @@ class ArticlesRepository(quill: Quill.Sqlite[SnakeCase]):
       author = ArticleAuthor(as.profileRow.username, Option(as.profileRow.bio), Option(as.profileRow.image), following = as.isFollowing)
     )
 
-  private def buildArticleQuery(arq: Quoted[Query[ArticleRow]]) = {
+  private def buildArticleQuery(arq: Quoted[Query[ArticleRow]]) =
     quote {
       for {
         ar <- arq
@@ -232,7 +232,6 @@ class ArticlesRepository(quill: Quill.Sqlite[SnakeCase]):
         isFollowing = false
       )
     }
-  }
 
   private def buildArticleQueryWithFavoriteAndFollowing(arq: Quoted[Query[ArticleRow]], viewerData: (Int, String)) = {
     val (viewerId, viewerEmail) = viewerData
