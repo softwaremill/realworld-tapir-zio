@@ -1,14 +1,12 @@
 package com.softwaremill.realworld.articles.comments
 
-import com.softwaremill.realworld.articles.core.{ArticleRow, ArticlesRepository}
+import com.softwaremill.realworld.articles.core.{ArticleFavoriteRow, ArticleRow, ArticlesRepository, FollowerRow}
 import io.getquill.*
 import io.getquill.jdbczio.*
 import zio.{Task, ZLayer}
 
 import java.time.Instant
 
-case class CommentRow(commentId: Int, articleId: Int, createdAt: Instant, updatedAt: Instant, authorId: Int, body: String)
-case class ProfileRow(userId: Int, username: String, bio: Option[String], image: Option[String])
 case class ArticleRow(
     articleId: Int,
     slug: String,
@@ -19,13 +17,17 @@ case class ArticleRow(
     updatedAt: Instant,
     authorId: Int
 )
+case class CommentRow(commentId: Int, articleId: Int, createdAt: Instant, updatedAt: Instant, authorId: Int, body: String)
+case class FollowerRow(userId: Int, followerId: Int)
+case class ProfileRow(userId: Int, username: String, bio: Option[String], image: Option[String])
 
 class CommentsRepository(quill: Quill.Sqlite[SnakeCase]):
   import quill.*
 
   private inline def queryArticle = quote(querySchema[ArticleRow](entity = "articles"))
-  private inline def queryProfile = quote(querySchema[ProfileRow](entity = "users"))
   private inline def queryComment = quote(querySchema[CommentRow](entity = "comments_articles"))
+  private inline def queryFollower = quote(querySchema[FollowerRow](entity = "followers"))
+  private inline def queryProfile = quote(querySchema[ProfileRow](entity = "users"))
 
   def addComment(articleId: Int, authorId: Int, comment: String): Task[Index] = {
     val now = Instant.now()
@@ -52,54 +54,72 @@ class CommentsRepository(quill: Quill.Sqlite[SnakeCase]):
     run(
       for {
         cr <- queryComment if cr.commentId == lift(commentId)
-        prOpt <- queryProfile.leftJoin(pr => pr.userId == cr.authorId)
-        arOpt <- queryArticle.leftJoin(ar => cr.articleId == ar.articleId)
-      } yield {
-        for {
-          prIdOpt <- prOpt.map(_.userId)
-          arIdOpt <- arOpt.map(_.articleId)
-        } yield (prIdOpt, arIdOpt)
-      }
-    )
-      .map(_.flatten.headOption)
-
-  def findComment(commentId: Int): Task[Option[Comment]] =
-    run(
-      for {
-        cr <- queryComment if cr.commentId == lift(commentId)
-        ar <- queryProfile.leftJoin(ar => ar.userId == cr.authorId)
-      } yield (cr, ar)
+        pr <- queryProfile.join(pr => pr.userId == cr.authorId)
+        ar <- queryArticle.join(ar => cr.articleId == ar.articleId)
+      } yield (pr.userId, ar.articleId)
     )
       .map(_.headOption)
-      .map(_.flatMap(comment))
 
-  def findComments(articleId: Int): Task[List[Comment]] =
-    run(
-      for {
-        cr <- queryComment if cr.articleId == lift(articleId)
-        ar <- queryProfile.leftJoin(ar => ar.userId == cr.authorId)
-      } yield (cr, ar)
-    )
-      .map(_.flatMap(comment))
+  def findComment(commentId: Int, viewerId: Int): Task[Option[Comment]] = {
+    val commentRow: Quoted[Query[CommentRow]] = quote {
+      queryComment.filter(cr => cr.commentId == lift(commentId))
+    }
 
-  private def comment(tuple: (CommentRow, Option[ProfileRow])): Option[Comment] = {
-    val (cr, arOpt) = tuple
+    val commentQuery = buildCommentQueryWithFollowing(commentRow, viewerId)
 
-    arOpt.map(ar =>
-      Comment(
-        id = cr.commentId,
-        createdAt = cr.createdAt,
-        updatedAt = cr.updatedAt,
-        body = cr.body,
-        author = CommentAuthor(
-          username = ar.username,
-          bio = ar.bio,
-          image = ar.image,
-          // TODO implement "following"
-          following = false
-        )
+    run(commentQuery)
+      .map(_.headOption)
+      .map(_.map(comment))
+  }
+
+  def findComments(articleId: Int, viewerIdOpt: Option[Int]): Task[List[Comment]] = {
+    val commentRow: Quoted[Query[CommentRow]] = quote {
+      queryComment.filter(cr => cr.articleId == lift(articleId))
+    }
+
+    val commentQuery = viewerIdOpt match
+      case Some(viewerId) => buildCommentQueryWithFollowing(commentRow, viewerId)
+      case None           => buildCommentQuery(commentRow)
+
+    run(commentQuery).map(_.map(comment))
+  }
+
+  private def comment(tuple: (CommentRow, ProfileRow, Boolean)): Comment = {
+    val (cr, pr, isFollowing) = tuple
+
+    Comment(
+      id = cr.commentId,
+      createdAt = cr.createdAt,
+      updatedAt = cr.updatedAt,
+      body = cr.body,
+      author = CommentAuthor(
+        username = pr.username,
+        bio = pr.bio,
+        image = pr.image,
+        following = isFollowing
       )
     )
+  }
+
+  private def buildCommentQuery(crq: Quoted[Query[CommentRow]]) = {
+    quote {
+      for {
+        cr <- crq
+        pr <- queryProfile.join(ar => ar.userId == cr.authorId)
+      } yield (cr, pr, false)
+    }
+  }
+
+  private def buildCommentQueryWithFollowing(crq: Quoted[Query[CommentRow]], viewerId: Int) = {
+    quote {
+      for {
+        tuple <- buildCommentQuery(crq)
+        isFollowing = queryFollower
+          .filter(f => (f.userId == tuple._2.userId) && (f.followerId == lift(viewerId)))
+          .map(_ => 1)
+          .nonEmpty
+      } yield (tuple._1, tuple._2, isFollowing)
+    }
   }
 
 object CommentsRepository:
