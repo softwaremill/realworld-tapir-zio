@@ -25,7 +25,7 @@ class ArticlesServerEndpoints(articlesEndpoints: ArticlesEndpoints, articlesServ
     .serverLogic(sessionOpt =>
       (filters, pagination) =>
         articlesService
-          .list(filters, pagination, sessionOpt.map(_.email))
+          .list(filters, pagination, sessionOpt.map(_.userEmail))
           .map(articles => ArticlesListResponse(articles = articles, articlesCount = articles.size))
           .logError
           .pipe(defaultErrorsMappings)
@@ -35,7 +35,7 @@ class ArticlesServerEndpoints(articlesEndpoints: ArticlesEndpoints, articlesServ
     .serverLogic(session =>
       pagination =>
         articlesService
-          .listArticlesByFollowedUsers(pagination, session.email)
+          .listArticlesByFollowedUsers(pagination, session.userEmail)
           .map(articles => ArticlesListResponse(articles = articles, articlesCount = articles.size))
           .logError
           .pipe(defaultErrorsMappings)
@@ -45,7 +45,7 @@ class ArticlesServerEndpoints(articlesEndpoints: ArticlesEndpoints, articlesServ
     .serverLogic(session =>
       slug =>
         articlesService
-          .findBySlug(slug, session.email)
+          .findBySlug(slug, session.userEmail)
           .logError
           .pipe(defaultErrorsMappings)
           .map(ArticleResponse.apply)
@@ -55,7 +55,7 @@ class ArticlesServerEndpoints(articlesEndpoints: ArticlesEndpoints, articlesServ
     .serverLogic(session =>
       data =>
         articlesService
-          .create(data.article, session.email)
+          .create(data.article, session.userEmail)
           .logError
           .pipe(defaultErrorsMappings)
           .map(ArticleResponse.apply)
@@ -65,7 +65,7 @@ class ArticlesServerEndpoints(articlesEndpoints: ArticlesEndpoints, articlesServ
     .serverLogic(session =>
       slug =>
         articlesService
-          .delete(slug, session.email)
+          .delete(slug, session.userEmail)
           .logError
           .pipe(defaultErrorsMappings)
     )
@@ -74,7 +74,7 @@ class ArticlesServerEndpoints(articlesEndpoints: ArticlesEndpoints, articlesServ
     .serverLogic(session =>
       data =>
         articlesService
-          .update(articleUpdateData = data._2.article, slug = data._1, email = session.email)
+          .update(articleUpdateData = data._2.article, slug = data._1, email = session.userEmail)
           .logError
           .pipe(defaultErrorsMappings)
           .map(ArticleResponse.apply)
@@ -84,7 +84,7 @@ class ArticlesServerEndpoints(articlesEndpoints: ArticlesEndpoints, articlesServ
     .serverLogic(session =>
       slug =>
         articlesService
-          .makeFavorite(slug, session.email)
+          .makeFavorite(slug, session.userEmail)
           .pipe(defaultErrorsMappings)
           .map(ArticleResponse.apply)
     )
@@ -93,7 +93,7 @@ class ArticlesServerEndpoints(articlesEndpoints: ArticlesEndpoints, articlesServ
     .serverLogic(session =>
       slug =>
         articlesService
-          .removeFavorite(slug, session.email)
+          .removeFavorite(slug, session.userEmail)
           .pipe(defaultErrorsMappings)
           .map(ArticleResponse.apply)
     )

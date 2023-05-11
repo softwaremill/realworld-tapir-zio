@@ -22,21 +22,21 @@ class CommentsServerEndpoints(commentsService: CommentsService, commentsEndpoint
     .serverLogic(session =>
       case (slug, CommentCreateRequest(comment)) =>
         commentsService
-          .addComment(slug, session.email, comment.body)
+          .addComment(slug, session, comment.body)
           .pipe(defaultErrorsMappings)
           .map(CommentResponse.apply)
     )
 
   val deleteCommentServerEndpoint: ZServerEndpoint[Any, Any] = commentsEndpoints.deleteCommentEndpoint
     .serverLogic(session =>
-      case (slug, commentId) => commentsService.deleteComment(slug, session.email, commentId).pipe(defaultErrorsMappings)
+      case (slug, commentId) => commentsService.deleteComment(slug, session, commentId).pipe(defaultErrorsMappings)
     )
 
   val getCommentsFromArticleServerEndpoint: ZServerEndpoint[Any, Any] = commentsEndpoints.getCommentsFromArticleEndpoint
     .serverLogic(sessionOpt =>
       slug =>
         commentsService
-          .getCommentsFromArticle(slug, sessionOpt.map(_.email))
+          .getCommentsFromArticle(slug, sessionOpt)
           .map(foundComments => CommentsListResponse(comments = foundComments))
           .pipe(defaultErrorsMappings)
     )
