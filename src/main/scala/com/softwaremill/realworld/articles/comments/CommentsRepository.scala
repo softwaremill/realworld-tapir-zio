@@ -20,6 +20,11 @@ case class ArticleRow(
 case class CommentRow(commentId: Int, articleId: Int, createdAt: Instant, updatedAt: Instant, authorId: Int, body: String)
 case class FollowerRow(userId: Int, followerId: Int)
 case class ProfileRow(userId: Int, username: String, bio: Option[String], image: Option[String])
+case class CommentQueryBuildSupport(
+    commentRow: CommentRow,
+    profileRow: ProfileRow,
+    isFollowing: Boolean
+)
 
 class CommentsRepository(quill: Quill.Sqlite[SnakeCase]):
   import quill.*
@@ -84,41 +89,38 @@ class CommentsRepository(quill: Quill.Sqlite[SnakeCase]):
     run(commentQuery).map(_.map(comment))
   }
 
-  private def comment(tuple: (CommentRow, ProfileRow, Boolean)): Comment = {
-    val (cr, pr, isFollowing) = tuple
-
+  private def comment(cs: CommentQueryBuildSupport): Comment =
     Comment(
-      id = cr.commentId,
-      createdAt = cr.createdAt,
-      updatedAt = cr.updatedAt,
-      body = cr.body,
+      id = cs.commentRow.commentId,
+      createdAt = cs.commentRow.createdAt,
+      updatedAt = cs.commentRow.updatedAt,
+      body = cs.commentRow.body,
       author = CommentAuthor(
-        username = pr.username,
-        bio = pr.bio,
-        image = pr.image,
-        following = isFollowing
+        username = cs.profileRow.username,
+        bio = cs.profileRow.bio,
+        image = cs.profileRow.image,
+        following = cs.isFollowing
       )
     )
-  }
 
   private def buildCommentQuery(crq: Quoted[Query[CommentRow]]) = {
     quote {
       for {
         cr <- crq
         pr <- queryProfile.join(ar => ar.userId == cr.authorId)
-      } yield (cr, pr, false)
+      } yield CommentQueryBuildSupport(commentRow = cr, profileRow = pr, isFollowing = false)
     }
   }
 
   private def buildCommentQueryWithFollowing(crq: Quoted[Query[CommentRow]], viewerId: Int) = {
     quote {
       for {
-        tuple <- buildCommentQuery(crq)
+        cs <- buildCommentQuery(crq)
         isFollowing = queryFollower
-          .filter(f => (f.userId == tuple._2.userId) && (f.followerId == lift(viewerId)))
+          .filter(f => (f.userId == cs.profileRow.userId) && (f.followerId == lift(viewerId)))
           .map(_ => 1)
           .nonEmpty
-      } yield (tuple._1, tuple._2, isFollowing)
+      } yield CommentQueryBuildSupport(cs.commentRow, cs.profileRow, isFollowing)
     }
   }
 

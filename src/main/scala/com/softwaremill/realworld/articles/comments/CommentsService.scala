@@ -30,14 +30,13 @@ class CommentsService(
     _ <- commentsRepository.deleteComment(commentId)
   } yield ()
 
-  def getCommentsFromArticle(slug: String, sessionOpt: Option[UserSession]): Task[List[Comment]] = {
+  def getCommentsFromArticle(slug: String, sessionOpt: Option[UserSession]): Task[List[Comment]] =
     articleIdBySlug(slug).flatMap(articleId =>
       sessionOpt match {
         case Some(session) => commentsRepository.findComments(articleId, Some(session.userId))
         case None          => commentsRepository.findComments(articleId, None)
       }
     )
-  }
 
   private def articleIdBySlug(slug: String): Task[Int] =
     articlesRepository.findArticleIdBySlug(slug).someOrFail(NotFound(ArticleNotFoundMessage(slug)))
