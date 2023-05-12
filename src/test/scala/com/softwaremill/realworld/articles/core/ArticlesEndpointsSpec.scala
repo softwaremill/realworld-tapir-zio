@@ -10,7 +10,7 @@ import com.softwaremill.realworld.auth.AuthService
 import com.softwaremill.realworld.common.{BaseEndpoints, Configuration}
 import com.softwaremill.realworld.users.api.UserRegisterData
 import com.softwaremill.realworld.users.{UsersRepository, UsersService}
-import com.softwaremill.realworld.utils.DbData.exampleArticle2
+import com.softwaremill.realworld.utils.DbData.{exampleArticle2, exampleUser2}
 import com.softwaremill.realworld.utils.TestUtils.*
 import sttp.client3.UriContext
 import sttp.model.Uri
@@ -209,7 +209,7 @@ object ArticlesEndpointsSpec extends ZIOSpecDefault:
       test("positive article deletion")(
         for {
           _ <- prepareDataForArticleDeletion
-          authHeader <- getValidAuthorizationHeader()
+          authHeader <- getValidAuthorizationHeader(exampleUser2.email)
           _ <- callDeleteArticle(
             authorizationHeader = authHeader,
             uri = uri"http://test.com/api/articles/how-to-train-your-dragon-3"
@@ -266,5 +266,6 @@ object ArticlesEndpointsSpec extends ZIOSpecDefault:
     ArticlesService.live,
     ArticlesEndpoints.live,
     ArticlesServerEndpoints.live,
+    CommentsRepository.live,
     testDbLayerWithEmptyDb
   )

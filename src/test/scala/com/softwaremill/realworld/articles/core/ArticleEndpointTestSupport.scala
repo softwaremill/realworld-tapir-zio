@@ -522,7 +522,7 @@ object ArticleEndpointTestSupport:
       articlesListOrError <- callGetListArticles(authorizationHeaderOpt, uri)
     } yield zio.test.assert(articlesListOrError.toOption) {
       isSome(
-        (hasField("articlesCount", _.articlesCount, equalTo(2)): Assertion[ArticlesListResponse]) &&
+        (hasField("articlesCount", _.articlesCount, equalTo(1)): Assertion[ArticlesListResponse]) &&
           hasField(
             "articles",
             _.articles,

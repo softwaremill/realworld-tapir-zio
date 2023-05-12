@@ -175,7 +175,7 @@ class ArticlesRepository(quill: Quill.Sqlite[SnakeCase]):
   }
 
   def deleteArticle(articleId: Int): Task[Long] = {
-    val deleteComments: DynamicDelete[CommentRow] = queryComment.dynamic.filter(_.commentId == lift(articleId)).delete
+    val deleteComments: DynamicDelete[CommentRow] = queryComment.dynamic.filter(_.articleId == lift(articleId)).delete
     val deleteFavorites: DynamicDelete[ArticleFavoriteRow] = queryFavoriteArticle.dynamic.filter(_.articleId == lift(articleId)).delete
     val deleteTags: DynamicDelete[ArticleTagRow] = queryTagArticle.dynamic.filter(_.articleId == lift(articleId)).delete
     val deleteArticle: DynamicDelete[ArticleRow] = queryArticle.dynamic.filter(_.articleId == lift(articleId)).delete

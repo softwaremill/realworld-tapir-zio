@@ -1,5 +1,6 @@
 package com.softwaremill.realworld.articles.core
 
+import com.softwaremill.realworld.articles.comments.CommentsRepository
 import com.softwaremill.realworld.articles.core.ArticlesRepository
 import com.softwaremill.realworld.articles.tags.TagsRepository
 import com.softwaremill.realworld.users.UsersRepository
@@ -92,11 +93,17 @@ object ArticleDbTestSupport:
     for {
       articleRepo <- ZIO.service[ArticlesRepository]
       userRepo <- ZIO.service[UsersRepository]
+      commentRepo <- ZIO.service[CommentsRepository]
       _ <- userRepo.add(exampleUser1)
+      _ <- userRepo.add(exampleUser2)
       userId1 <- userRepo.findUserIdByEmail(exampleUser1.email).someOrFail(s"User with email ${exampleUser1.email} doesn't exist.")
+      userId2 <- userRepo.findUserIdByEmail(exampleUser2.email).someOrFail(s"User with email ${exampleUser2.email} doesn't exist.")
       _ <- articleRepo.addArticle(exampleArticle1, userId1)
-      _ <- articleRepo.addArticle(exampleArticle2, userId1)
-      _ <- articleRepo.addArticle(exampleArticle3, userId1)
+      _ <- articleRepo.addArticle(exampleArticle3, userId2)
+      articleId1 <- articleRepo.findArticleIdBySlug(exampleArticle1Slug).someOrFail(s"Article $exampleArticle1Slug doesn't exist")
+      _ <- commentRepo.addComment(articleId1, userId2, "Thank you so much!")
+      _ <- commentRepo.addComment(articleId1, userId2, "Amazing article!")
+      _ <- commentRepo.addComment(articleId1, userId2, "Not bad.")
     } yield ()
 
   def prepareDataForArticleUpdating =

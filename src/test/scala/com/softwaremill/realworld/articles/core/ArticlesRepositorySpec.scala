@@ -1,10 +1,12 @@
 package com.softwaremill.realworld.articles.core
 
+import com.softwaremill.realworld.articles.comments.CommentsRepository
 import com.softwaremill.realworld.articles.core.ArticleDbTestSupport.*
 import com.softwaremill.realworld.articles.core.ArticleRepositoryTestSupport.*
 import com.softwaremill.realworld.articles.core.ArticlesServerEndpoints.{*, given}
 import com.softwaremill.realworld.articles.core.api.ArticleCreateData
 import com.softwaremill.realworld.articles.core.{ArticlesFilters, ArticlesRepository}
+import com.softwaremill.realworld.articles.tags.TagsRepository
 import com.softwaremill.realworld.common.Pagination
 import com.softwaremill.realworld.users.UsersRepository
 import com.softwaremill.realworld.utils.DbData.{exampleUser1, exampleUser2}
@@ -94,10 +96,10 @@ object ArticlesRepositorySpec extends ZIOSpecDefault:
         } yield result
       }
     ),
-    suite("create and update article")(
-      test("create article") {
+    suite("create article")(
+      test("positive create article") {
         for {
-          _ <- prepareDataForListingArticles
+          _ <- prepareDataForArticleCreation
           result <- createAndCheckArticle(
             slug = "new-article-under-test",
             articleCreateData = ArticleCreateData(
@@ -105,6 +107,22 @@ object ArticlesRepositorySpec extends ZIOSpecDefault:
               description = "What a nice day!",
               body = "Writing scala code is quite challenging pleasure",
               tagList = None
+            ),
+            userEmail = exampleUser1.email,
+            viewerData = (1, exampleUser1.email)
+          )
+        } yield result
+      },
+      test("create article with not proper tag list - check if rollback returns the previous state") {
+        for {
+          _ <- prepareDataForArticleCreation
+          result <- checkIfRollbackWorksCorrectlyInAddArticle(
+            slug = "new-article-under-test",
+            articleCreateData = ArticleCreateData(
+              title = "New-article-under-test",
+              description = "What a nice day!",
+              body = "Writing scala code is quite challenging pleasure",
+              tagList = Some(List(null))
             ),
             userEmail = exampleUser1.email,
             viewerData = (1, exampleUser1.email)
@@ -124,8 +142,10 @@ object ArticlesRepositorySpec extends ZIOSpecDefault:
             userEmail = exampleUser1.email
           )
         } yield result
-      },
-      test("update article") {
+      }
+    ),
+    suite("update article")(
+      test("positive updating article") {
         for {
           _ <- prepareDataForListingArticles
           result <- updateAndCheckArticle(
@@ -151,9 +171,22 @@ object ArticlesRepositorySpec extends ZIOSpecDefault:
           )
         } yield result
       }
+    ),
+    suite("delete article")(
+      test("positive deleting article") {
+        for {
+          _ <- prepareDataForArticleDeletion
+          result <- deleteArticle(
+            slug = "how-to-train-your-dragon",
+            viewerData = (1, exampleUser1.email)
+          )
+        } yield result
+      }
     )
   ).provide(
     ArticlesRepository.live,
     UsersRepository.live,
+    CommentsRepository.live,
+    TagsRepository.live,
     testDbLayerWithEmptyDb
   )
