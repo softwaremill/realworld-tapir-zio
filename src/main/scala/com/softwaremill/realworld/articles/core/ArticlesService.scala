@@ -49,7 +49,7 @@ class ArticlesService(
   def create(createData: ArticleCreateData, email: String): Task[Article] =
     for {
       userId <- userIdByEmail(email)
-      _ <- articlesRepository.addArticleTransaction(createData, userId)
+      _ <- articlesRepository.addArticle(createData, userId)
       articleData <- findBySlug(articlesRepository.convertToSlug(createData.title), (userId, email))
     } yield articleData
 
@@ -60,7 +60,7 @@ class ArticlesService(
       .someOrFail(NotFound(ArticleAndAuthorIdsNotFoundMessage(slug)))
     (articleId, authorId) = tupleWithIds
     _ <- ZIO.fail(Unauthorized(ArticleCannotBeRemovedMessage)).when(userId != authorId)
-    _ <- articlesRepository.deleteArticleTransaction(articleId)
+    _ <- articlesRepository.deleteArticle(articleId)
   } yield ()
 
   def update(articleUpdateData: ArticleUpdateData, slug: String, email: String): Task[Article] =

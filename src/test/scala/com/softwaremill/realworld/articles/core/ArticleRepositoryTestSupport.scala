@@ -48,7 +48,7 @@ object ArticleRepositoryTestSupport:
   def callCreateArticle(articleCreateData: ArticleCreateData, userId: Int): ZIO[ArticlesRepository, Throwable, Unit] = {
     for {
       repo <- ZIO.service[ArticlesRepository]
-      result <- repo.addArticleTransaction(articleCreateData, userId)
+      result <- repo.addArticle(articleCreateData, userId)
     } yield result
   }
 

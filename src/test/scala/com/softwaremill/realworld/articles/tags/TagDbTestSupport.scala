@@ -16,6 +16,6 @@ object TagDbTestSupport:
       _ <- userRepo.add(exampleUser2)
       userId1 <- userRepo.findUserIdByEmail(exampleUser1.email).someOrFail(s"User with email ${exampleUser1.email} doesn't exist.")
       userId2 <- userRepo.findUserIdByEmail(exampleUser2.email).someOrFail(s"User with email ${exampleUser2.email} doesn't exist.")
-      _ <- articleRepo.addArticleTransaction(exampleArticle1, userId1)
-      _ <- articleRepo.addArticleTransaction(exampleArticle2, userId2)
+      _ <- articleRepo.addArticle(exampleArticle1, userId1)
+      _ <- articleRepo.addArticle(exampleArticle2, userId2)
     } yield ()

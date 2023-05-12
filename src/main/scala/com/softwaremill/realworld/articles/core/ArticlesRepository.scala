@@ -143,11 +143,11 @@ class ArticlesRepository(quill: Quill.Sqlite[SnakeCase]):
           .map(ar => (ar.articleId, ar.authorId))
       )
 
-  def addArticleTransaction(createData: ArticleCreateData, userId: Int): Task[Unit] = {
+  def addArticle(createData: ArticleCreateData, userId: Int): Task[Unit] = {
     val now = Instant.now()
     val tags = createData.tagList.getOrElse(Nil)
 
-    val addArticle = quote {
+    val addArticle: Quoted[ActionReturning[ArticleRow, Index]] = quote {
       queryArticle
         .insert(
           _.slug -> lift(convertToSlug(createData.title)),
@@ -161,7 +161,7 @@ class ArticlesRepository(quill: Quill.Sqlite[SnakeCase]):
         .returning[Int](_.articleId)
     }
 
-    def addTags(tags: List[String], articleId: Int) =
+    def addTags(tags: List[String], articleId: Int): Quoted[BatchAction[Insert[ArticleTagRow]]] =
       quote {
         liftQuery(tags).foreach(tag => queryTagArticle.insertValue(ArticleTagRow(tag, lift(articleId))))
       }
@@ -174,16 +174,16 @@ class ArticlesRepository(quill: Quill.Sqlite[SnakeCase]):
     }
   }
 
-  def deleteArticleTransaction(articleId: Int): Task[Long] = {
-    val deleteComments = queryComment.dynamic.filter(_.commentId == lift(articleId)).delete
-    val deleteFavorites = queryFavoriteArticle.dynamic.filter(_.articleId == lift(articleId)).delete
-    val deleteTags = queryTagArticle.dynamic.filter(_.articleId == lift(articleId)).delete
-    val deleteArticle = queryArticle.dynamic.filter(_.articleId == lift(articleId)).delete
+  def deleteArticle(articleId: Int): Task[Long] = {
+    val deleteComments: DynamicDelete[CommentRow] = queryComment.dynamic.filter(_.commentId == lift(articleId)).delete
+    val deleteFavorites: DynamicDelete[ArticleFavoriteRow] = queryFavoriteArticle.dynamic.filter(_.articleId == lift(articleId)).delete
+    val deleteTags: DynamicDelete[ArticleTagRow] = queryTagArticle.dynamic.filter(_.articleId == lift(articleId)).delete
+    val deleteArticle: DynamicDelete[ArticleRow] = queryArticle.dynamic.filter(_.articleId == lift(articleId)).delete
 
     transaction {
-      run(deleteComments).unit
-        .flatMap(_ => run(deleteFavorites).unit)
-        .flatMap(_ => run(deleteTags).unit)
+      run(deleteComments)
+        .flatMap(_ => run(deleteFavorites))
+        .flatMap(_ => run(deleteTags))
         .flatMap(_ => run(deleteArticle))
     }
   }
