@@ -170,7 +170,7 @@ object UserRepositoryTestSupport:
     }
   }
 
-  def checkIfUserWithPasswordNotFoundByEmail(email: String): ZIO[UsersRepository, Exception, TestResult] = {
+  def checkUserWithPasswordNotFoundByEmail(email: String): ZIO[UsersRepository, Exception, TestResult] = {
     for {
       result <- callFindUserWithPasswordByEmail(email)
     } yield zio.test.assert(result)(
@@ -180,7 +180,7 @@ object UserRepositoryTestSupport:
     )
   }
 
-  def checkIfUserWithPasswordNotFoundById(id: Int): ZIO[UsersRepository, Exception, TestResult] = {
+  def checkUserWithPasswordNotFoundById(id: Int): ZIO[UsersRepository, Exception, TestResult] = {
     for {
       result <- callFindUserWithPasswordById(id)
     } yield zio.test.assert(result)(
