@@ -29,6 +29,7 @@ case class ArticleRow(
     updatedAt: Instant,
     authorId: Int
 )
+case class CommentRow(commentId: Int, articleId: Int, createdAt: Instant, updatedAt: Instant, authorId: Int, body: String)
 case class FollowerRow(userId: Int, followerId: Int)
 case class ProfileRow(userId: Int, username: String, bio: String, image: String)
 case class UserRow(
@@ -52,10 +53,11 @@ class ArticlesRepository(quill: Quill.Sqlite[SnakeCase]):
   import quill.*
 
   private inline def queryArticle = quote(querySchema[ArticleRow](entity = "articles"))
-  private inline def queryTagArticle = quote(querySchema[ArticleTagRow](entity = "tags_articles"))
+  private inline def queryComment = quote(querySchema[CommentRow](entity = "comments_articles"))
   private inline def queryFavoriteArticle = quote(querySchema[ArticleFavoriteRow](entity = "favorites_articles"))
   private inline def queryFollower = quote(querySchema[FollowerRow](entity = "followers"))
   private inline def queryProfile = quote(querySchema[ProfileRow](entity = "users"))
+  private inline def queryTagArticle = quote(querySchema[ArticleTagRow](entity = "tags_articles"))
   private inline def queryUser = quote(querySchema[UserRow](entity = "users"))
   private inline def tagsConcat: Quoted[String => String] = quote { (str: String) =>
     sql"GROUP_CONCAT(($str), '|')".pure.as[String]
@@ -141,17 +143,11 @@ class ArticlesRepository(quill: Quill.Sqlite[SnakeCase]):
           .map(ar => (ar.articleId, ar.authorId))
       )
 
-  def addTag(tag: String, articleId: Int): IO[Exception, Unit] = run(
-    queryTagArticle
-      .insert(
-        _.tag -> lift(tag),
-        _.articleId -> lift(articleId)
-      )
-  ).unit
-
-  def add(createData: ArticleCreateData, userId: Int): Task[Int] = {
+  def addArticle(createData: ArticleCreateData, userId: Int): Task[Unit] = {
     val now = Instant.now()
-    run(
+    val tags = createData.tagList.getOrElse(Nil)
+
+    val addArticle: Quoted[ActionReturning[ArticleRow, Index]] = quote {
       queryArticle
         .insert(
           _.slug -> lift(convertToSlug(createData.title)),
@@ -162,16 +158,35 @@ class ArticlesRepository(quill: Quill.Sqlite[SnakeCase]):
           _.updatedAt -> lift(now),
           _.authorId -> lift(userId)
         )
-        .returning(_.articleId)
-    )
-      .pipe(mapUniqueConstraintViolationError)
+        .returning[Int](_.articleId)
+    }
+
+    def addTags(tags: List[String], articleId: Int): Quoted[BatchAction[Insert[ArticleTagRow]]] =
+      quote {
+        liftQuery(tags).foreach(tag => queryTagArticle.insertValue(ArticleTagRow(tag, lift(articleId))))
+      }
+
+    transaction {
+      run(addArticle)
+        .pipe(mapUniqueConstraintViolationError)
+        .flatMap(articleId => run(addTags(tags, articleId)))
+        .unit
+    }
   }
 
-  def deleteArticle(articleId: Int): Task[Long] =
-    run(queryArticle.filter(_.articleId == lift(articleId)).delete)
+  def deleteArticle(articleId: Int): Task[Long] = {
+    val deleteComments: DynamicDelete[CommentRow] = queryComment.dynamic.filter(_.articleId == lift(articleId)).delete
+    val deleteFavorites: DynamicDelete[ArticleFavoriteRow] = queryFavoriteArticle.dynamic.filter(_.articleId == lift(articleId)).delete
+    val deleteTags: DynamicDelete[ArticleTagRow] = queryTagArticle.dynamic.filter(_.articleId == lift(articleId)).delete
+    val deleteArticle: DynamicDelete[ArticleRow] = queryArticle.dynamic.filter(_.articleId == lift(articleId)).delete
 
-  def deleteFavoritesByArticleId(articleId: Int): Task[Long] =
-    run(queryFavoriteArticle.filter(_.articleId == lift(articleId)).delete)
+    transaction {
+      run(deleteComments)
+        .flatMap(_ => run(deleteFavorites))
+        .flatMap(_ => run(deleteTags))
+        .flatMap(_ => run(deleteArticle))
+    }
+  }
 
   def updateById(updateData: Article, articleId: Int): Task[Unit] = run(
     queryArticle
