@@ -39,6 +39,11 @@ class UsersRepository(quill: Quill.Sqlite[SnakeCase]):
       .map(_.headOption)
       .map(_.map(user))
 
+  def findUserByUsername(username: String): IO[Exception, Option[User]] =
+    run(queryUser.filter(ur => ur.username == lift(username)))
+      .map(_.headOption)
+      .map(_.map(user))
+
   def findUserWithIdByUsername(username: String): IO[Exception, Option[(User, Int)]] =
     run(queryUser.filter(ur => ur.username == lift(username)))
       .map(_.headOption)

@@ -37,6 +37,20 @@ object UsersRepositorySpec extends ZIOSpecDefault:
         } yield result
       }
     ),
+    suite("find user by username")(
+      test("user not found") {
+        for {
+          _ <- prepareBasicUsersData
+          result <- checkUserNotFoundByUsername("notExisting")
+        } yield result
+      },
+      test("user found") {
+        for {
+          _ <- prepareBasicUsersData
+          result <- checkUserFoundByUsername("jake")
+        } yield result
+      }
+    ),
     suite("find user with password by email")(
       test("user with password found") {
         for {

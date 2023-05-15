@@ -16,20 +16,21 @@ class UsersService(authService: AuthService, usersRepository: UsersRepository):
     .findUserById(userId)
     .someOrFail(NotFound(UserWithIdNotFoundMessage(userId)))
 
-  // TODO username should also be checked (in database is unique)
   def register(user: UserRegisterData): IO[Throwable, UserResponse] = {
     val emailClean = user.email.toLowerCase.trim()
     val usernameClean = user.username.trim()
     val passwordClean = user.password.trim()
 
-    def checkUserDoesNotExist(email: String): IO[Exception, Unit] =
+    def checkUserDoesNotExist(email: String, username: String): IO[Exception, Unit] =
       for {
-        maybeUser <- usersRepository.findUserByEmail(email.toLowerCase)
-        _ <- ZIO.fail(AlreadyInUse(UserAlreadyInUseMessage(email))).when(maybeUser.isDefined)
+        maybeUserByEmail <- usersRepository.findUserByEmail(email)
+        maybeUserByUsername <- usersRepository.findUserByUsername(username)
+        _ <- ZIO.fail(AlreadyInUse(UserWithEmailAlreadyInUseMessage(email))).when(maybeUserByEmail.isDefined)
+        _ <- ZIO.fail(AlreadyInUse(UserWithUsernameAlreadyInUseMessage(username))).when(maybeUserByUsername.isDefined)
       } yield ()
 
     for {
-      _ <- checkUserDoesNotExist(emailClean)
+      _ <- checkUserDoesNotExist(emailClean, usernameClean)
       user <- {
         for {
           hashedPassword <- authService.encryptPassword(passwordClean)
@@ -110,7 +111,8 @@ class UsersService(authService: AuthService, usersRepository: UsersRepository):
 object UsersService:
   private val UserWithIdNotFoundMessage: Int => String = (id: Int) => s"User with id $id doesn't exist"
   private val UserWithUsernameNotFoundMessage: String => String = (username: String) => s"User with username $username doesn't exist"
-  private val UserAlreadyInUseMessage: String => String = (email: String) => s"User with email $email already in use"
+  private val UserWithEmailAlreadyInUseMessage: String => String = (email: String) => s"User with email $email already in use"
+  private val UserWithUsernameAlreadyInUseMessage: String => String = (username: String) => s"User with username $username already in use"
   private val CannotFollowYourselfMessage: String = "You can't follow yourself"
 
   val live: ZLayer[AuthService with UsersRepository, Nothing, UsersService] = ZLayer.fromFunction(UsersService(_, _))

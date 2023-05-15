@@ -28,6 +28,13 @@ object UserRepositoryTestSupport:
     } yield result
   }
 
+  def callFindByUsername(username: String): ZIO[UsersRepository, Exception, Option[User]] = {
+    for {
+      repo <- ZIO.service[UsersRepository]
+      result <- repo.findUserByUsername(username)
+    } yield result
+  }
+
   def callFindUserWithPasswordByEmail(email: String): ZIO[UsersRepository, Exception, Option[UserWithPassword]] = {
     for {
       repo <- ZIO.service[UsersRepository]
@@ -76,9 +83,32 @@ object UserRepositoryTestSupport:
     )
   }
 
+  def checkUserNotFoundByUsername(username: String): ZIO[UsersRepository, Exception, TestResult] = {
+    for {
+      result <- callFindByUsername(username)
+    } yield zio.test.assert(result)(
+      Assertion.equalTo(
+        Option.empty
+      )
+    )
+  }
+
   def checkUserFoundByEmail(email: String): ZIO[UsersRepository, Exception, TestResult] = {
     for {
       userOpt <- callFindByEmail(email)
+    } yield zio.test.assert(userOpt)(
+      isSome(
+        (hasField("email", _.email, equalTo("jake@example.com")): Assertion[User]) &&
+          hasField("username", _.username, equalTo("jake")) &&
+          hasField("bio", _.bio, isNone) &&
+          hasField("image", _.image, isNone)
+      )
+    )
+  }
+
+  def checkUserFoundByUsername(username: String): ZIO[UsersRepository, Exception, TestResult] = {
+    for {
+      userOpt <- callFindByUsername(username)
     } yield zio.test.assert(userOpt)(
       isSome(
         (hasField("email", _.email, equalTo("jake@example.com")): Assertion[User]) &&
