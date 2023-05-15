@@ -62,14 +62,25 @@ object UsersEndpointsSpec extends ZIOSpecDefault:
         }
       ),
       suite("user register")(
-        test("return already in use error") {
+        test("return email already in use error") {
           for {
             _ <- prepareBasicUsersData
             authHeader <- getValidAuthorizationHeader()
-            result <- checkIfUserAlreadyExistsErrorOccur(
+            result <- checkIfUserEmailAlreadyExistsErrorOccur(
               authorizationHeader = authHeader,
               uri = uri"http://test.com/api/users",
-              userRegisterData = UserRegisterData(email = "jake@example.com", username = "jake", password = "password")
+              userRegisterData = UserRegisterData(email = "jake@example.com", username = "new_username", password = "password")
+            )
+          } yield result
+        },
+        test("return username already in use error") {
+          for {
+            _ <- prepareBasicUsersData
+            authHeader <- getValidAuthorizationHeader()
+            result <- checkIfUserUsernameAlreadyExistsErrorOccur(
+              authorizationHeader = authHeader,
+              uri = uri"http://test.com/api/users",
+              userRegisterData = UserRegisterData(email = "new_email@example.com", username = "jake", password = "password")
             )
           } yield result
         },
