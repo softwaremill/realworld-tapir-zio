@@ -39,7 +39,7 @@ class ArticlesService(
   def create(createData: ArticleCreateData, userId: Int, userEmail: String): Task[Article] =
     for {
       _ <- articlesRepository.addArticle(createData, userId)
-      articleData <- findBySlug(articlesRepository.convertToSlug(createData.title), (userId, userEmail))
+      articleData <- findBySlug(articlesRepository.convertToSlug(createData.title), userId, userEmail)
     } yield articleData
 
   def delete(slug: String, userId: Int): Task[Unit] = for {

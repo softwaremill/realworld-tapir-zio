@@ -109,7 +109,8 @@ object ArticlesRepositorySpec extends ZIOSpecDefault:
               tagList = None
             ),
             userEmail = exampleUser1.email,
-            viewerData = (1, exampleUser1.email)
+            viewerId = 1,
+            viewerEmail = exampleUser1.email
           )
         } yield result
       },

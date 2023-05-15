@@ -160,13 +160,14 @@ object ArticleRepositoryTestSupport:
       slug: String,
       articleCreateData: ArticleCreateData,
       userEmail: String,
-      viewerData: (Int, String)
+      viewerId: Int,
+      viewerEmail: String
   ): ZIO[ArticlesRepository with UsersRepository, Object, TestResult] = {
 
     for {
       userId <- callFindUserIdByEmail(userEmail).someOrFail(s"User $userEmail doesn't exist")
       articleOrError <- callCreateArticle(articleCreateData, userId).either
-      article <- callFindBySlug(slug, viewerData)
+      article <- callFindBySlug(slug, viewerId, viewerEmail)
     } yield {
       zio.test.assert(articleOrError)(
         isLeft(
@@ -517,20 +518,21 @@ object ArticleRepositoryTestSupport:
 
   def deleteArticle(
       slug: String,
-      viewerData: (Int, String)
+      viewerId: Int,
+      viewerEmail: String
   ): ZIO[ArticlesRepository with UsersRepository with CommentsRepository with TagsRepository, Object, TestResult] = {
 
     for {
       articleId <- callFindArticleIdBySlug(slug).someOrFail(s"Article $slug doesn't exist")
-      commentsBefore <- callFindComments(articleId, Some(viewerData._1))
+      commentsBefore <- callFindComments(articleId, Some(viewerId))
       tagsBefore <- callFindTags()
-      articleBefore <- callFindBySlug(slug, viewerData)
+      articleBefore <- callFindBySlug(slug, viewerId, viewerEmail)
 
       _ <- callDeleteArticle(articleId)
 
-      commentsAfter <- callFindComments(articleId, Some(viewerData._1))
+      commentsAfter <- callFindComments(articleId, Some(viewerId))
       tagsAfter <- callFindTags()
-      articleAfter <- callFindBySlug(slug, viewerData)
+      articleAfter <- callFindBySlug(slug, viewerId, viewerEmail)
     } yield {
       zio.test.assert(commentsBefore)(hasSize(equalTo(3))) &&
       zio.test.assert(tagsBefore)(hasSize(equalTo(2))) &&
