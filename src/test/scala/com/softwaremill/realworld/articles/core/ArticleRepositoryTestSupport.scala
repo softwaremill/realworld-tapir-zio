@@ -25,18 +25,18 @@ object ArticleRepositoryTestSupport:
   def callListArticles(
       filters: ArticlesFilters,
       pagination: Pagination,
-      viewerDataOpt: Option[(Int, String)]
+      viewerIdOpt: Option[Int]
   ): ZIO[ArticlesRepository, SQLException, List[Article]] = {
     for {
       repo <- ZIO.service[ArticlesRepository]
-      result <- repo.list(filters, pagination, viewerDataOpt)
+      result <- repo.list(filters, pagination, viewerIdOpt)
     } yield result
   }
 
-  def callFindBySlug(slug: String, viewerData: (Int, String)): ZIO[ArticlesRepository, SQLException, Option[Article]] = {
+  def callFindBySlug(slug: String, viewerId: Int): ZIO[ArticlesRepository, SQLException, Option[Article]] = {
     for {
       repo <- ZIO.service[ArticlesRepository]
-      result <- repo.findBySlug(slug, viewerData)
+      result <- repo.findBySlug(slug, viewerId)
     } yield result
   }
 
@@ -92,19 +92,19 @@ object ArticleRepositoryTestSupport:
   def checkIfArticleListIsEmpty(
       filters: ArticlesFilters,
       pagination: Pagination,
-      viewerDataOpt: Option[(Int, String)]
+      viewerIdOpt: Option[Int]
   ): ZIO[ArticlesRepository, SQLException, TestResult] = {
     for {
-      result <- callListArticles(filters, pagination, viewerDataOpt)
+      result <- callListArticles(filters, pagination, viewerIdOpt)
     } yield zio.test.assert(result)(isEmpty)
   }
 
   def checkArticleNotFound(
       slug: String,
-      viewerData: (Int, String)
+      viewerId: Int
   ): ZIO[ArticlesRepository, SQLException, TestResult] = {
 
-    assertZIO(callFindBySlug(slug, viewerData))(isNone)
+    assertZIO(callFindBySlug(slug, viewerId))(isNone)
   }
 
   def checkIfArticleAlreadyExistsInCreate(
@@ -128,7 +128,7 @@ object ArticleRepositoryTestSupport:
       updatedTitle: String,
       updatedDescription: String,
       updatedBody: String,
-      viewerData: (Int, String)
+      viewerId: Int
   ): ZIO[ArticlesRepository with UsersRepository, Object, TestResult] = {
 
     assertZIO((for {
@@ -146,7 +146,7 @@ object ArticleRepositoryTestSupport:
         author = null
       )
       _ <- callUpdateArticle(articleUpdateData, articleId)
-      article <- callFindBySlug(articleUpdateData.slug, viewerData)
+      article <- callFindBySlug(articleUpdateData.slug, viewerId)
     } yield article).exit)(
       failsCause(
         containsCause(Cause.fail(AlreadyInUse(message = "Article name already exists")))
@@ -158,13 +158,13 @@ object ArticleRepositoryTestSupport:
       slug: String,
       articleCreateData: ArticleCreateData,
       userEmail: String,
-      viewerData: (Int, String)
+      viewerId: Int
   ): ZIO[ArticlesRepository with UsersRepository, Object, TestResult] = {
 
     for {
       userId <- callFindUserIdByEmail(userEmail).someOrFail(s"User $userEmail doesn't exist")
       articleOrError <- callCreateArticle(articleCreateData, userId).either
-      article <- callFindBySlug(slug, viewerData)
+      article <- callFindBySlug(slug, viewerId)
     } yield {
       zio.test.assert(articleOrError)(
         isLeft(
@@ -182,10 +182,10 @@ object ArticleRepositoryTestSupport:
   def listArticlesWithSmallPagination(
       filters: ArticlesFilters,
       pagination: Pagination,
-      viewerDataOpt: Option[(Int, String)]
+      viewerIdOpt: Option[Int]
   ): ZIO[ArticlesRepository, SQLException, TestResult] = {
     for {
-      articlesList <- callListArticles(filters, pagination, viewerDataOpt)
+      articlesList <- callListArticles(filters, pagination, viewerIdOpt)
     } yield zio.test.assert(articlesList)(
       hasSize(equalTo(1)) &&
         exists(
@@ -212,10 +212,10 @@ object ArticleRepositoryTestSupport:
   def listArticlesWithBigPagination(
       filters: ArticlesFilters,
       pagination: Pagination,
-      viewerDataOpt: Option[(Int, String)]
+      viewerIdOpt: Option[Int]
   ): ZIO[ArticlesRepository, SQLException, TestResult] = {
     for {
-      articlesList <- callListArticles(filters, pagination, viewerDataOpt)
+      articlesList <- callListArticles(filters, pagination, viewerIdOpt)
     } yield zio.test.assert(articlesList)(
       hasSize(equalTo(3)) &&
         exists(
@@ -278,10 +278,10 @@ object ArticleRepositoryTestSupport:
   def listArticlesWithTagFilter(
       filters: ArticlesFilters,
       pagination: Pagination,
-      viewerDataOpt: Option[(Int, String)]
+      viewerIdOpt: Option[Int]
   ): ZIO[ArticlesRepository, SQLException, TestResult] = {
     for {
-      articlesList <- callListArticles(filters, pagination, viewerDataOpt)
+      articlesList <- callListArticles(filters, pagination, viewerIdOpt)
     } yield zio.test.assert(articlesList)(
       hasSize(equalTo(2)) &&
         exists(
@@ -326,10 +326,10 @@ object ArticleRepositoryTestSupport:
   def listArticlesWithFavoritedTagFilter(
       filters: ArticlesFilters,
       pagination: Pagination,
-      viewerDataOpt: Option[(Int, String)]
+      viewerIdOpt: Option[Int]
   ): ZIO[ArticlesRepository, SQLException, TestResult] = {
     for {
-      articlesList <- callListArticles(filters, pagination, viewerDataOpt)
+      articlesList <- callListArticles(filters, pagination, viewerIdOpt)
     } yield zio.test.assert(articlesList)(
       hasSize(equalTo(1)) &&
         exists(
@@ -356,10 +356,10 @@ object ArticleRepositoryTestSupport:
   def listArticlesWithAuthorFilter(
       filters: ArticlesFilters,
       pagination: Pagination,
-      viewerDataOpt: Option[(Int, String)]
+      viewerIdOpt: Option[Int]
   ): ZIO[ArticlesRepository, SQLException, TestResult] = {
     for {
-      articlesList <- callListArticles(filters, pagination, viewerDataOpt)
+      articlesList <- callListArticles(filters, pagination, viewerIdOpt)
     } yield zio.test.assert(articlesList)(
       hasSize(equalTo(1)) &&
         exists(
@@ -385,11 +385,11 @@ object ArticleRepositoryTestSupport:
 
   def findArticleBySlug(
       slug: String,
-      viewerData: (Int, String)
+      viewerId: Int
   ): ZIO[ArticlesRepository, SQLException, TestResult] = {
 
     assertZIO(
-      callFindBySlug(slug, viewerData)
+      callFindBySlug(slug, viewerId)
     )(
       isSome(
         (hasField("slug", _.slug, equalTo("how-to-train-your-dragon")): Assertion[Article])
@@ -414,11 +414,11 @@ object ArticleRepositoryTestSupport:
 
   def findBySlugAsSeenBy(
       slug: String,
-      viewerData: (Int, String)
+      viewerId: Int
   ): ZIO[ArticlesRepository, SQLException, TestResult] = {
 
     assertZIO(
-      callFindBySlug(slug, viewerData)
+      callFindBySlug(slug, viewerId)
     )(
       isSome(
         (hasField("slug", _.slug, equalTo("how-to-train-your-dragon-2")): Assertion[Article])
@@ -445,13 +445,13 @@ object ArticleRepositoryTestSupport:
       slug: String,
       articleCreateData: ArticleCreateData,
       userEmail: String,
-      viewerData: (Int, String)
+      viewerId: Int
   ): ZIO[ArticlesRepository with UsersRepository, Object, TestResult] = {
 
     for {
       userId <- callFindUserIdByEmail(userEmail).someOrFail(s"User $userEmail doesn't exist")
       _ <- callCreateArticle(articleCreateData, userId)
-      article <- callFindBySlug(slug, viewerData)
+      article <- callFindBySlug(slug, viewerId)
     } yield zio.test.assert(article) {
       isSome(
         (hasField("slug", _.slug, equalTo("new-article-under-test")): Assertion[Article])
@@ -480,7 +480,7 @@ object ArticleRepositoryTestSupport:
       updatedTitle: String,
       updatedDescription: String,
       updatedBody: String,
-      viewerData: (Int, String)
+      viewerId: Int
   ): ZIO[ArticlesRepository with UsersRepository, Object, TestResult] = {
 
     for {
@@ -498,7 +498,7 @@ object ArticleRepositoryTestSupport:
         author = null
       )
       _ <- callUpdateArticle(articleUpdateData, articleId)
-      article <- callFindBySlug(articleUpdateData.slug, viewerData)
+      article <- callFindBySlug(articleUpdateData.slug, viewerId)
     } yield zio.test.assert(article) {
       isSome(
         (hasField("slug", _.slug, equalTo("updated-article-under-test")): Assertion[Article])
@@ -511,20 +511,20 @@ object ArticleRepositoryTestSupport:
 
   def deleteArticle(
       slug: String,
-      viewerData: (Int, String)
+      viewerId: Int
   ): ZIO[ArticlesRepository with UsersRepository with CommentsRepository with TagsRepository, Object, TestResult] = {
 
     for {
       articleId <- callFindArticleIdBySlug(slug).someOrFail(s"Article $slug doesn't exist")
-      commentsBefore <- callFindComments(articleId, Some(viewerData._1))
+      commentsBefore <- callFindComments(articleId, Some(viewerId))
       tagsBefore <- callFindTags()
-      articleBefore <- callFindBySlug(slug, viewerData)
+      articleBefore <- callFindBySlug(slug, viewerId)
 
       _ <- callDeleteArticle(articleId)
 
-      commentsAfter <- callFindComments(articleId, Some(viewerData._1))
+      commentsAfter <- callFindComments(articleId, Some(viewerId))
       tagsAfter <- callFindTags()
-      articleAfter <- callFindBySlug(slug, viewerData)
+      articleAfter <- callFindBySlug(slug, viewerId)
     } yield {
       zio.test.assert(commentsBefore)(hasSize(equalTo(3))) &&
       zio.test.assert(tagsBefore)(hasSize(equalTo(2))) &&

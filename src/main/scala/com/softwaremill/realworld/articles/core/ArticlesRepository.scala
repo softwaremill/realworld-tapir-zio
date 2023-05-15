@@ -63,7 +63,7 @@ class ArticlesRepository(quill: Quill.Sqlite[SnakeCase]):
     sql"GROUP_CONCAT(($str), '|')".pure.as[String]
   }
 
-  def list(filters: ArticlesFilters, pagination: Pagination, viewerDataOpt: Option[(Int, String)]): IO[SQLException, List[Article]] = {
+  def list(filters: ArticlesFilters, pagination: Pagination, viewerIdOpt: Option[Int]): IO[SQLException, List[Article]] = {
     val tagFilter = filters.tag.getOrElse("")
     val authorFilter = filters.author.getOrElse("")
     val favoritedFilter = filters.favorited.getOrElse("")
@@ -87,9 +87,9 @@ class ArticlesRepository(quill: Quill.Sqlite[SnakeCase]):
         .sortBy(ar => ar.slug)
     }
 
-    val articleQuery = viewerDataOpt match
-      case Some(viewerData) =>
-        buildArticleQueryWithFavoriteAndFollowing(articleRow, viewerData)
+    val articleQuery = viewerIdOpt match
+      case Some(viewerId) =>
+        buildArticleQueryWithFavoriteAndFollowing(articleRow, viewerId)
       case None =>
         buildArticleQuery(articleRow)
 
@@ -98,10 +98,8 @@ class ArticlesRepository(quill: Quill.Sqlite[SnakeCase]):
 
   def listArticlesByFollowedUsers(
       pagination: Pagination,
-      viewerData: (Int, String)
+      viewerId: Int
   ): IO[SQLException, List[Article]] = {
-    val (viewerId, _) = viewerData
-
     val articleRow: Quoted[Query[ArticleRow]] = quote {
       sql"""
                SELECT DISTINCT * FROM articles a
@@ -114,14 +112,14 @@ class ArticlesRepository(quill: Quill.Sqlite[SnakeCase]):
         .sortBy(ar => ar.slug)
     }
 
-    val articleQuery = buildArticleQueryWithFavoriteAndFollowing(articleRow, viewerData)
+    val articleQuery = buildArticleQueryWithFavoriteAndFollowing(articleRow, viewerId)
 
     run(articleQuery).map(_.map(article))
   }
 
-  def findBySlug(slug: String, viewerData: (Int, String)): IO[SQLException, Option[Article]] = {
+  def findBySlug(slug: String, viewerId: Int): IO[SQLException, Option[Article]] = {
     val articleRow: Quoted[EntityQuery[ArticleRow]] = quote { queryArticle.filter(ar => ar.slug == lift(slug)) }
-    val articleQuery = buildArticleQueryWithFavoriteAndFollowing(articleRow, viewerData)
+    val articleQuery = buildArticleQueryWithFavoriteAndFollowing(articleRow, viewerId)
 
     run(articleQuery)
       .map(_.headOption)
@@ -227,7 +225,7 @@ class ArticlesRepository(quill: Quill.Sqlite[SnakeCase]):
       author = ArticleAuthor(as.profileRow.username, Option(as.profileRow.bio), Option(as.profileRow.image), following = as.isFollowing)
     )
 
-  private def buildArticleQuery(arq: Quoted[Query[ArticleRow]]) = {
+  private def buildArticleQuery(arq: Quoted[Query[ArticleRow]]) =
     quote {
       for {
         ar <- arq
@@ -247,17 +245,14 @@ class ArticlesRepository(quill: Quill.Sqlite[SnakeCase]):
         isFollowing = false
       )
     }
-  }
 
-  private def buildArticleQueryWithFavoriteAndFollowing(arq: Quoted[Query[ArticleRow]], viewerData: (Int, String)) = {
-    val (viewerId, viewerEmail) = viewerData
-
+  private def buildArticleQueryWithFavoriteAndFollowing(arq: Quoted[Query[ArticleRow]], viewerId: Int) =
     quote {
       for {
         as <- buildArticleQuery(arq)
         isFavorite = queryUser
           .join(queryFavoriteArticle)
-          .on((u, f) => u.email == lift(viewerEmail) && (f.articleId == as.articleRow.articleId) && (f.profileId == u.userId))
+          .on((u, f) => u.userId == lift(viewerId) && (f.articleId == as.articleRow.articleId) && (f.profileId == u.userId))
           .map(_ => 1)
           .nonEmpty
         isFollowing = queryFollower
@@ -273,7 +268,6 @@ class ArticlesRepository(quill: Quill.Sqlite[SnakeCase]):
         isFollowing = isFollowing
       )
     }
-  }
 
   private def mapUniqueConstraintViolationError[R, A](task: RIO[R, A]): RIO[R, A] = task.mapError {
     case e: SQLiteException if e.getResultCode == SQLITE_CONSTRAINT_UNIQUE =>

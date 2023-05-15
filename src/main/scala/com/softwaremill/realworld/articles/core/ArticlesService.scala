@@ -18,43 +18,30 @@ class ArticlesService(
     usersRepository: UsersRepository
 ):
 
-  def list(filters: ArticlesFilters, pagination: Pagination, emailOpt: Option[String]): Task[List[Article]] =
-    emailOpt match
-      case Some(email) =>
-        userIdByEmail(email)
-          .flatMap(userId =>
-            articlesRepository
-              .list(filters, pagination, Some(userId, email))
-          )
-      case None => articlesRepository.list(filters, pagination, None)
+  def list(filters: ArticlesFilters, pagination: Pagination, userIdOpt: Option[Int]): Task[List[Article]] =
+    userIdOpt match
+      case Some(userId) => articlesRepository.list(filters, pagination, Some(userId))
+      case None         => articlesRepository.list(filters, pagination, None)
 
   def listArticlesByFollowedUsers(
       pagination: Pagination,
-      email: String
+      userId: Int
   ): Task[List[Article]] =
-    for {
-      userId <- userIdByEmail(email)
-      foundArticles <- articlesRepository
-        .listArticlesByFollowedUsers(pagination, (userId, email))
-    } yield foundArticles
+    articlesRepository
+      .listArticlesByFollowedUsers(pagination, userId)
 
-  def findBySlug(slug: String, email: String): Task[Article] =
-    for {
-      userId <- userIdByEmail(email)
-      foundArticle <- articlesRepository
-        .findBySlug(slug, (userId, email))
-        .someOrFail(NotFound(ArticleNotFoundMessage(slug)))
-    } yield foundArticle
+  def findBySlug(slug: String, userId: Int): Task[Article] =
+    articlesRepository
+      .findBySlug(slug, userId)
+      .someOrFail(NotFound(ArticleNotFoundMessage(slug)))
 
-  def create(createData: ArticleCreateData, email: String): Task[Article] =
+  def create(createData: ArticleCreateData, userId: Int): Task[Article] =
     for {
-      userId <- userIdByEmail(email)
       _ <- articlesRepository.addArticle(createData, userId)
-      articleData <- findBySlug(articlesRepository.convertToSlug(createData.title), (userId, email))
+      articleData <- findBySlug(articlesRepository.convertToSlug(createData.title), userId)
     } yield articleData
 
-  def delete(slug: String, email: String): Task[Unit] = for {
-    userId <- userIdByEmail(email)
+  def delete(slug: String, userId: Int): Task[Unit] = for {
     tupleWithIds <- articlesRepository
       .findArticleAndAuthorIdsBySlug(slug)
       .someOrFail(NotFound(ArticleAndAuthorIdsNotFoundMessage(slug)))
@@ -63,40 +50,36 @@ class ArticlesService(
     _ <- articlesRepository.deleteArticle(articleId)
   } yield ()
 
-  def update(articleUpdateData: ArticleUpdateData, slug: String, email: String): Task[Article] =
-    for {
-      userId <- userIdByEmail(email)
-      oldArticle <- articlesRepository
-        .findBySlug(slug.trim.toLowerCase, (userId, email))
-        .someOrFail(NotFound(ArticleNotFoundMessage(slug)))
-      oldArticleUserId <- userIdByUsername(oldArticle.author.username)
-      _ <- ZIO
-        .fail(Unauthorized(ArticleCannotBeUpdatedMessage))
-        .when(userId != oldArticleUserId)
-      updatedArticle = updateArticleData(oldArticle, articleUpdateData)
-      articleId <- articlesRepository.findArticleIdBySlug(slug).someOrFail(NotFound(ArticleNotFoundMessage(slug)))
-      _ <- articlesRepository.updateById(updatedArticle, articleId)
-    } yield updatedArticle
+  def update(articleUpdateData: ArticleUpdateData, slug: String, userId: Int): Task[Article] = for {
+    oldArticle <- articlesRepository
+      .findBySlug(slug.trim.toLowerCase, userId)
+      .someOrFail(NotFound(ArticleNotFoundMessage(slug)))
+    oldArticleUserId <- userIdByUsername(oldArticle.author.username)
+    _ <- ZIO
+      .fail(Unauthorized(ArticleCannotBeUpdatedMessage))
+      .when(userId != oldArticleUserId)
+    updatedArticle = updateArticleData(oldArticle, articleUpdateData)
+    articleId <- articlesRepository.findArticleIdBySlug(slug).someOrFail(NotFound(ArticleNotFoundMessage(slug)))
+    _ <- articlesRepository.updateById(updatedArticle, articleId)
+  } yield updatedArticle
 
-  def makeFavorite(slug: String, email: String): Task[Article] = for {
-    userId <- userIdByEmail(email)
+  def makeFavorite(slug: String, userId: Int): Task[Article] = for {
     articleId <- articlesRepository
       .findArticleIdBySlug(slug)
       .someOrFail(Exceptions.NotFound(ArticleNotFoundMessage(slug)))
     _ <- articlesRepository.makeFavorite(articleId, userId)
-    articleData <- findBySlug(slug, (userId, email))
+    articleData <- findBySlug(slug, userId)
   } yield articleData
 
-  def removeFavorite(slug: String, email: String): Task[Article] = for {
-    userId <- userIdByEmail(email)
+  def removeFavorite(slug: String, userId: Int): Task[Article] = for {
     articleId <- articlesRepository
       .findArticleIdBySlug(slug)
       .someOrFail(Exceptions.NotFound(ArticleNotFoundMessage(slug)))
     _ <- articlesRepository.removeFavorite(articleId, userId)
-    articleData <- findBySlug(slug, (userId, email))
+    articleData <- findBySlug(slug, userId)
   } yield articleData
 
-  private def updateArticleData(articleData: Article, updatedData: ArticleUpdateData): Article = {
+  private def updateArticleData(articleData: Article, updatedData: ArticleUpdateData): Article =
     articleData.copy(
       slug = updatedData.title
         .map(_.toLowerCase)
@@ -108,22 +91,12 @@ class ArticlesService(
       body = updatedData.body.getOrElse(articleData.body),
       updatedAt = Instant.now()
     )
-  }
-
-  private def findBySlug(slug: String, viewerData: (Int, String)): Task[Article] =
-    articlesRepository
-      .findBySlug(slug, viewerData)
-      .someOrFail(NotFound(ArticleNotFoundMessage(slug)))
-
-  private def userIdByEmail(email: String): Task[Int] =
-    usersRepository.findUserIdByEmail(email).someOrFail(NotFound(UserWithEmailNotFoundMessage(email)))
 
   private def userIdByUsername(username: String): Task[Int] =
     usersRepository.findUserIdByUsername(username).someOrFail(NotFound(UserWithUsernameNotFoundMessage(username)))
 
 object ArticlesService:
   private val ArticleNotFoundMessage = (slug: String) => s"Article with slug $slug doesn't exist."
-  private val UserWithEmailNotFoundMessage: String => String = (email: String) => s"User with email $email doesn't exist"
   private val UserWithUsernameNotFoundMessage: String => String = (username: String) => s"User with username $username doesn't exist"
   private val ArticleAndAuthorIdsNotFoundMessage = (slug: String) => s"ArticleId or AuthorId for article with slug $slug doesn't exist"
   private val ArticleCannotBeRemovedMessage: String = "Can't remove the article you're not an author of"

@@ -2,7 +2,7 @@ package com.softwaremill.realworld.users
 
 import com.softwaremill.realworld.auth.AuthService
 import com.softwaremill.realworld.common.Exceptions.{AlreadyInUse, BadRequest, NotFound, Unauthorized}
-import com.softwaremill.realworld.common.{Exceptions, Pagination}
+import com.softwaremill.realworld.common.{Exceptions, Pagination, UserSession}
 import com.softwaremill.realworld.users.UsersService.*
 import com.softwaremill.realworld.users.api.*
 import zio.{Console, IO, Task, ZIO, ZLayer}
@@ -12,9 +12,9 @@ import javax.sql.DataSource
 
 class UsersService(authService: AuthService, usersRepository: UsersRepository):
 
-  def get(email: String): IO[Exception, User] = usersRepository
-    .findUserByEmail(email)
-    .someOrFail(NotFound(UserWithEmailNotFoundMessage(email)))
+  def get(userId: Int): IO[Exception, User] = usersRepository
+    .findUserById(userId)
+    .someOrFail(NotFound(UserWithIdNotFoundMessage(userId)))
 
   def register(user: UserRegisterData): IO[Throwable, UserResponse] = {
     val emailClean = user.email.toLowerCase.trim()
@@ -53,47 +53,43 @@ class UsersService(authService: AuthService, usersRepository: UsersRepository):
     } yield userWithPassword.user.copy(token = Some(jwt))
   }
 
-  def update(updateData: UserUpdateData, email: String): IO[Throwable, User] =
-    for {
-      oldUser <- usersRepository
-        .findUserWithPasswordByEmail(email)
-        .someOrFail(NotFound(UserWithEmailNotFoundMessage(email)))
-      password <- updateData.password
-        .map(newPassword => authService.encryptPassword(newPassword))
-        .getOrElse(ZIO.succeed(oldUser.hashedPassword))
-      updatedUser <- usersRepository
-        .updateByEmail(
-          updateData.update(oldUser.copy(hashedPassword = password)),
-          email
-        )
-        .someOrFail(NotFound(UserWithEmailNotFoundMessage(email)))
-    } yield updatedUser
+  def update(updateData: UserUpdateData, userId: Int): IO[Throwable, User] = for {
+    oldUser <- usersRepository
+      .findUserWithPasswordById(userId)
+      .someOrFail(NotFound(UserWithIdNotFoundMessage(userId)))
+    password <- updateData.password
+      .map(newPassword => authService.encryptPassword(newPassword))
+      .getOrElse(ZIO.succeed(oldUser.hashedPassword))
+    updatedUser <- usersRepository
+      .updateById(
+        updateData.update(oldUser.copy(hashedPassword = password)),
+        userId
+      )
+      .someOrFail(NotFound(UserWithIdNotFoundMessage(userId)))
+  } yield updatedUser
 
-  def getProfile(username: String, viewerEmail: String): Task[ProfileResponse] = for {
+  def getProfile(username: String, followerId: Int): Task[ProfileResponse] = for {
     userWithIdTuple <- getUserWithIdByUsername(username)
-    (user, userId) = userWithIdTuple
-    viewerId <- getFollowerIdByEmail(viewerEmail)
-    profile <- getProfileData(user, userId, Some(viewerId))
+    (followed, followedId) = userWithIdTuple
+    profile <- getProfileData(followed, followedId, Some(followerId))
   } yield ProfileResponse(profile)
 
-  def follow(username: String, followerEmail: String): Task[ProfileResponse] = for {
+  def follow(username: String, followerId: Int): Task[ProfileResponse] = for {
     userWithIdTuple <- getUserWithIdByUsername(username)
-    (user, userId) = userWithIdTuple
-    followerId <- getFollowerIdByEmail(followerEmail)
-    _ <- ZIO.fail(BadRequest(CannotFollowYourselfMessage)).when(userId == followerId)
-    _ <- usersRepository.follow(userId, followerId)
-    profile <- getProfileData(user, userId, Some(followerId))
+    (followed, followedId) = userWithIdTuple
+    _ <- ZIO.fail(BadRequest(CannotFollowYourselfMessage)).when(followedId == followerId)
+    _ <- usersRepository.follow(followedId, followerId)
+    profile <- getProfileData(followed, followedId, Some(followerId))
   } yield ProfileResponse(profile)
 
-  def unfollow(username: String, followerEmail: String): Task[ProfileResponse] = for {
+  def unfollow(username: String, followerId: Int): Task[ProfileResponse] = for {
     userWithIdTuple <- getUserWithIdByUsername(username)
-    (user, userId) = userWithIdTuple
-    followerId <- getFollowerIdByEmail(followerEmail)
-    _ <- usersRepository.unfollow(userId, followerId)
-    profile <- getProfileData(user, userId, Some(followerId))
+    (followed, followedId) = userWithIdTuple
+    _ <- usersRepository.unfollow(followedId, followerId)
+    profile <- getProfileData(followed, followedId, Some(followerId))
   } yield ProfileResponse(profile)
 
-  private def userWithToken(email: String, username: String, jwt: String): User = {
+  private def userWithToken(email: String, username: String, jwt: String): User =
     User(
       email,
       Some(jwt),
@@ -101,14 +97,10 @@ class UsersService(authService: AuthService, usersRepository: UsersRepository):
       Option.empty[String],
       Option.empty[String]
     )
-  }
 
   private def getUserWithIdByUsername(username: String): Task[(User, Int)] = usersRepository
     .findUserWithIdByUsername(username)
     .someOrFail(NotFound(UserWithUsernameNotFoundMessage(username)))
-
-  private def getFollowerIdByEmail(email: String): Task[Int] =
-    usersRepository.findUserIdByEmail(email).someOrFail(NotFound(UserWithEmailNotFoundMessage(email)))
 
   private def getProfileData(user: User, userId: Int, asSeenByUserWithIdOpt: Option[Int]): Task[Profile] =
     asSeenByUserWithIdOpt match
@@ -117,7 +109,7 @@ class UsersService(authService: AuthService, usersRepository: UsersRepository):
       case None => ZIO.succeed(Profile(user.username, user.bio, user.image, false))
 
 object UsersService:
-  private val UserWithEmailNotFoundMessage: String => String = (email: String) => s"User with email $email doesn't exist"
+  private val UserWithIdNotFoundMessage: Int => String = (id: Int) => s"User with id $id doesn't exist"
   private val UserWithUsernameNotFoundMessage: String => String = (username: String) => s"User with username $username doesn't exist"
   private val UserWithEmailAlreadyInUseMessage: String => String = (email: String) => s"User with email $email already in use"
   private val UserWithUsernameAlreadyInUseMessage: String => String = (username: String) => s"User with username $username already in use"

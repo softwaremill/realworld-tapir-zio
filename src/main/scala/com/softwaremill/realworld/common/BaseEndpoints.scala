@@ -3,8 +3,9 @@ package com.softwaremill.realworld.common
 import com.softwaremill.realworld.articles.core.{ArticlesServerEndpoints, ArticlesService}
 import com.softwaremill.realworld.auth.AuthService
 import com.softwaremill.realworld.common.*
-import com.softwaremill.realworld.common.BaseEndpoints.defaultErrorOutputs
+import com.softwaremill.realworld.common.BaseEndpoints.{UserWithEmailNotFoundMessage, defaultErrorOutputs}
 import com.softwaremill.realworld.db.{Db, DbConfig}
+import com.softwaremill.realworld.users.UsersRepository
 import io.getquill.SnakeCase
 import sttp.model.headers.WWWAuthenticateChallenge
 import sttp.model.{HeaderNames, StatusCode}
@@ -14,11 +15,11 @@ import sttp.tapir.server.ServerEndpoint.Full
 import sttp.tapir.ztapir.*
 import sttp.tapir.{Endpoint, EndpointIO, EndpointInput, EndpointOutput, PublicEndpoint, Validator}
 import zio.json.{DeriveJsonDecoder, DeriveJsonEncoder}
-import zio.{Cause, Exit, IO, ZIO, ZLayer}
+import zio.{Cause, Exit, IO, Task, ZIO, ZLayer}
 
-case class UserSession(email: String)
+case class UserSession(userId: Int)
 
-class BaseEndpoints(authService: AuthService):
+class BaseEndpoints(authService: AuthService, usersRepository: UsersRepository):
 
   val secureEndpoint: ZPartialServerEndpoint[Any, String, UserSession, Unit, ErrorInfo, Unit, Any] = endpoint
     .errorOut(defaultErrorOutputs)
@@ -35,9 +36,11 @@ class BaseEndpoints(authService: AuthService):
 
   private def handleAuth(token: String): IO[ErrorInfo, UserSession] = {
     (for {
-      email <- authService.verifyJwt(token)
-    } yield UserSession(email)).logError.mapError {
+      userEmail <- authService.verifyJwt(token)
+      userId <- userIdByEmail(userEmail)
+    } yield UserSession(userId)).logError.mapError {
       case e: Exceptions.Unauthorized => Unauthorized(e.message)
+      case e: Exceptions.NotFound     => NotFound(e.message)
       case _                          => InternalServerError()
     }
   }
@@ -48,9 +51,13 @@ class BaseEndpoints(authService: AuthService):
       case None        => ZIO.none
   }
 
-object BaseEndpoints:
+  private def userIdByEmail(email: String): Task[Int] =
+    usersRepository.findUserIdByEmail(email).someOrFail(Exceptions.NotFound(UserWithEmailNotFoundMessage(email)))
 
-  val live: ZLayer[AuthService, Nothing, BaseEndpoints] = ZLayer.fromFunction(new BaseEndpoints(_))
+object BaseEndpoints:
+  private val UserWithEmailNotFoundMessage: String => String = (email: String) => s"User with email $email doesn't exist"
+
+  val live: ZLayer[AuthService with UsersRepository, Nothing, BaseEndpoints] = ZLayer.fromFunction(new BaseEndpoints(_, _))
 
   val defaultErrorOutputs: EndpointOutput.OneOf[ErrorInfo, ErrorInfo] = oneOf[ErrorInfo](
     oneOfVariant(statusCode(StatusCode.BadRequest).and(jsonBody[BadRequest])),

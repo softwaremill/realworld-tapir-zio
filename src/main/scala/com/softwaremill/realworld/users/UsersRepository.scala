@@ -34,6 +34,11 @@ class UsersRepository(quill: Quill.Sqlite[SnakeCase]):
       .map(_.headOption)
       .map(_.map(user))
 
+  def findUserById(userId: Int): IO[Exception, Option[User]] =
+    run(queryUser.filter(ur => ur.userId == lift(userId)))
+      .map(_.headOption)
+      .map(_.map(user))
+
   def findUserByUsername(username: String): IO[Exception, Option[User]] =
     run(queryUser.filter(ur => ur.username == lift(username)))
       .map(_.headOption)
@@ -59,6 +64,11 @@ class UsersRepository(quill: Quill.Sqlite[SnakeCase]):
       .map(_.headOption)
       .map(_.map(userWithPassword))
 
+  def findUserWithPasswordById(id: Int): IO[Exception, Option[UserWithPassword]] =
+    run(queryUser.filter(ur => ur.userId == lift(id)))
+      .map(_.headOption)
+      .map(_.map(userWithPassword))
+
   def add(user: UserRegisterData): Task[Unit] = run(
     queryUser
       .insert(
@@ -69,9 +79,9 @@ class UsersRepository(quill: Quill.Sqlite[SnakeCase]):
   ).unit
     .pipe(mapUniqueConstraintViolationError)
 
-  def updateByEmail(updateData: UserUpdateData, email: String): IO[Throwable, Option[User]] = {
+  def updateById(updateData: UserUpdateData, userId: Int): IO[Throwable, Option[User]] = {
     val update = queryUser.dynamic
-      .filter(_.email == lift(email))
+      .filter(_.userId == lift(userId))
       .update(
         setOpt[UserRow, String](_.email, updateData.email),
         setOpt[UserRow, String](_.username, updateData.username),
@@ -82,7 +92,7 @@ class UsersRepository(quill: Quill.Sqlite[SnakeCase]):
 
     val read = quote(
       queryUser
-        .filter(_.email == lift(updateData.email.getOrElse(email)))
+        .filter(_.userId == lift(userId))
         .value
     )
 
