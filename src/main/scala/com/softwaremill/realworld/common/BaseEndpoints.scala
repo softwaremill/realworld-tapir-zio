@@ -17,7 +17,7 @@ import sttp.tapir.{Endpoint, EndpointIO, EndpointInput, EndpointOutput, PublicEn
 import zio.json.{DeriveJsonDecoder, DeriveJsonEncoder}
 import zio.{Cause, Exit, IO, Task, ZIO, ZLayer}
 
-case class UserSession(userId: Int, userEmail: String)
+case class UserSession(userId: Int)
 
 class BaseEndpoints(authService: AuthService, usersRepository: UsersRepository):
 
@@ -38,7 +38,7 @@ class BaseEndpoints(authService: AuthService, usersRepository: UsersRepository):
     (for {
       userEmail <- authService.verifyJwt(token)
       userId <- userIdByEmail(userEmail)
-    } yield UserSession(userId, userEmail)).logError.mapError {
+    } yield UserSession(userId)).logError.mapError {
       case e: Exceptions.Unauthorized => Unauthorized(e.message)
       case e: Exceptions.NotFound     => NotFound(e.message)
       case _                          => InternalServerError()

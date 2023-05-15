@@ -18,28 +18,27 @@ class ArticlesService(
     usersRepository: UsersRepository
 ):
 
-  def list(filters: ArticlesFilters, pagination: Pagination, userDataOpt: Option[(Int, String)]): Task[List[Article]] =
-    userDataOpt match
-      case Some(userData) => articlesRepository.list(filters, pagination, Some(userData))
-      case None           => articlesRepository.list(filters, pagination, None)
+  def list(filters: ArticlesFilters, pagination: Pagination, userIdOpt: Option[Int]): Task[List[Article]] =
+    userIdOpt match
+      case Some(userId) => articlesRepository.list(filters, pagination, Some(userId))
+      case None         => articlesRepository.list(filters, pagination, None)
 
   def listArticlesByFollowedUsers(
       pagination: Pagination,
-      userId: Int,
-      userEmail: String
+      userId: Int
   ): Task[List[Article]] =
     articlesRepository
-      .listArticlesByFollowedUsers(pagination, userId, userEmail)
+      .listArticlesByFollowedUsers(pagination, userId)
 
-  def findBySlug(slug: String, userId: Int, userEmail: String): Task[Article] =
+  def findBySlug(slug: String, userId: Int): Task[Article] =
     articlesRepository
-      .findBySlug(slug, userId, userEmail)
+      .findBySlug(slug, userId)
       .someOrFail(NotFound(ArticleNotFoundMessage(slug)))
 
-  def create(createData: ArticleCreateData, userId: Int, userEmail: String): Task[Article] =
+  def create(createData: ArticleCreateData, userId: Int): Task[Article] =
     for {
       _ <- articlesRepository.addArticle(createData, userId)
-      articleData <- findBySlug(articlesRepository.convertToSlug(createData.title), userId, userEmail)
+      articleData <- findBySlug(articlesRepository.convertToSlug(createData.title), userId)
     } yield articleData
 
   def delete(slug: String, userId: Int): Task[Unit] = for {
@@ -51,9 +50,9 @@ class ArticlesService(
     _ <- articlesRepository.deleteArticle(articleId)
   } yield ()
 
-  def update(articleUpdateData: ArticleUpdateData, slug: String, userId: Int, userEmail: String): Task[Article] = for {
+  def update(articleUpdateData: ArticleUpdateData, slug: String, userId: Int): Task[Article] = for {
     oldArticle <- articlesRepository
-      .findBySlug(slug.trim.toLowerCase, userId, userEmail)
+      .findBySlug(slug.trim.toLowerCase, userId)
       .someOrFail(NotFound(ArticleNotFoundMessage(slug)))
     oldArticleUserId <- userIdByUsername(oldArticle.author.username)
     _ <- ZIO
@@ -64,20 +63,20 @@ class ArticlesService(
     _ <- articlesRepository.updateById(updatedArticle, articleId)
   } yield updatedArticle
 
-  def makeFavorite(slug: String, userId: Int, userEmail: String): Task[Article] = for {
+  def makeFavorite(slug: String, userId: Int): Task[Article] = for {
     articleId <- articlesRepository
       .findArticleIdBySlug(slug)
       .someOrFail(Exceptions.NotFound(ArticleNotFoundMessage(slug)))
     _ <- articlesRepository.makeFavorite(articleId, userId)
-    articleData <- findBySlug(slug, userId, userEmail)
+    articleData <- findBySlug(slug, userId)
   } yield articleData
 
-  def removeFavorite(slug: String, userId: Int, userEmail: String): Task[Article] = for {
+  def removeFavorite(slug: String, userId: Int): Task[Article] = for {
     articleId <- articlesRepository
       .findArticleIdBySlug(slug)
       .someOrFail(Exceptions.NotFound(ArticleNotFoundMessage(slug)))
     _ <- articlesRepository.removeFavorite(articleId, userId)
-    articleData <- findBySlug(slug, userId, userEmail)
+    articleData <- findBySlug(slug, userId)
   } yield articleData
 
   private def updateArticleData(articleData: Article, updatedData: ArticleUpdateData): Article =

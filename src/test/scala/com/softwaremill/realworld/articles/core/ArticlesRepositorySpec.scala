@@ -21,13 +21,13 @@ object ArticlesRepositorySpec extends ZIOSpecDefault:
     suite("list articles")(
       suite("with empty db")(
         test("with no filters") {
-          checkIfArticleListIsEmpty(filters = ArticlesFilters.empty, pagination = Pagination(20, 0), viewerDataOpt = None)
+          checkIfArticleListIsEmpty(filters = ArticlesFilters.empty, pagination = Pagination(20, 0), viewerIdOpt = None)
         },
         test("with filters") {
           checkIfArticleListIsEmpty(
             filters = ArticlesFilters(Some("dragon"), Some("John"), Some("Ron")),
             pagination = Pagination(20, 0),
-            viewerDataOpt = None
+            viewerIdOpt = None
           )
         }
       ),
@@ -35,13 +35,13 @@ object ArticlesRepositorySpec extends ZIOSpecDefault:
         test("with small pagination") {
           for {
             _ <- prepareDataForListingArticles
-            result <- listArticlesWithSmallPagination(filters = ArticlesFilters.empty, pagination = Pagination(1, 1), viewerDataOpt = None)
+            result <- listArticlesWithSmallPagination(filters = ArticlesFilters.empty, pagination = Pagination(1, 1), viewerIdOpt = None)
           } yield result
         },
         test("with big pagination") {
           for {
             _ <- prepareDataForListingArticles
-            result <- listArticlesWithBigPagination(filters = ArticlesFilters.empty, pagination = Pagination(20, 0), viewerDataOpt = None)
+            result <- listArticlesWithBigPagination(filters = ArticlesFilters.empty, pagination = Pagination(20, 0), viewerIdOpt = None)
           } yield result
         },
         test("with tag filter") {
@@ -50,7 +50,7 @@ object ArticlesRepositorySpec extends ZIOSpecDefault:
             result <- listArticlesWithTagFilter(
               filters = ArticlesFilters.withTag("dragons"),
               pagination = Pagination(20, 0),
-              viewerDataOpt = None
+              viewerIdOpt = None
             )
           } yield result
         },
@@ -60,7 +60,7 @@ object ArticlesRepositorySpec extends ZIOSpecDefault:
             result <- listArticlesWithFavoritedTagFilter(
               filters = ArticlesFilters.withFavorited("jake"),
               pagination = Pagination(20, 0),
-              viewerDataOpt = None
+              viewerIdOpt = None
             )
           } yield result
         },
@@ -70,7 +70,7 @@ object ArticlesRepositorySpec extends ZIOSpecDefault:
             result <- listArticlesWithAuthorFilter(
               filters = ArticlesFilters.withAuthor("john"),
               pagination = Pagination(20, 0),
-              viewerDataOpt = None
+              viewerIdOpt = None
             )
           } yield result
         }
@@ -80,19 +80,19 @@ object ArticlesRepositorySpec extends ZIOSpecDefault:
       test("find by slug") {
         for {
           _ <- prepareDataForListingArticles
-          result <- findArticleBySlug(slug = "how-to-train-your-dragon", viewerId = 2, viewerEmail = exampleUser2.email)
+          result <- findArticleBySlug(slug = "how-to-train-your-dragon", viewerId = 2)
         } yield result
       },
       test("find article - check article not found") {
         for {
           _ <- prepareDataForListingArticles
-          result <- checkArticleNotFound(slug = "non-existing-article-slug", viewerId = 1, viewerEmail = exampleUser1.email)
+          result <- checkArticleNotFound(slug = "non-existing-article-slug", viewerId = 1)
         } yield result
       },
       test("find article by slug as seen by user that marked it as favorite") {
         for {
           _ <- prepareDataForListingArticles
-          result <- findBySlugAsSeenBy(slug = "how-to-train-your-dragon-2", viewerId = 2, viewerEmail = exampleUser2.email)
+          result <- findBySlugAsSeenBy(slug = "how-to-train-your-dragon-2", viewerId = 2)
         } yield result
       }
     ),
@@ -109,8 +109,7 @@ object ArticlesRepositorySpec extends ZIOSpecDefault:
               tagList = None
             ),
             userEmail = exampleUser1.email,
-            viewerId = 1,
-            viewerEmail = exampleUser1.email
+            viewerId = 1
           )
         } yield result
       },
@@ -126,8 +125,7 @@ object ArticlesRepositorySpec extends ZIOSpecDefault:
               tagList = Some(List(null))
             ),
             userEmail = exampleUser1.email,
-            viewerId = 1,
-            viewerEmail = exampleUser1.email
+            viewerId = 1
           )
         } yield result
       },
@@ -156,8 +154,7 @@ object ArticlesRepositorySpec extends ZIOSpecDefault:
             updatedTitle = "Updated article under test",
             updatedDescription = "What a nice updated day!",
             updatedBody = "Updating scala code is quite challenging pleasure",
-            viewerId = 1,
-            viewerEmail = exampleUser1.email
+            viewerId = 1
           )
         } yield result
       },
@@ -170,8 +167,7 @@ object ArticlesRepositorySpec extends ZIOSpecDefault:
             updatedTitle = "How to train your dragon 2",
             updatedDescription = "What a nice updated day!",
             updatedBody = "Updating scala code is quite challenging pleasure",
-            viewerId = 1,
-            viewerEmail = exampleUser1.email
+            viewerId = 1
           )
         } yield result
       }
@@ -182,8 +178,7 @@ object ArticlesRepositorySpec extends ZIOSpecDefault:
           _ <- prepareDataForArticleDeletion
           result <- deleteArticle(
             slug = "how-to-train-your-dragon",
-            viewerId = 1,
-            viewerEmail = exampleUser1.email
+            viewerId = 1
           )
         } yield result
       }

@@ -12,9 +12,9 @@ import javax.sql.DataSource
 
 class UsersService(authService: AuthService, usersRepository: UsersRepository):
 
-  def get(userEmail: String): IO[Exception, User] = usersRepository
-    .findUserByEmail(userEmail)
-    .someOrFail(NotFound(UserWithEmailNotFoundMessage(userEmail)))
+  def get(userId: Int): IO[Exception, User] = usersRepository
+    .findUserById(userId)
+    .someOrFail(NotFound(UserWithIdNotFoundMessage(userId)))
 
   // TODO username should also be checked (in database is unique)
   def register(user: UserRegisterData): IO[Throwable, UserResponse] = {
@@ -52,19 +52,19 @@ class UsersService(authService: AuthService, usersRepository: UsersRepository):
     } yield userWithPassword.user.copy(token = Some(jwt))
   }
 
-  def update(updateData: UserUpdateData, userEmail: String): IO[Throwable, User] = for {
+  def update(updateData: UserUpdateData, userId: Int): IO[Throwable, User] = for {
     oldUser <- usersRepository
-      .findUserWithPasswordByEmail(userEmail)
-      .someOrFail(NotFound(UserWithEmailNotFoundMessage(userEmail)))
+      .findUserWithPasswordById(userId)
+      .someOrFail(NotFound(UserWithIdNotFoundMessage(userId)))
     password <- updateData.password
       .map(newPassword => authService.encryptPassword(newPassword))
       .getOrElse(ZIO.succeed(oldUser.hashedPassword))
     updatedUser <- usersRepository
-      .updateByEmail(
+      .updateById(
         updateData.update(oldUser.copy(hashedPassword = password)),
-        userEmail
+        userId
       )
-      .someOrFail(NotFound(UserWithEmailNotFoundMessage(userEmail)))
+      .someOrFail(NotFound(UserWithIdNotFoundMessage(userId)))
   } yield updatedUser
 
   def getProfile(username: String, followerId: Int): Task[ProfileResponse] = for {
@@ -108,7 +108,7 @@ class UsersService(authService: AuthService, usersRepository: UsersRepository):
       case None => ZIO.succeed(Profile(user.username, user.bio, user.image, false))
 
 object UsersService:
-  private val UserWithEmailNotFoundMessage: String => String = (email: String) => s"User with email $email doesn't exist"
+  private val UserWithIdNotFoundMessage: Int => String = (id: Int) => s"User with id $id doesn't exist"
   private val UserWithUsernameNotFoundMessage: String => String = (username: String) => s"User with username $username doesn't exist"
   private val UserAlreadyInUseMessage: String => String = (email: String) => s"User with email $email already in use"
   private val CannotFollowYourselfMessage: String = "You can't follow yourself"

@@ -39,7 +39,7 @@ class UsersServerEndpoints(usersService: UsersService, userEndpoints: UsersEndpo
     .serverLogic(session =>
       _ =>
         usersService
-          .get(session.userEmail)
+          .get(session.userId)
           .logError
           .mapError {
             case e: Exceptions.NotFound => NotFound(e.message)
@@ -52,7 +52,7 @@ class UsersServerEndpoints(usersService: UsersService, userEndpoints: UsersEndpo
     .serverLogic(session =>
       data =>
         usersService
-          .update(data.user, session.userEmail)
+          .update(data.user, session.userId)
           .logError
           .pipe(defaultErrorsMappings)
           .map(UserResponse.apply)

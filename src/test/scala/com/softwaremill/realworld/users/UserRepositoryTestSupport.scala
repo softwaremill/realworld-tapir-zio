@@ -21,10 +21,24 @@ object UserRepositoryTestSupport:
     } yield result
   }
 
+  def callFindById(id: Int): ZIO[UsersRepository, Exception, Option[User]] = {
+    for {
+      repo <- ZIO.service[UsersRepository]
+      result <- repo.findUserById(id)
+    } yield result
+  }
+
   def callFindUserWithPasswordByEmail(email: String): ZIO[UsersRepository, Exception, Option[UserWithPassword]] = {
     for {
       repo <- ZIO.service[UsersRepository]
       result <- repo.findUserWithPasswordByEmail(email)
+    } yield result
+  }
+
+  def callFindUserWithPasswordById(id: Int): ZIO[UsersRepository, Exception, Option[UserWithPassword]] = {
+    for {
+      repo <- ZIO.service[UsersRepository]
+      result <- repo.findUserWithPasswordById(id)
     } yield result
   }
 
@@ -35,14 +49,14 @@ object UserRepositoryTestSupport:
     } yield result
   }
 
-  def callUpdateByEmail(userUpdateData: UserUpdateData, email: String): ZIO[UsersRepository, Throwable, Option[User]] = {
+  def callUpdateById(userUpdateData: UserUpdateData, userId: Int): ZIO[UsersRepository, Throwable, Option[User]] = {
     for {
       repo <- ZIO.service[UsersRepository]
-      result <- repo.updateByEmail(userUpdateData, email)
+      result <- repo.updateById(userUpdateData, userId)
     } yield result
   }
 
-  def checkUserNotFound(email: String): ZIO[UsersRepository, Exception, TestResult] = {
+  def checkUserNotFoundByEmail(email: String): ZIO[UsersRepository, Exception, TestResult] = {
     for {
       result <- callFindByEmail(email)
     } yield zio.test.assert(result)(
@@ -52,7 +66,17 @@ object UserRepositoryTestSupport:
     )
   }
 
-  def checkUserFound(email: String): ZIO[UsersRepository, Exception, TestResult] = {
+  def checkUserNotFoundById(id: Int): ZIO[UsersRepository, Exception, TestResult] = {
+    for {
+      result <- callFindById(id)
+    } yield zio.test.assert(result)(
+      Assertion.equalTo(
+        Option.empty
+      )
+    )
+  }
+
+  def checkUserFoundByEmail(email: String): ZIO[UsersRepository, Exception, TestResult] = {
     for {
       userOpt <- callFindByEmail(email)
     } yield zio.test.assert(userOpt)(
@@ -65,7 +89,20 @@ object UserRepositoryTestSupport:
     )
   }
 
-  def checkUserWithPasswordFound(email: String): ZIO[UsersRepository, Exception, TestResult] = {
+  def checkUserFoundById(id: Int): ZIO[UsersRepository, Exception, TestResult] = {
+    for {
+      userOpt <- callFindById(id)
+    } yield zio.test.assert(userOpt)(
+      isSome(
+        (hasField("email", _.email, equalTo("jake@example.com")): Assertion[User]) &&
+          hasField("username", _.username, equalTo("jake")) &&
+          hasField("bio", _.bio, isNone) &&
+          hasField("image", _.image, isNone)
+      )
+    )
+  }
+
+  def checkUserWithPasswordFoundByEmail(email: String): ZIO[UsersRepository, Exception, TestResult] = {
     for {
       userWithPasswordOpt <- callFindUserWithPasswordByEmail(email)
     } yield zio.test.assert(userWithPasswordOpt) {
@@ -84,9 +121,38 @@ object UserRepositoryTestSupport:
     }
   }
 
-  def checkUserWithPasswordNotFound(email: String): ZIO[UsersRepository, Exception, TestResult] = {
+  def checkUserWithPasswordFoundById(userId: Int): ZIO[UsersRepository, Exception, TestResult] = {
+    for {
+      userWithPasswordOpt <- callFindUserWithPasswordById(userId)
+    } yield zio.test.assert(userWithPasswordOpt) {
+      isSome(
+        (hasField(
+          "user",
+          _.user,
+          (hasField("email", _.email, equalTo("jake@example.com")): Assertion[User]) &&
+            hasField("token", _.token, isNone) &&
+            hasField("username", _.username, equalTo("jake")) &&
+            hasField("bio", _.bio, isNone) &&
+            hasField("image", _.image, isNone)
+        ): Assertion[UserWithPassword]) &&
+          hasField("hashedPassword", _.hashedPassword, isNonEmptyString)
+      )
+    }
+  }
+
+  def checkIfUserWithPasswordNotFoundByEmail(email: String): ZIO[UsersRepository, Exception, TestResult] = {
     for {
       result <- callFindUserWithPasswordByEmail(email)
+    } yield zio.test.assert(result)(
+      Assertion.equalTo(
+        Option.empty
+      )
+    )
+  }
+
+  def checkIfUserWithPasswordNotFoundById(id: Int): ZIO[UsersRepository, Exception, TestResult] = {
+    for {
+      result <- callFindUserWithPasswordById(id)
     } yield zio.test.assert(result)(
       Assertion.equalTo(
         Option.empty
@@ -114,7 +180,7 @@ object UserRepositoryTestSupport:
   ): ZIO[UsersRepository, Throwable, TestResult] = {
     for {
       _ <- callUserAdd(userRegisterData)
-      userOpt <- callUpdateByEmail(userUpdateData, userRegisterData.email)
+      userOpt <- callUpdateById(userUpdateData, 1)
     } yield zio.test.assert(userOpt) {
       isSome {
         hasField[User, Option[String]](
@@ -145,7 +211,7 @@ object UserRepositoryTestSupport:
   ): ZIO[UsersRepository, Throwable, TestResult] = {
     for {
       _ <- callUserAdd(userRegisterData)
-      userOpt <- callUpdateByEmail(userUpdateData, userRegisterData.email)
+      userOpt <- callUpdateById(userUpdateData, 1)
     } yield zio.test.assert(userOpt) {
       isSome {
         hasField[User, Option[String]](
