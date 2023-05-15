@@ -37,7 +37,7 @@ object DbData:
     title = "How to train your dragon",
     description = "Ever wonder how?",
     body = "It takes a Jacobian",
-    tagList = None
+    tagList = Some(List("dragons", "training"))
   )
 
   val exampleArticle1Slug = "how-to-train-your-dragon"
@@ -46,7 +46,7 @@ object DbData:
     title = "How to train your dragon 2",
     description = "So toothless",
     body = "Its a dragon",
-    tagList = None
+    tagList = Some(List("dragons", "goats", "training"))
   )
 
   val exampleArticle2Slug = "how-to-train-your-dragon-2"

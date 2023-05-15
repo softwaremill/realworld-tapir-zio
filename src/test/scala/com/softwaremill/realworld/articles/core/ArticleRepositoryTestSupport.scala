@@ -1,8 +1,10 @@
 package com.softwaremill.realworld.articles.core
 
 import com.softwaremill.diffx.{Diff, compare}
+import com.softwaremill.realworld.articles.comments.{Comment, CommentsRepository}
 import com.softwaremill.realworld.articles.core.api.ArticleCreateData
 import com.softwaremill.realworld.articles.core.{Article, ArticleAuthor, ArticlesFilters, ArticlesRepository}
+import com.softwaremill.realworld.articles.tags.TagsRepository
 import com.softwaremill.realworld.common.Exceptions.AlreadyInUse
 import com.softwaremill.realworld.common.Pagination
 import com.softwaremill.realworld.users.{Profile, User, UsersRepository}
@@ -45,17 +47,10 @@ object ArticleRepositoryTestSupport:
     } yield result
   }
 
-  def callAddTag(newtTag: String, articleId: Int): ZIO[ArticlesRepository, Exception, Unit] = {
+  def callCreateArticle(articleCreateData: ArticleCreateData, userId: Int): ZIO[ArticlesRepository, Throwable, Unit] = {
     for {
       repo <- ZIO.service[ArticlesRepository]
-      result <- repo.addTag(newtTag, articleId)
-    } yield result
-  }
-
-  def callCreateArticle(articleCreateData: ArticleCreateData, userId: Int): ZIO[ArticlesRepository, Throwable, Int] = {
-    for {
-      repo <- ZIO.service[ArticlesRepository]
-      result <- repo.add(articleCreateData, userId)
+      result <- repo.addArticle(articleCreateData, userId)
     } yield result
   }
 
@@ -70,6 +65,27 @@ object ArticleRepositoryTestSupport:
     for {
       repo <- ZIO.service[ArticlesRepository]
       result <- repo.updateById(articleUpdateData, articleId)
+    } yield result
+  }
+
+  def callDeleteArticle(articleId: Int): ZIO[ArticlesRepository, Throwable, Long] = {
+    for {
+      repo <- ZIO.service[ArticlesRepository]
+      result <- repo.deleteArticle(articleId)
+    } yield result
+  }
+
+  def callFindComments(articleId: Int, viewerIdOpt: Option[Int]): ZIO[CommentsRepository, Throwable, List[Comment]] = {
+    for {
+      repo <- ZIO.service[CommentsRepository]
+      result <- repo.findComments(articleId, viewerIdOpt)
+    } yield result
+  }
+
+  def callFindTags(): ZIO[TagsRepository, Throwable, List[String]] = {
+    for {
+      repo <- ZIO.service[TagsRepository]
+      result <- repo.listTags
     } yield result
   }
 
@@ -98,8 +114,8 @@ object ArticleRepositoryTestSupport:
 
     assertZIO((for {
       userId <- callFindUserIdByEmail(userEmail).someOrFail(s"User $userEmail doesn't exist")
-      articleId <- callCreateArticle(articleCreateData, userId)
-    } yield articleId).exit)(
+      _ <- callCreateArticle(articleCreateData, userId)
+    } yield ()).exit)(
       failsCause(
         containsCause(Cause.fail(AlreadyInUse(message = "Article name already exists")))
       )
@@ -136,6 +152,31 @@ object ArticleRepositoryTestSupport:
         containsCause(Cause.fail(AlreadyInUse(message = "Article name already exists")))
       )
     )
+  }
+
+  def checkIfRollbackWorksCorrectlyInAddArticle(
+      slug: String,
+      articleCreateData: ArticleCreateData,
+      userEmail: String,
+      viewerData: (Int, String)
+  ): ZIO[ArticlesRepository with UsersRepository, Object, TestResult] = {
+
+    for {
+      userId <- callFindUserIdByEmail(userEmail).someOrFail(s"User $userEmail doesn't exist")
+      articleOrError <- callCreateArticle(articleCreateData, userId).either
+      article <- callFindBySlug(slug, viewerData)
+    } yield {
+      zio.test.assert(articleOrError)(
+        isLeft(
+          hasField(
+            "getMessage",
+            _.getMessage,
+            equalTo("[SQLITE_CONSTRAINT_NOTNULL] A NOT NULL constraint failed (NOT NULL constraint failed: tags_articles.tag)")
+          )
+        )
+      ) &&
+      zio.test.assert(article)(isNone)
+    }
   }
 
   def listArticlesWithSmallPagination(
@@ -400,35 +441,6 @@ object ArticleRepositoryTestSupport:
     )
   }
 
-  def addAndCheckTag(
-      newTag: String,
-      articleSlug: String,
-      viewerData: (Int, String)
-  ): ZIO[ArticlesRepository, Object, TestResult] = {
-
-    for {
-      articleId <- callFindArticleIdBySlug(articleSlug).someOrFail(s"Article $articleSlug doesn't exist")
-      _ <- callAddTag(newTag, articleId)
-      updatedArticle <- callFindBySlug(articleSlug, viewerData).map(_.get.tagList)
-    } yield zio.test.assert(updatedArticle)(contains(newTag))
-  }
-
-  def addTagAndCheckIfOtherArticleIsUntouched(
-      newTag: String,
-      articleSlugToChange: String,
-      articleSlugWithoutChange: String,
-      viewerData: (Int, String)
-  ): ZIO[ArticlesRepository, Object, TestResult] = {
-
-    for {
-      articleToChangeId <- callFindArticleIdBySlug(articleSlugToChange).someOrFail(s"Article $articleSlugToChange doesn't exist")
-      _ <- callAddTag(newTag, articleToChangeId)
-      articleWithoutChange <- callFindBySlug(articleSlugWithoutChange, viewerData)
-        .someOrFail(s"Article $articleSlugWithoutChange doesn't exist")
-        .map(_.tagList)
-    } yield zio.test.assert(articleWithoutChange)(hasNoneOf(newTag))
-  }
-
   def createAndCheckArticle(
       slug: String,
       articleCreateData: ArticleCreateData,
@@ -494,5 +506,31 @@ object ArticleRepositoryTestSupport:
           && hasField("description", _.description, equalTo("What a nice updated day!"))
           && hasField("body", _.body, equalTo("Updating scala code is quite challenging pleasure"))
       )
+    }
+  }
+
+  def deleteArticle(
+      slug: String,
+      viewerData: (Int, String)
+  ): ZIO[ArticlesRepository with UsersRepository with CommentsRepository with TagsRepository, Object, TestResult] = {
+
+    for {
+      articleId <- callFindArticleIdBySlug(slug).someOrFail(s"Article $slug doesn't exist")
+      commentsBefore <- callFindComments(articleId, Some(viewerData._1))
+      tagsBefore <- callFindTags()
+      articleBefore <- callFindBySlug(slug, viewerData)
+
+      _ <- callDeleteArticle(articleId)
+
+      commentsAfter <- callFindComments(articleId, Some(viewerData._1))
+      tagsAfter <- callFindTags()
+      articleAfter <- callFindBySlug(slug, viewerData)
+    } yield {
+      zio.test.assert(commentsBefore)(hasSize(equalTo(3))) &&
+      zio.test.assert(tagsBefore)(hasSize(equalTo(2))) &&
+      zio.test.assert(articleBefore)(isSome) &&
+      zio.test.assert(commentsAfter)(hasSize(equalTo(0))) &&
+      zio.test.assert(tagsAfter)(hasSize(equalTo(0))) &&
+      zio.test.assert(articleAfter)(isNone)
     }
   }
