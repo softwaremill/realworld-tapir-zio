@@ -1,10 +1,9 @@
 package com.softwaremill.realworld.articles.core
 
-import com.softwaremill.realworld.articles.comments.{Comment, CommentsRepository}
+import com.softwaremill.realworld.articles.comments.Comment
 import com.softwaremill.realworld.articles.core.ArticlesService.*
 import com.softwaremill.realworld.articles.core.api.{ArticleCreateData, ArticleUpdateData}
 import com.softwaremill.realworld.articles.core.{Article, ArticlesFilters, ArticlesRepository}
-import com.softwaremill.realworld.articles.tags.TagsRepository
 import com.softwaremill.realworld.common.Exceptions.{BadRequest, NotFound, Unauthorized}
 import com.softwaremill.realworld.common.{Exceptions, Pagination}
 import com.softwaremill.realworld.users.{User, UsersRepository, UsersService}
@@ -16,9 +15,7 @@ import javax.sql.DataSource
 
 class ArticlesService(
     articlesRepository: ArticlesRepository,
-    usersRepository: UsersRepository,
-    tagsRepository: TagsRepository,
-    commentsRepository: CommentsRepository
+    usersRepository: UsersRepository
 ):
 
   def list(filters: ArticlesFilters, pagination: Pagination, emailOpt: Option[String]): Task[List[Article]] =
@@ -52,10 +49,7 @@ class ArticlesService(
   def create(createData: ArticleCreateData, email: String): Task[Article] =
     for {
       userId <- userIdByEmail(email)
-      articleId <- articlesRepository.add(createData, userId)
-      _ <- ZIO.foreach(createData.tagList) { tagList =>
-        ZIO.foreach(tagList)(tag => articlesRepository.addTag(tag, articleId))
-      }
+      _ <- articlesRepository.addArticle(createData, userId)
       articleData <- findBySlug(articlesRepository.convertToSlug(createData.title), (userId, email))
     } yield articleData
 
@@ -66,9 +60,6 @@ class ArticlesService(
       .someOrFail(NotFound(ArticleAndAuthorIdsNotFoundMessage(slug)))
     (articleId, authorId) = tupleWithIds
     _ <- ZIO.fail(Unauthorized(ArticleCannotBeRemovedMessage)).when(userId != authorId)
-    _ <- commentsRepository.deleteCommentsByArticleId(articleId)
-    _ <- articlesRepository.deleteFavoritesByArticleId(articleId)
-    _ <- tagsRepository.deleteTagsByArticleId(articleId)
     _ <- articlesRepository.deleteArticle(articleId)
   } yield ()
 
@@ -138,9 +129,5 @@ object ArticlesService:
   private val ArticleCannotBeRemovedMessage: String = "Can't remove the article you're not an author of"
   private val ArticleCannotBeUpdatedMessage: String = "You're not an author of article that you're trying to update"
 
-  val live: ZLayer[
-    ArticlesRepository with UsersRepository with TagsRepository with CommentsRepository,
-    Nothing,
-    ArticlesService
-  ] =
-    ZLayer.fromFunction(ArticlesService(_, _, _, _))
+  val live: ZLayer[ArticlesRepository with UsersRepository, Nothing, ArticlesService] =
+    ZLayer.fromFunction(ArticlesService(_, _))
