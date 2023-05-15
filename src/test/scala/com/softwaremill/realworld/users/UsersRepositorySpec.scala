@@ -12,13 +12,13 @@ object UsersRepositorySpec extends ZIOSpecDefault:
     suite("find user by email")(
       test("user not found") {
         for {
-          _ <- prepareBasicUsersData
+          _ <- prepareOneUser
           result <- checkUserNotFoundByEmail("notExisting@example.com")
         } yield result
       },
       test("user found") {
         for {
-          _ <- prepareBasicUsersData
+          _ <- prepareOneUser
           result <- checkUserFoundByEmail("jake@example.com")
         } yield result
       }
@@ -26,13 +26,13 @@ object UsersRepositorySpec extends ZIOSpecDefault:
     suite("find user by id")(
       test("user not found") {
         for {
-          _ <- prepareBasicUsersData
+          _ <- prepareOneUser
           result <- checkUserNotFoundById(0)
         } yield result
       },
       test("user found") {
         for {
-          _ <- prepareBasicUsersData
+          _ <- prepareOneUser
           result <- checkUserFoundById(1)
         } yield result
       }
@@ -40,13 +40,13 @@ object UsersRepositorySpec extends ZIOSpecDefault:
     suite("find user by username")(
       test("user not found") {
         for {
-          _ <- prepareBasicUsersData
+          _ <- prepareOneUser
           result <- checkUserNotFoundByUsername("notExisting")
         } yield result
       },
       test("user found") {
         for {
-          _ <- prepareBasicUsersData
+          _ <- prepareOneUser
           result <- checkUserFoundByUsername("jake")
         } yield result
       }
@@ -54,13 +54,13 @@ object UsersRepositorySpec extends ZIOSpecDefault:
     suite("find user with password by email")(
       test("user with password not found") {
         for {
-          _ <- prepareBasicUsersData
+          _ <- prepareOneUser
           result <- checkUserWithPasswordNotFoundByEmail("notExisting@example.com")
         } yield result
       },
       test("user with password found") {
         for {
-          _ <- prepareBasicUsersData
+          _ <- prepareOneUser
           result <- checkUserWithPasswordFoundByEmail("jake@example.com")
         } yield result
       }
@@ -68,13 +68,13 @@ object UsersRepositorySpec extends ZIOSpecDefault:
     suite("find user with password by id")(
       test("user with password not found") {
         for {
-          _ <- prepareBasicUsersData
+          _ <- prepareOneUser
           result <- checkUserWithPasswordNotFoundById(0)
         } yield result
       },
       test("user with password found") {
         for {
-          _ <- prepareBasicUsersData
+          _ <- prepareOneUser
           result <- checkUserWithPasswordFoundById(1)
         } yield result
       }
@@ -82,7 +82,7 @@ object UsersRepositorySpec extends ZIOSpecDefault:
     suite("add user")(
       test("user added") {
         for {
-          _ <- prepareBasicUsersData
+          _ <- prepareOneUser
           result <- checkUserAdd(UserRegisterData(email = "test@test.com", username = "tested", password = "tested"))
         } yield result
       }
