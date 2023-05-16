@@ -316,32 +316,26 @@ object UserEndpointTestSupport:
   def checkIfUnauthorizedErrorOccurInGet(
       authorizationHeaderOpt: Option[Map[String, String]],
       uri: Uri
-  ): ZIO[UsersServerEndpoints, Throwable, TestResult] = {
-
+  ): ZIO[UsersServerEndpoints, Throwable, TestResult] =
     assertZIO(callGetProfile(authorizationHeaderOpt, uri))(
       isLeft(isSubtype[HttpError[_]](hasField("statusCode", _.statusCode, equalTo(StatusCode.Unauthorized))))
     )
-  }
 
   def checkIfUnauthorizedErrorOccurInFollow(
       authorizationHeaderOpt: Option[Map[String, String]],
       uri: Uri
-  ): ZIO[UsersServerEndpoints, Throwable, TestResult] = {
-
+  ): ZIO[UsersServerEndpoints, Throwable, TestResult] =
     assertZIO(callFollowUser(authorizationHeaderOpt, uri))(
       isLeft(isSubtype[HttpError[_]](hasField("statusCode", _.statusCode, equalTo(StatusCode.Unauthorized))))
     )
-  }
 
   def checkIfUnauthorizedErrorOccurInUnfollow(
       authorizationHeaderOpt: Option[Map[String, String]],
       uri: Uri
-  ): ZIO[UsersServerEndpoints, Throwable, TestResult] = {
-
+  ): ZIO[UsersServerEndpoints, Throwable, TestResult] =
     assertZIO(callUnfollowUser(authorizationHeaderOpt, uri))(
       isLeft(isSubtype[HttpError[_]](hasField("statusCode", _.statusCode, equalTo(StatusCode.Unauthorized))))
     )
-  }
 
   def checkIfUserNotChangeInUpdate(
       authorizationHeader: Map[String, String],
@@ -427,8 +421,7 @@ object UserEndpointTestSupport:
       authorizationHeader: Map[String, String],
       uri: Uri,
       updateUserData: UserUpdateData
-  ): ZIO[UsersServerEndpoints, Throwable, TestResult] = {
-
+  ): ZIO[UsersServerEndpoints, Throwable, TestResult] =
     for {
       userOrError <- callUpdateUser(authorizationHeader, uri, updateUserData)
     } yield zio.test.assert(userOrError.toOption) {
@@ -444,13 +437,11 @@ object UserEndpointTestSupport:
         )
       )
     }
-  }
 
   def checkGetProfile(
       authorizationHeaderOpt: Option[Map[String, String]],
       uri: Uri
-  ): ZIO[UsersServerEndpoints, Throwable, TestResult] = {
-
+  ): ZIO[UsersServerEndpoints, Throwable, TestResult] =
     assertZIO(callGetProfile(authorizationHeaderOpt, uri))(
       isRight(
         hasField(
@@ -459,17 +450,15 @@ object UserEndpointTestSupport:
           (hasField("username", _.username, equalTo("jake")): Assertion[Profile])
             && hasField("bio", _.bio, isNone)
             && hasField("image", _.image, isNone)
-            && hasField("following", _.following, isTrue)
+            && hasField("following", _.following, isFalse)
         )
       )
     )
-  }
 
   def checkFollowUser(
       authorizationHeaderOpt: Option[Map[String, String]],
       uri: Uri
-  ): ZIO[UsersServerEndpoints, Throwable, TestResult] = {
-
+  ): ZIO[UsersServerEndpoints, Throwable, TestResult] =
     assertZIO(callFollowUser(authorizationHeaderOpt, uri))(
       isRight(
         hasField(
@@ -482,13 +471,11 @@ object UserEndpointTestSupport:
         )
       )
     )
-  }
 
   def checkUnfollowUser(
       authorizationHeaderOpt: Option[Map[String, String]],
       uri: Uri
-  ): ZIO[UsersServerEndpoints, Throwable, TestResult] = {
-
+  ): ZIO[UsersServerEndpoints, Throwable, TestResult] =
     assertZIO(callUnfollowUser(authorizationHeaderOpt, uri))(
       isRight(
         hasField(
@@ -501,4 +488,3 @@ object UserEndpointTestSupport:
         )
       )
     )
-  }

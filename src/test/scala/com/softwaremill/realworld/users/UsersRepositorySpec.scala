@@ -51,6 +51,48 @@ object UsersRepositorySpec extends ZIOSpecDefault:
         } yield result
       }
     ),
+    suite("find user with id by username")(
+      test("user not found") {
+        for {
+          _ <- prepareOneUser
+          result <- checkUserWithIdNotFoundByUsername("notExisting")
+        } yield result
+      },
+      test("user found") {
+        for {
+          _ <- prepareOneUser
+          result <- checkUserWithIdFoundByUsername("jake")
+        } yield result
+      }
+    ),
+    suite("find user id by email")(
+      test("user not found") {
+        for {
+          _ <- prepareOneUser
+          result <- checkUserIdNotFoundByEmail("notExisting@example.com")
+        } yield result
+      },
+      test("user found") {
+        for {
+          _ <- prepareOneUser
+          result <- checkUserIdFoundByEmail("jake@example.com")
+        } yield result
+      }
+    ),
+    suite("find user id by username")(
+      test("user not found") {
+        for {
+          _ <- prepareOneUser
+          result <- checkUserIdNotFoundByUsername("notExisting")
+        } yield result
+      },
+      test("user found") {
+        for {
+          _ <- prepareOneUser
+          result <- checkUserIdFoundByUsername("jake")
+        } yield result
+      }
+    ),
     suite("find user with password by email")(
       test("user with password not found") {
         for {
@@ -102,6 +144,26 @@ object UsersRepositorySpec extends ZIOSpecDefault:
             userRegisterData = UserRegisterData(email = "test@test.com", username = "tested", password = "tested"),
             userUpdateData = UserUpdateData(Some("updated@test.com"), None, None, Some("Updated test bio"), None)
           )
+        } yield result
+      }
+    ),
+    suite("check following")(
+      test("check is following") {
+        for {
+          _ <- prepareTwoUsersWithFollowing
+          result <- checkIsFollowing(followedId = 1, followerId = 2)
+        } yield result
+      },
+      test("check follow") {
+        for {
+          _ <- prepareTwoUsers
+          result <- checkFollow(followedId = 1, followerId = 2)
+        } yield result
+      },
+      test("check unfollow") {
+        for {
+          _ <- prepareTwoUsersWithFollowing
+          result <- checkUnfollow(followedId = 1, followerId = 2)
         } yield result
       }
     )
