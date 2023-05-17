@@ -4,6 +4,7 @@ import com.softwaremill.realworld.articles.core.ArticlesRepository
 import com.softwaremill.realworld.articles.tags.TagsRepository
 import com.softwaremill.realworld.users.UsersRepository
 import com.softwaremill.realworld.utils.DbData.*
+import com.softwaremill.realworld.utils.TestUtils.{findArticleIdBySlug, findUserIdByEmail}
 import zio.ZIO
 
 object CommentDbTestSupport:
@@ -13,7 +14,7 @@ object CommentDbTestSupport:
       articleRepo <- ZIO.service[ArticlesRepository]
       userRepo <- ZIO.service[UsersRepository]
       _ <- userRepo.add(exampleUser1)
-      userId1 <- userRepo.findUserIdByEmail(exampleUser1.email).someOrFail(s"User with email ${exampleUser1.email} doesn't exist.")
+      userId1 <- findUserIdByEmail(userRepo, exampleUser1.email)
       _ <- articleRepo.addArticle(exampleArticle2, userId1)
     } yield ()
 
@@ -25,12 +26,12 @@ object CommentDbTestSupport:
       _ <- userRepo.add(exampleUser1)
       _ <- userRepo.add(exampleUser2)
       _ <- userRepo.add(exampleUser4)
-      userId1 <- userRepo.findUserIdByEmail(exampleUser1.email).someOrFail(s"User with email ${exampleUser1.email} doesn't exist.")
-      userId2 <- userRepo.findUserIdByEmail(exampleUser2.email).someOrFail(s"User with email ${exampleUser2.email} doesn't exist.")
-      userId4 <- userRepo.findUserIdByEmail(exampleUser4.email).someOrFail(s"User with email ${exampleUser4.email} doesn't exist.")
+      userId1 <- findUserIdByEmail(userRepo, exampleUser1.email)
+      userId2 <- findUserIdByEmail(userRepo, exampleUser2.email)
+      userId4 <- findUserIdByEmail(userRepo, exampleUser4.email)
       _ <- userRepo.follow(userId1, userId2)
       _ <- articleRepo.addArticle(exampleArticle3, userId2)
-      articleId3 <- articleRepo.findArticleIdBySlug(exampleArticle3Slug).someOrFail(s"Article $exampleArticle3Slug doesn't exist")
+      articleId3 <- findArticleIdBySlug(articleRepo, exampleArticle3Slug)
       _ <- commentRepo.addComment(articleId3, userId1, "Thank you so much!")
       _ <- commentRepo.addComment(articleId3, userId4, "Great article!")
     } yield ()
@@ -43,13 +44,13 @@ object CommentDbTestSupport:
       _ <- userRepo.add(exampleUser2)
       _ <- userRepo.add(exampleUser3)
       _ <- userRepo.add(exampleUser4)
-      userId2 <- userRepo.findUserIdByEmail(exampleUser2.email).someOrFail(s"User with email ${exampleUser2.email} doesn't exist.")
-      userId3 <- userRepo.findUserIdByEmail(exampleUser3.email).someOrFail(s"User with email ${exampleUser3.email} doesn't exist.")
-      userId4 <- userRepo.findUserIdByEmail(exampleUser4.email).someOrFail(s"User with email ${exampleUser4.email} doesn't exist.")
+      userId2 <- findUserIdByEmail(userRepo, exampleUser2.email)
+      userId3 <- findUserIdByEmail(userRepo, exampleUser3.email)
+      userId4 <- findUserIdByEmail(userRepo, exampleUser4.email)
       _ <- articleRepo.addArticle(exampleArticle3, userId4)
       _ <- articleRepo.addArticle(exampleArticle4, userId2)
-      articleId3 <- articleRepo.findArticleIdBySlug(exampleArticle3Slug).someOrFail(s"Article $exampleArticle3Slug doesn't exist")
-      articleId4 <- articleRepo.findArticleIdBySlug(exampleArticle4Slug).someOrFail(s"Article $exampleArticle4Slug doesn't exist")
+      articleId3 <- findArticleIdBySlug(articleRepo, exampleArticle3Slug)
+      articleId4 <- findArticleIdBySlug(articleRepo, exampleArticle4Slug)
       _ <- commentRepo.addComment(articleId3, userId3, "Thank you so much!")
       _ <- commentRepo.addComment(articleId4, userId3, "Amazing article!")
       _ <- commentRepo.addComment(articleId4, userId4, "Not bad.")
@@ -60,6 +61,6 @@ object CommentDbTestSupport:
       articleRepo <- ZIO.service[ArticlesRepository]
       userRepo <- ZIO.service[UsersRepository]
       _ <- userRepo.add(exampleUser4)
-      userId4 <- userRepo.findUserIdByEmail(exampleUser4.email).someOrFail(s"User with email ${exampleUser4.email} doesn't exist.")
+      userId4 <- findUserIdByEmail(userRepo, exampleUser4.email)
       _ <- articleRepo.addArticle(exampleArticle6, userId4)
     } yield ()

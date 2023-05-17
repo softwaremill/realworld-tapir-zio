@@ -16,7 +16,6 @@ import zio.test.*
 
 object ArticlesRepositorySpec extends ZIOSpecDefault:
 
-  // TODO should i use named parameters everywhere?
   override def spec = suite("article repository tests")(
     suite("list articles")(
       suite("with empty db")(
@@ -76,17 +75,45 @@ object ArticlesRepositorySpec extends ZIOSpecDefault:
         }
       )
     ),
-    suite("find article")(
-      test("find by slug") {
+    suite("find article id by slug")(
+      test("article id not found") {
         for {
-          _ <- prepareDataForListingArticles
-          result <- findArticleBySlug(slug = "how-to-train-your-dragon", viewerId = 2)
+          _ <- prepareDataForFindingArticle
+          result <- checkArticleIdNotFoundBySlug("not-existing-slug")
         } yield result
       },
+      test("article id found") {
+        for {
+          _ <- prepareDataForFindingArticle
+          result <- checkArticleIdFoundBySlug("how-to-train-your-dragon")
+        } yield result
+      }
+    ),
+    suite("find article and author id by slug")(
+      test("article and author id not found") {
+        for {
+          _ <- prepareDataForFindingArticle
+          result <- checkArticleAndAuthorIdNotFoundBySlug("not-existing-slug")
+        } yield result
+      },
+      test("article and author id found") {
+        for {
+          _ <- prepareDataForFindingArticle
+          result <- checkArticleAndAuthorIdFoundBySlug("how-to-train-your-dragon")
+        } yield result
+      }
+    ),
+    suite("find article")(
       test("find article - check article not found") {
         for {
           _ <- prepareDataForListingArticles
           result <- checkArticleNotFound(slug = "non-existing-article-slug", viewerId = 1)
+        } yield result
+      },
+      test("find by slug") {
+        for {
+          _ <- prepareDataForListingArticles
+          result <- findArticleBySlug(slug = "how-to-train-your-dragon", viewerId = 2)
         } yield result
       },
       test("find article by slug as seen by user that marked it as favorite") {
@@ -97,22 +124,6 @@ object ArticlesRepositorySpec extends ZIOSpecDefault:
       }
     ),
     suite("create article")(
-      test("positive create article") {
-        for {
-          _ <- prepareDataForArticleCreation
-          result <- createAndCheckArticle(
-            slug = "new-article-under-test",
-            articleCreateData = ArticleCreateData(
-              title = "New-article-under-test",
-              description = "What a nice day!",
-              body = "Writing scala code is quite challenging pleasure",
-              tagList = None
-            ),
-            userEmail = exampleUser1.email,
-            viewerId = 1
-          )
-        } yield result
-      },
       test("create article with not proper tag list - check if rollback returns the previous state") {
         for {
           _ <- prepareDataForArticleCreation
@@ -142,22 +153,25 @@ object ArticlesRepositorySpec extends ZIOSpecDefault:
             userEmail = exampleUser1.email
           )
         } yield result
-      }
-    ),
-    suite("update article")(
-      test("positive updating article") {
+      },
+      test("positive create article") {
         for {
-          _ <- prepareDataForListingArticles
-          result <- updateAndCheckArticle(
-            existingSlug = "how-to-train-your-dragon",
-            updatedSlug = "updated-article-under-test",
-            updatedTitle = "Updated article under test",
-            updatedDescription = "What a nice updated day!",
-            updatedBody = "Updating scala code is quite challenging pleasure",
+          _ <- prepareDataForArticleCreation
+          result <- createAndCheckArticle(
+            slug = "new-article-under-test",
+            articleCreateData = ArticleCreateData(
+              title = "New-article-under-test",
+              description = "What a nice day!",
+              body = "Writing scala code is quite challenging pleasure",
+              tagList = None
+            ),
+            userEmail = exampleUser1.email,
             viewerId = 1
           )
         } yield result
-      },
+      }
+    ),
+    suite("update article")(
       test("update article - check article already exist") {
         for {
           _ <- prepareDataForListingArticles
@@ -165,6 +179,19 @@ object ArticlesRepositorySpec extends ZIOSpecDefault:
             existingSlug = "how-to-train-your-dragon",
             updatedSlug = "how-to-train-your-dragon-2",
             updatedTitle = "How to train your dragon 2",
+            updatedDescription = "What a nice updated day!",
+            updatedBody = "Updating scala code is quite challenging pleasure",
+            viewerId = 1
+          )
+        } yield result
+      },
+      test("positive updating article") {
+        for {
+          _ <- prepareDataForListingArticles
+          result <- updateAndCheckArticle(
+            existingSlug = "how-to-train-your-dragon",
+            updatedSlug = "updated-article-under-test",
+            updatedTitle = "Updated article under test",
             updatedDescription = "What a nice updated day!",
             updatedBody = "Updating scala code is quite challenging pleasure",
             viewerId = 1
@@ -179,6 +206,26 @@ object ArticlesRepositorySpec extends ZIOSpecDefault:
           result <- deleteArticle(
             slug = "how-to-train-your-dragon",
             viewerId = 1
+          )
+        } yield result
+      }
+    ),
+    suite("check favorite")(
+      test("check mark favorite") {
+        for {
+          _ <- prepareDataForMarkingFavorites
+          result <- checkMarkFavorite(
+            slug = "how-to-train-your-dragon",
+            viewerId = 2
+          )
+        } yield result
+      },
+      test("check remove favorite") {
+        for {
+          _ <- prepareDataForRemovingFavorites
+          result <- checkRemoveFavorite(
+            slug = "how-to-train-your-dragon",
+            viewerId = 2
           )
         } yield result
       }

@@ -43,8 +43,7 @@ object ArticleEndpointTestSupport:
       authorizationHeaderOpt: Option[Map[String, String]],
       uri: Uri,
       endpoint: ZIO[ArticlesServerEndpoints, Nothing, ZServerEndpoint[Any, Any]]
-  ): ZIO[ArticlesServerEndpoints, Throwable, Either[ResponseException[String, String], ArticlesListResponse]] = {
-
+  ): ZIO[ArticlesServerEndpoints, Throwable, Either[ResponseException[String, String], ArticlesListResponse]] =
     endpoint
       .flatMap { endpoint =>
         val requestWithUri = basicRequest
@@ -59,7 +58,6 @@ object ArticleEndpointTestSupport:
           .send(backendStub(endpoint))
           .map(_.body)
       }
-  }
 
   def callGetArticle(
       authorizationHeader: Map[String, String],
@@ -80,8 +78,7 @@ object ArticleEndpointTestSupport:
   def callDeleteArticle(
       authorizationHeader: Map[String, String],
       uri: Uri
-  ): ZIO[ArticlesServerEndpoints, Throwable, Response[Either[String, String]]] = {
-
+  ): ZIO[ArticlesServerEndpoints, Throwable, Response[Either[String, String]]] =
     ZIO
       .service[ArticlesServerEndpoints]
       .map(_.deleteServerEndpoint)
@@ -91,13 +88,12 @@ object ArticleEndpointTestSupport:
           .headers(authorizationHeader)
           .send(backendStub(endpoint))
       }
-  }
 
   def callCreateArticle(
       authorizationHeader: Map[String, String],
       uri: Uri,
       createData: ArticleCreateData
-  ): ZIO[ArticlesServerEndpoints, Throwable, Either[ResponseException[String, String], ArticleResponse]] = {
+  ): ZIO[ArticlesServerEndpoints, Throwable, Either[ResponseException[String, String], ArticleResponse]] =
     ZIO
       .service[ArticlesServerEndpoints]
       .map(_.createServerEndpoint)
@@ -110,32 +106,29 @@ object ArticleEndpointTestSupport:
           .send(backendStub(endpoint))
           .map(_.body)
       }
-  }
 
   def callUpdateArticle(
       authorizationHeader: Map[String, String],
       uri: Uri,
-      updateData: ArticleUpdateRequest
-  ): ZIO[ArticlesServerEndpoints, Throwable, Either[ResponseException[String, String], ArticleResponse]] = {
+      updateData: ArticleUpdateData
+  ): ZIO[ArticlesServerEndpoints, Throwable, Either[ResponseException[String, String], ArticleResponse]] =
     ZIO
       .service[ArticlesServerEndpoints]
       .map(_.updateServerEndpoint)
       .flatMap { endpoint =>
         basicRequest
           .put(uri)
-          .body(updateData)
           .headers(authorizationHeader)
+          .body(ArticleUpdateRequest(updateData))
           .response(asJson[ArticleResponse])
           .send(backendStub(endpoint))
           .map(_.body)
       }
-  }
 
   def checkIfFilterErrorOccur(
       authorizationHeaderOpt: Option[Map[String, String]],
       uri: Uri
-  ): ZIO[ArticlesServerEndpoints, Throwable, TestResult] = {
-
+  ): ZIO[ArticlesServerEndpoints, Throwable, TestResult] =
     assertZIO(
       callGetListArticles(authorizationHeaderOpt, uri)
     )(
@@ -148,13 +141,11 @@ object ArticleEndpointTestSupport:
         )
       )
     )
-  }
 
   def checkIfPaginationErrorOccur(
       authorizationHeaderOpt: Option[Map[String, String]],
       uri: Uri
-  ): ZIO[ArticlesServerEndpoints, Throwable, TestResult] = {
-
+  ): ZIO[ArticlesServerEndpoints, Throwable, TestResult] =
     assertZIO(
       callGetListArticles(authorizationHeaderOpt, uri)
     )(
@@ -167,13 +158,11 @@ object ArticleEndpointTestSupport:
         )
       )
     )
-  }
 
   def checkIfPaginationErrorOccurInFeed(
       authorizationHeaderOpt: Option[Map[String, String]],
       uri: Uri
-  ): ZIO[ArticlesServerEndpoints, Throwable, TestResult] = {
-
+  ): ZIO[ArticlesServerEndpoints, Throwable, TestResult] =
     assertZIO(
       callGetFeedArticles(authorizationHeaderOpt, uri)
     )(
@@ -186,14 +175,12 @@ object ArticleEndpointTestSupport:
         )
       )
     )
-  }
 
   def updateAndCheckIfInvalidNameErrorOccur(
       authorizationHeader: Map[String, String],
       uri: Uri,
-      updateData: ArticleUpdateRequest
-  ): ZIO[ArticlesServerEndpoints, Throwable, TestResult] = {
-
+      updateData: ArticleUpdateData
+  ): ZIO[ArticlesServerEndpoints, Throwable, TestResult] =
     assertZIO(
       callUpdateArticle(authorizationHeader, uri, updateData)
     )(
@@ -206,14 +193,12 @@ object ArticleEndpointTestSupport:
         )
       )
     )
-  }
 
   def createAndCheckIfInvalidNameErrorOccur(
       authorizationHeader: Map[String, String],
       uri: Uri,
       createData: ArticleCreateData
-  ): ZIO[ArticlesServerEndpoints, Throwable, TestResult] = {
-
+  ): ZIO[ArticlesServerEndpoints, Throwable, TestResult] =
     assertZIO(
       callCreateArticle(authorizationHeader, uri, createData)
     )(
@@ -226,13 +211,11 @@ object ArticleEndpointTestSupport:
         )
       )
     )
-  }
 
   def checkIfNonExistentArticleErrorOccur(
       authorizationHeader: Map[String, String],
       uri: Uri
-  ): ZIO[ArticlesServerEndpoints, Throwable, TestResult] = {
-
+  ): ZIO[ArticlesServerEndpoints, Throwable, TestResult] =
     assertZIO(callGetArticle(authorizationHeader, uri))(
       isLeft(
         equalTo(
@@ -240,13 +223,55 @@ object ArticleEndpointTestSupport:
         )
       )
     )
-  }
+
+  def checkIfEmptyFieldsErrorOccurInCreate(
+      authorizationHeader: Map[String, String],
+      uri: Uri,
+      createData: ArticleCreateData
+  ): ZIO[ArticlesServerEndpoints, Throwable, TestResult] =
+    assertZIO(
+      callCreateArticle(authorizationHeader, uri, createData)
+    )(
+      isLeft(
+        equalTo(
+          HttpError(
+            "{\"errors\":{\"body\":[\"Invalid value for: body (" +
+              "expected article.title to have length greater than or equal to 1, but got: \\\"\\\", " +
+              "expected article.description to have length greater than or equal to 1, but got: \\\"\\\", " +
+              "expected article.body to have length greater than or equal to 1, but got: \\\"\\\", " +
+              "expected article.tagList to pass validation: each element in the tagList is " +
+              "expected to have a length greater than or equal to 1, but got: List())\"]}}",
+            sttp.model.StatusCode(422)
+          )
+        )
+      )
+    )
+
+  def checkIfEmptyFieldsErrorOccurInUpdate(
+      authorizationHeader: Map[String, String],
+      uri: Uri,
+      updateData: ArticleUpdateData
+  ): ZIO[ArticlesServerEndpoints, Throwable, TestResult] =
+    assertZIO(
+      callUpdateArticle(authorizationHeader, uri, updateData)
+    )(
+      isLeft(
+        equalTo(
+          HttpError(
+            "{\"errors\":{\"body\":[\"Invalid value for: body (" +
+              "expected article.title to have length greater than or equal to 1, but got: \\\"\\\", " +
+              "expected article.description to have length greater than or equal to 1, but got: \\\"\\\", " +
+              "expected article.body to have length greater than or equal to 1, but got: \\\"\\\")\"]}}",
+            sttp.model.StatusCode(422)
+          )
+        )
+      )
+    )
 
   def checkIfArticleListIsEmpty(
       authorizationHeaderOpt: Option[Map[String, String]],
       uri: Uri
-  ): ZIO[ArticlesServerEndpoints, Throwable, TestResult] = {
-
+  ): ZIO[ArticlesServerEndpoints, Throwable, TestResult] =
     assertZIO(
       callGetListArticles(authorizationHeaderOpt, uri)
     )(
@@ -259,13 +284,11 @@ object ArticleEndpointTestSupport:
         )
       )
     )
-  }
 
   def checkPagination(
       authorizationHeaderOpt: Option[Map[String, String]],
       uri: Uri
-  ): ZIO[ArticlesServerEndpoints, Throwable, TestResult] = {
-
+  ): ZIO[ArticlesServerEndpoints, Throwable, TestResult] =
     for {
       articlesListOrError <- callGetListArticles(authorizationHeaderOpt, uri)
     } yield zio.test.assert(articlesListOrError.toOption) {
@@ -295,13 +318,11 @@ object ArticleEndpointTestSupport:
           )
       )
     }
-  }
 
   def checkFeedPagination(
       authorizationHeaderOpt: Option[Map[String, String]],
       uri: Uri
-  ): ZIO[ArticlesServerEndpoints, Throwable, TestResult] = {
-
+  ): ZIO[ArticlesServerEndpoints, Throwable, TestResult] =
     for {
       articlesFeedOrError <- callGetFeedArticles(authorizationHeaderOpt, uri)
     } yield zio.test.assert(articlesFeedOrError.toOption) {
@@ -331,13 +352,11 @@ object ArticleEndpointTestSupport:
           )
       )
     }
-  }
 
   def checkFilters(
       authorizationHeaderOpt: Option[Map[String, String]],
       uri: Uri
-  ): ZIO[ArticlesServerEndpoints, Throwable, TestResult] = {
-
+  ): ZIO[ArticlesServerEndpoints, Throwable, TestResult] =
     for {
       articlesListOrError <- callGetListArticles(authorizationHeaderOpt, uri)
     } yield zio.test.assert(articlesListOrError.toOption) {
@@ -367,13 +386,11 @@ object ArticleEndpointTestSupport:
           )
       )
     }
-  }
 
   def listAvailableArticles(
       authorizationHeaderOpt: Option[Map[String, String]],
       uri: Uri
-  ): ZIO[ArticlesServerEndpoints, Throwable, TestResult] = {
-
+  ): ZIO[ArticlesServerEndpoints, Throwable, TestResult] =
     for {
       articlesListOrError <- callGetListArticles(authorizationHeaderOpt, uri)
     } yield zio.test.assert(articlesListOrError.toOption) {
@@ -439,13 +456,11 @@ object ArticleEndpointTestSupport:
           )
       )
     }
-  }
 
   def listFeedAvailableArticles(
       authorizationHeaderOpt: Option[Map[String, String]],
       uri: Uri
-  ): ZIO[ArticlesServerEndpoints, Throwable, TestResult] = {
-
+  ): ZIO[ArticlesServerEndpoints, Throwable, TestResult] =
     for {
       articlesFeedOrError <- callGetFeedArticles(authorizationHeaderOpt, uri)
     } yield zio.test.assert(articlesFeedOrError.toOption) {
@@ -511,13 +526,11 @@ object ArticleEndpointTestSupport:
           )
       )
     }
-  }
 
   def checkArticlesListAfterDeletion(
       authorizationHeaderOpt: Option[Map[String, String]],
       uri: Uri
-  ): ZIO[ArticlesServerEndpoints, Throwable, TestResult] = {
-
+  ): ZIO[ArticlesServerEndpoints, Throwable, TestResult] =
     for {
       articlesListOrError <- callGetListArticles(authorizationHeaderOpt, uri)
     } yield zio.test.assert(articlesListOrError.toOption) {
@@ -530,13 +543,11 @@ object ArticleEndpointTestSupport:
           )
       )
     }
-  }
 
   def getAndCheckExistingArticle(
       authorizationHeader: Map[String, String],
       uri: Uri
-  ): ZIO[ArticlesServerEndpoints, Throwable, TestResult] = {
-
+  ): ZIO[ArticlesServerEndpoints, Throwable, TestResult] =
     assertZIO(
       callGetArticle(authorizationHeader, uri)
     )(
@@ -563,14 +574,12 @@ object ArticleEndpointTestSupport:
         )
       )
     )
-  }
 
   def createAndCheckArticle(
       authorizationHeader: Map[String, String],
       uri: Uri,
       createData: ArticleCreateData
-  ): ZIO[ArticlesServerEndpoints, Throwable, TestResult] = {
-
+  ): ZIO[ArticlesServerEndpoints, Throwable, TestResult] =
     assertZIO(
       callCreateArticle(authorizationHeader, uri, createData)
     )(
@@ -597,14 +606,12 @@ object ArticleEndpointTestSupport:
         )
       )
     )
-  }
 
   def updateAndCheckArticle(
       authorizationHeader: Map[String, String],
       uri: Uri,
-      updateData: ArticleUpdateRequest
-  ): ZIO[ArticlesServerEndpoints, Throwable, TestResult] = {
-
+      updateData: ArticleUpdateData
+  ): ZIO[ArticlesServerEndpoints, Throwable, TestResult] =
     assertZIO(
       callUpdateArticle(authorizationHeader, uri, updateData)
     )(
@@ -631,4 +638,3 @@ object ArticleEndpointTestSupport:
         )
       )
     )
-  }

@@ -1,6 +1,7 @@
 package com.softwaremill.realworld.users
 
 import com.softwaremill.realworld.utils.DbData.*
+import com.softwaremill.realworld.utils.TestUtils.findUserIdByEmail
 import zio.ZIO
 object UserDbTestSupport:
   def prepareOneUser =
@@ -18,7 +19,7 @@ object UserDbTestSupport:
       userRepo <- ZIO.service[UsersRepository]
       _ <- userRepo.add(exampleUser1)
       _ <- userRepo.add(exampleUser2)
-      userId1 <- userRepo.findUserIdByEmail(exampleUser1.email).someOrFail(s"User with email ${exampleUser1.email} doesn't exist.")
-      userId2 <- userRepo.findUserIdByEmail(exampleUser2.email).someOrFail(s"User with email ${exampleUser2.email} doesn't exist.")
+      userId1 <- findUserIdByEmail(userRepo, exampleUser1.email)
+      userId2 <- findUserIdByEmail(userRepo, exampleUser2.email)
       _ <- userRepo.follow(userId1, userId2)
     } yield ()

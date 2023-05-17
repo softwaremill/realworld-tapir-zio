@@ -3,7 +3,7 @@ package com.softwaremill.realworld.articles.core
 import com.softwaremill.realworld.articles.comments.CommentsRepository
 import com.softwaremill.realworld.articles.core.ArticleDbTestSupport.*
 import com.softwaremill.realworld.articles.core.ArticleEndpointTestSupport.*
-import com.softwaremill.realworld.articles.core.api.{ArticleUpdateData, ArticleUpdateRequest, ArticlesEndpoints}
+import com.softwaremill.realworld.articles.core.api.{ArticleCreateData, ArticleUpdateData, ArticleUpdateRequest, ArticlesEndpoints}
 import com.softwaremill.realworld.articles.core.{ArticlesRepository, ArticlesServerEndpoints, ArticlesService}
 import com.softwaremill.realworld.articles.tags.TagsRepository
 import com.softwaremill.realworld.auth.AuthService
@@ -23,13 +23,6 @@ object ArticlesEndpointsSpec extends ZIOSpecDefault:
   override def spec = suite("article endpoints tests")(
     suite("check articles list")(
       suite("with auth header")(
-        test("return empty list") {
-          for {
-            _ <- prepareDataForListingEmptyList
-            authHeader <- getValidAuthorizationHeader()
-            result <- checkIfArticleListIsEmpty(authorizationHeaderOpt = Some(authHeader), uri = uri"http://test.com/api/articles")
-          } yield result
-        },
         test("validation failed on filter") {
           for {
             authHeader <- getValidAuthorizationHeader()
@@ -66,6 +59,13 @@ object ArticlesEndpointsSpec extends ZIOSpecDefault:
               authorizationHeaderOpt = Some(authHeader),
               uri = uri"http://test.com/api/articles?author=jake&favorited=john&tag=goats"
             )
+          } yield result
+        },
+        test("return empty list") {
+          for {
+            _ <- prepareDataForListingEmptyList
+            authHeader <- getValidAuthorizationHeader()
+            result <- checkIfArticleListIsEmpty(authorizationHeaderOpt = Some(authHeader), uri = uri"http://test.com/api/articles")
           } yield result
         },
         test("list available articles") {
@@ -80,9 +80,6 @@ object ArticlesEndpointsSpec extends ZIOSpecDefault:
         }
       ),
       suite("with no header")(
-        test("return empty list") {
-          checkIfArticleListIsEmpty(authorizationHeaderOpt = None, uri = uri"http://test.com/api/articles")
-        },
         test("validation failed on filter") {
           for {
             result <- checkIfFilterErrorOccur(
@@ -116,6 +113,9 @@ object ArticlesEndpointsSpec extends ZIOSpecDefault:
               uri = uri"http://test.com/api/articles?author=jake&favorited=john&tag=goats"
             )
           } yield result
+        },
+        test("return empty list") {
+          checkIfArticleListIsEmpty(authorizationHeaderOpt = None, uri = uri"http://test.com/api/articles")
         },
         test("list available articles") {
           for {
@@ -182,14 +182,19 @@ object ArticlesEndpointsSpec extends ZIOSpecDefault:
       }
     ),
     suite("check article creation")(
-      test("positive article creation") {
+      test("return empty string fields error") {
         for {
           _ <- prepareDataForArticleCreation
           authHeader <- getValidAuthorizationHeader()
-          result <- createAndCheckArticle(
+          result <- checkIfEmptyFieldsErrorOccurInCreate(
             authorizationHeader = authHeader,
             uri = uri"http://test.com/api/articles",
-            createData = exampleArticle2
+            createData = ArticleCreateData(
+              title = "",
+              description = "",
+              body = "",
+              tagList = Some(List(""))
+            )
           )
         } yield result
       },
@@ -198,6 +203,17 @@ object ArticlesEndpointsSpec extends ZIOSpecDefault:
           _ <- prepareDataForCreatingNameConflict
           authHeader <- getValidAuthorizationHeader()
           result <- createAndCheckIfInvalidNameErrorOccur(
+            authorizationHeader = authHeader,
+            uri = uri"http://test.com/api/articles",
+            createData = exampleArticle2
+          )
+        } yield result
+      },
+      test("positive article creation") {
+        for {
+          _ <- prepareDataForArticleCreation
+          authHeader <- getValidAuthorizationHeader()
+          result <- createAndCheckArticle(
             authorizationHeader = authHeader,
             uri = uri"http://test.com/api/articles",
             createData = exampleArticle2
@@ -222,19 +238,17 @@ object ArticlesEndpointsSpec extends ZIOSpecDefault:
       )
     ),
     suite("update article")(
-      test("positive article update") {
+      test("return empty string fields error") {
         for {
           _ <- prepareDataForArticleUpdating
           authHeader <- getValidAuthorizationHeader()
-          result <- updateAndCheckArticle(
+          result <- checkIfEmptyFieldsErrorOccurInUpdate(
             authorizationHeader = authHeader,
             uri = uri"http://test.com/api/articles/how-to-train-your-dragon",
-            updateData = ArticleUpdateRequest(
-              ArticleUpdateData(
-                title = Option("Updated slug"),
-                description = Option("updated description"),
-                body = Option("updated body")
-              )
+            updateData = ArticleUpdateData(
+              title = Some(""),
+              description = Some(""),
+              body = Some("")
             )
           )
         } yield result
@@ -246,12 +260,25 @@ object ArticlesEndpointsSpec extends ZIOSpecDefault:
           result <- updateAndCheckIfInvalidNameErrorOccur(
             authorizationHeader = authHeader,
             uri = uri"http://test.com/api/articles/how-to-train-your-dragon",
-            updateData = ArticleUpdateRequest(
-              ArticleUpdateData(
-                title = Option("How to train your dragon 2"),
-                description = Option("updated description"),
-                body = Option("updated body")
-              )
+            updateData = ArticleUpdateData(
+              title = Some("How to train your dragon 2"),
+              description = Some("updated description"),
+              body = Some("updated body")
+            )
+          )
+        } yield result
+      },
+      test("positive article update") {
+        for {
+          _ <- prepareDataForArticleUpdating
+          authHeader <- getValidAuthorizationHeader()
+          result <- updateAndCheckArticle(
+            authorizationHeader = authHeader,
+            uri = uri"http://test.com/api/articles/how-to-train-your-dragon",
+            updateData = ArticleUpdateData(
+              title = Some("Updated slug"),
+              description = Some("updated description"),
+              body = Some("updated body")
             )
           )
         } yield result
