@@ -58,15 +58,10 @@ class UsersService(authService: AuthService, usersRepository: UsersRepository):
     val emailCleanOpt = updateData.email.map(email => email.toLowerCase.trim())
     val usernameCleanOpt = updateData.username.map(username => username.trim())
 
-    def checkUserDoesNotExist(emailOpt: Option[String], usernameOpt: Option[String]): Task[Unit] =
-      ZIO.foreach(emailOpt)(checkUserDoesNotExistByEmail).flatMap(_ => ZIO.foreach(usernameOpt)(checkUserDoesNotExistByUsername).unit)
-
-    def validateEmailOpt(emailCleanOpt: Option[String]): Task[Unit] =
-      ZIO.foreach(emailCleanOpt)(validateEmail).unit
-
     for {
-      _ <- validateEmailOpt(emailCleanOpt)
-      _ <- checkUserDoesNotExist(emailCleanOpt, usernameCleanOpt)
+      _ <- ZIO.foreach(emailCleanOpt)(validateEmail)
+      _ <- ZIO.foreach(emailCleanOpt)(checkUserDoesNotExistByEmail)
+      _ <- ZIO.foreach(usernameCleanOpt)(checkUserDoesNotExistByUsername)
       oldUser <- usersRepository
         .findUserWithPasswordById(userId)
         .someOrFail(NotFound(UserWithIdNotFoundMessage(userId)))
