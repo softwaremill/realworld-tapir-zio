@@ -17,8 +17,7 @@ object CommentTestSupport:
   def callGetCommentsFromArticle(
       authorizationHeaderOpt: Option[Map[String, String]],
       uri: Uri
-  ): ZIO[CommentsServerEndpoints, Throwable, Either[ResponseException[String, String], CommentsListResponse]] = {
-
+  ): ZIO[CommentsServerEndpoints, Throwable, Either[ResponseException[String, String], CommentsListResponse]] =
     ZIO
       .service[CommentsServerEndpoints]
       .map(_.getCommentsFromArticleServerEndpoint)
@@ -36,14 +35,12 @@ object CommentTestSupport:
           .send(backendStub(endpoint))
           .map(_.body)
       }
-  }
 
   def callAddComment(
       authorizationHeader: Map[String, String],
       uri: Uri,
       bodyComment: String
-  ): ZIO[CommentsServerEndpoints, Throwable, Either[ResponseException[String, String], CommentResponse]] = {
-
+  ): ZIO[CommentsServerEndpoints, Throwable, Either[ResponseException[String, String], CommentResponse]] =
     ZIO
       .service[CommentsServerEndpoints]
       .map(_.addCommentServerEndpoint)
@@ -56,13 +53,11 @@ object CommentTestSupport:
           .send(backendStub(endpoint))
           .map(_.body)
       }
-  }
 
   def deleteCommentRequest(
       authorizationHeader: Map[String, String],
       uri: Uri
-  ): ZIO[CommentsServerEndpoints, Throwable, Either[String, String]] = {
-
+  ): ZIO[CommentsServerEndpoints, Throwable, Either[String, String]] =
     ZIO
       .service[CommentsServerEndpoints]
       .map(_.deleteCommentServerEndpoint)
@@ -73,13 +68,11 @@ object CommentTestSupport:
           .send(backendStub(endpoint))
           .map(_.body)
       }
-  }
 
   def checkIfCommentsListIsEmpty(
       authorizationHeaderOpt: Option[Map[String, String]],
       uri: Uri
-  ): ZIO[CommentsServerEndpoints, Throwable, TestResult] = {
-
+  ): ZIO[CommentsServerEndpoints, Throwable, TestResult] =
     assertZIO(
       callGetCommentsFromArticle(authorizationHeaderOpt, uri)
     )(
@@ -91,13 +84,11 @@ object CommentTestSupport:
         )
       )
     )
-  }
 
   def checkIfNotAuthorOfCommentErrorOccurInDelete(
       authorizationHeader: Map[String, String],
       uri: Uri
-  ): ZIO[CommentsServerEndpoints, Throwable, TestResult] = {
-
+  ): ZIO[CommentsServerEndpoints, Throwable, TestResult] =
     assertZIO(
       deleteCommentRequest(authorizationHeader, uri)
     )(
@@ -105,13 +96,11 @@ object CommentTestSupport:
         equalTo("{\"error\":\"Can't remove the comment you're not an author of\"}")
       )
     )
-  }
 
   def checkIfCommentNotLinkedToSlugErrorOccurInDelete(
       authorizationHeader: Map[String, String],
       uri: Uri
-  ): ZIO[CommentsServerEndpoints, Throwable, TestResult] = {
-
+  ): ZIO[CommentsServerEndpoints, Throwable, TestResult] =
     assertZIO(
       deleteCommentRequest(authorizationHeader, uri)
     )(
@@ -119,14 +108,30 @@ object CommentTestSupport:
         equalTo("{\"error\":\"Comment with id=1 is not linked to slug how-to-train-your-dragon-4\"}")
       )
     )
-  }
+
+  def checkIfEmptyFieldsErrorOccurInCreate(
+      authorizationHeader: Map[String, String],
+      uri: Uri,
+      body: String
+  ): ZIO[CommentsServerEndpoints, Throwable, TestResult] =
+    assertZIO(
+      callAddComment(authorizationHeader, uri, body)
+    )(
+      isLeft(
+        equalTo(
+          HttpError(
+            """{"errors":{"body":["Invalid value for: body (expected comment.body to have length greater than or equal to 1, but got: \"\")"]}}""",
+            sttp.model.StatusCode(422)
+          )
+        )
+      )
+    )
 
   def createAndCheckComment(
       authorizationHeader: Map[String, String],
       uri: Uri,
       body: String
-  ): ZIO[CommentsServerEndpoints, Throwable, TestResult] = {
-
+  ): ZIO[CommentsServerEndpoints, Throwable, TestResult] =
     for {
       comment <- callAddComment(authorizationHeader, uri, body)
     } yield zio.test.assert(comment.toOption) {
@@ -147,13 +152,11 @@ object CommentTestSupport:
         )
       )
     }
-  }
 
   def checkCommentsList(
       authorizationHeaderOpt: Option[Map[String, String]],
       uri: Uri
-  ): ZIO[CommentsServerEndpoints, Throwable, TestResult] = {
-
+  ): ZIO[CommentsServerEndpoints, Throwable, TestResult] =
     for {
       commentsList <- callGetCommentsFromArticle(authorizationHeaderOpt, uri)
     } yield zio.test.assert(commentsList.toOption) {
@@ -189,13 +192,11 @@ object CommentTestSupport:
         )
       )
     }
-  }
 
   def checkCommentsListAfterDelete(
       authorizationHeaderOpt: Option[Map[String, String]],
       uri: Uri
-  ): ZIO[CommentsServerEndpoints, Throwable, TestResult] = {
-
+  ): ZIO[CommentsServerEndpoints, Throwable, TestResult] =
     for {
       commentsList <- callGetCommentsFromArticle(authorizationHeaderOpt, uri)
     } yield zio.test.assert(commentsList.toOption) {
@@ -219,4 +220,3 @@ object CommentTestSupport:
         )
       )
     }
-  }
