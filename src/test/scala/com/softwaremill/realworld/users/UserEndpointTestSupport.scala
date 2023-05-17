@@ -1,6 +1,5 @@
 package com.softwaremill.realworld.users
 
-import com.softwaremill.diffx.{Diff, compare}
 import com.softwaremill.realworld.users
 import com.softwaremill.realworld.users.api.*
 import com.softwaremill.realworld.utils.TestUtils.backendStub

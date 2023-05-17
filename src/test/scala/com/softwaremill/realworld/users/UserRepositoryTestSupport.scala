@@ -1,6 +1,5 @@
 package com.softwaremill.realworld.users
 
-import com.softwaremill.diffx.{Diff, compare}
 import com.softwaremill.realworld.users.UserRepositoryTestSupport.callFollow
 import com.softwaremill.realworld.users.api.{UserRegisterData, UserUpdateData}
 import sttp.client3.testing.SttpBackendStub

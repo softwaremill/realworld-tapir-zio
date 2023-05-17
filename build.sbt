@@ -1,4 +1,3 @@
-val diffxVersion = "0.8.3"
 val emailValidatorVersion = "1.7"
 val flywayVersion = "9.17.0"
 val hikariVersion = "5.0.1"
@@ -37,7 +36,6 @@ val db = Seq(
 )
 
 val tests = Seq(
-  "com.softwaremill.diffx" %% "diffx-core" % diffxVersion,
   "com.softwaremill.sttp.tapir" %% "tapir-sttp-stub-server" % tapirVersion % Test,
   "dev.zio" %% "zio-logging" % zioLoggingVersion,
   "dev.zio" %% "zio-logging-slf4j" % zioLoggingVersion,
