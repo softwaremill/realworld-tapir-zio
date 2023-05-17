@@ -1,12 +1,14 @@
 package com.softwaremill.realworld.articles.core.api
 
 import com.softwaremill.realworld.common.NoneAsNullOptionEncoder.*
+import sttp.tapir.Schema.annotations.validateEach
+import sttp.tapir.Validator
 import zio.json.{DeriveJsonDecoder, DeriveJsonEncoder, JsonDecoder, JsonEncoder}
 
 case class ArticleUpdateData(
-    title: Option[String],
-    description: Option[String],
-    body: Option[String]
+    @validateEach(Validator.nonEmptyString) title: Option[String],
+    @validateEach(Validator.nonEmptyString) description: Option[String],
+    @validateEach(Validator.nonEmptyString) body: Option[String]
 )
 
 object ArticleUpdateData:

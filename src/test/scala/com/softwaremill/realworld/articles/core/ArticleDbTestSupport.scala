@@ -115,6 +115,15 @@ object ArticleDbTestSupport:
       _ <- articleRepo.addArticle(exampleArticle1, userId1)
     } yield ()
 
+  def prepareDataForFindingArticle =
+    for {
+      articleRepo <- ZIO.service[ArticlesRepository]
+      userRepo <- ZIO.service[UsersRepository]
+      _ <- userRepo.add(exampleUser1)
+      userId1 <- userRepo.findUserIdByEmail(exampleUser1.email).someOrFail(s"User with email ${exampleUser1.email} doesn't exist.")
+      _ <- articleRepo.addArticle(exampleArticle1, userId1)
+    } yield ()
+
   def prepareDataForUpdatingNameConflict =
     for {
       articleRepo <- ZIO.service[ArticlesRepository]
@@ -123,4 +132,27 @@ object ArticleDbTestSupport:
       userId1 <- userRepo.findUserIdByEmail(exampleUser1.email).someOrFail(s"User with email ${exampleUser1.email} doesn't exist.")
       _ <- articleRepo.addArticle(exampleArticle1, userId1)
       _ <- articleRepo.addArticle(exampleArticle2, userId1)
+    } yield ()
+
+  def prepareDataForMarkingFavorites =
+    for {
+      articleRepo <- ZIO.service[ArticlesRepository]
+      userRepo <- ZIO.service[UsersRepository]
+      _ <- userRepo.add(exampleUser1)
+      _ <- userRepo.add(exampleUser2)
+      userId1 <- userRepo.findUserIdByEmail(exampleUser1.email).someOrFail(s"User with email ${exampleUser1.email} doesn't exist.")
+      _ <- articleRepo.addArticle(exampleArticle1, userId1)
+    } yield ()
+
+  def prepareDataForRemovingFavorites =
+    for {
+      articleRepo <- ZIO.service[ArticlesRepository]
+      userRepo <- ZIO.service[UsersRepository]
+      _ <- userRepo.add(exampleUser1)
+      _ <- userRepo.add(exampleUser2)
+      userId1 <- userRepo.findUserIdByEmail(exampleUser1.email).someOrFail(s"User with email ${exampleUser1.email} doesn't exist.")
+      userId2 <- userRepo.findUserIdByEmail(exampleUser2.email).someOrFail(s"User with email ${exampleUser2.email} doesn't exist.")
+      _ <- articleRepo.addArticle(exampleArticle1, userId1)
+      articleId1 <- articleRepo.findArticleIdBySlug(exampleArticle1Slug).someOrFail(s"Article $exampleArticle1Slug doesn't exist")
+      _ <- articleRepo.makeFavorite(articleId1, userId2)
     } yield ()

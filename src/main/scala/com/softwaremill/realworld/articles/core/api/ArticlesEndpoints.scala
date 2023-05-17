@@ -55,13 +55,13 @@ class ArticlesEndpoints(base: BaseEndpoints):
       .out(jsonBody[ArticlesListResponse].example(Examples.articlesFeedResponse))
 
   val getEndpoint: ZPartialServerEndpoint[Any, String, UserSession, String, ErrorInfo, ArticleResponse, Any] = base.secureEndpoint.get
-    .in("api" / "articles" / path[String]("slug")) // TODO Input Validation
+    .in("api" / "articles" / path[String]("slug"))
     .out(jsonBody[ArticleResponse].example(Examples.articleResponse))
 
   val createEndpoint: ZPartialServerEndpoint[Any, String, UserSession, ArticleCreateRequest, ErrorInfo, ArticleResponse, Any] =
     base.secureEndpoint.post
       .in("api" / "articles")
-      .in(jsonBody[ArticleCreateRequest].example(Examples.articleCreateRequest)) // TODO Input Validation
+      .in(jsonBody[ArticleCreateRequest].example(Examples.articleCreateRequest))
       .out(jsonBody[ArticleResponse].example(Examples.articleResponse))
 
   val deleteEndpoint: ZPartialServerEndpoint[Any, String, UserSession, String, ErrorInfo, Unit, Any] = base.secureEndpoint.delete
@@ -70,7 +70,7 @@ class ArticlesEndpoints(base: BaseEndpoints):
   val updateEndpoint: ZPartialServerEndpoint[Any, String, UserSession, (String, ArticleUpdateRequest), ErrorInfo, ArticleResponse, Any] =
     base.secureEndpoint.put
       .in("api" / "articles" / path[String]("slug"))
-      .in(jsonBody[ArticleUpdateRequest].example(Examples.articleUpdateRequest)) // TODO Input Validation
+      .in(jsonBody[ArticleUpdateRequest].example(Examples.articleUpdateRequest))
       .out(jsonBody[ArticleResponse].example(Examples.articleResponse))
 
   val makeFavoriteEndpoint: ZPartialServerEndpoint[Any, String, UserSession, String, ErrorInfo, ArticleResponse, Any] =
