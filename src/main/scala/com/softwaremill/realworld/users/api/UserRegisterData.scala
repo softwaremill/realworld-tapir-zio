@@ -6,7 +6,7 @@ import zio.json.{DeriveJsonDecoder, DeriveJsonEncoder}
 
 case class UserRegisterData(
     @validate(Validator.nonEmptyString) email: String,
-    @validate(Validator.nonEmptyString) username: String,
+    @validate(Validator.minLength(3)) username: String,
     @validate(Validator.nonEmptyString) password: String
 )
 

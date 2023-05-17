@@ -8,7 +8,7 @@ import zio.json.{DeriveJsonDecoder, DeriveJsonEncoder}
 
 case class UserUpdateData(
     @validateEach(Validator.nonEmptyString) email: Option[String],
-    @validateEach(Validator.nonEmptyString) username: Option[String],
+    @validateEach(Validator.minLength(3)) username: Option[String],
     @validateEach(Validator.nonEmptyString) password: Option[String],
     @validateEach(Validator.nonEmptyString) bio: Option[String],
     @validateEach(Validator.nonEmptyString) image: Option[String]

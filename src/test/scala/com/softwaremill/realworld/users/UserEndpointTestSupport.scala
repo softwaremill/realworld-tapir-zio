@@ -199,7 +199,7 @@ object UserEndpointTestSupport:
           HttpError(
             "{\"errors\":{\"body\":[\"Invalid value for: body (" +
               "expected user.email to have length greater than or equal to 1, but got: \\\"\\\", " +
-              "expected user.username to have length greater than or equal to 1, but got: \\\"\\\", " +
+              "expected user.username to have length greater than or equal to 3, but got: \\\"\\\", " +
               "expected user.password to have length greater than or equal to 1, but got: \\\"\\\")\"]}}",
             sttp.model.StatusCode(422)
           )
@@ -240,7 +240,7 @@ object UserEndpointTestSupport:
           HttpError(
             "{\"errors\":{\"body\":[\"Invalid value for: body (" +
               "expected user.email to have length greater than or equal to 1, but got: \\\"\\\", " +
-              "expected user.username to have length greater than or equal to 1, but got: \\\"\\\", " +
+              "expected user.username to have length greater than or equal to 3, but got: \\\"\\\", " +
               "expected user.password to have length greater than or equal to 1, but got: \\\"\\\", " +
               "expected user.bio to have length greater than or equal to 1, but got: \\\"\\\", " +
               "expected user.image to have length greater than or equal to 1, but got: \\\"\\\")\"]}}",

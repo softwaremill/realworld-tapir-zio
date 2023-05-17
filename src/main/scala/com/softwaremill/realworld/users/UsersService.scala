@@ -22,7 +22,7 @@ class UsersService(authService: AuthService, usersRepository: UsersRepository):
     val usernameClean = user.username.trim()
     val passwordClean = user.password.trim()
 
-    def checkUserDoesNotExist(email: String, username: String): IO[Exception, Unit] =
+    def checkUserDoesNotExist(email: String, username: String): Task[Unit] =
       for {
         _ <- checkUserDoesNotExistByEmail(email)
         _ <- checkUserDoesNotExistByUsername(username)
@@ -58,19 +58,11 @@ class UsersService(authService: AuthService, usersRepository: UsersRepository):
     val emailCleanOpt = updateData.email.map(email => email.toLowerCase.trim())
     val usernameCleanOpt = updateData.username.map(username => username.trim())
 
-    def checkUserDoesNotExist(emailOpt: Option[String], usernameOpt: Option[String]): IO[Exception, Unit] =
-      (emailOpt, usernameOpt) match
-        case (Some(email), None)    => checkUserDoesNotExistByEmail(email)
-        case (None, Some(username)) => checkUserDoesNotExistByUsername(username)
-        case (Some(email), Some(username)) =>
-          checkUserDoesNotExistByEmail(email)
-          checkUserDoesNotExistByUsername(username)
-        case (None, None) => ZIO.unit
+    def checkUserDoesNotExist(emailOpt: Option[String], usernameOpt: Option[String]): Task[Unit] =
+      ZIO.foreach(emailOpt)(checkUserDoesNotExistByEmail).flatMap(_ => ZIO.foreach(usernameOpt)(checkUserDoesNotExistByUsername).unit)
 
-    def validateEmailOpt(emailCleanOpt: Option[String]): IO[Exception, Unit] =
-      emailCleanOpt match
-        case Some(email) => validateEmail(email)
-        case None        => ZIO.unit
+    def validateEmailOpt(emailCleanOpt: Option[String]): Task[Unit] =
+      ZIO.foreach(emailCleanOpt)(validateEmail).unit
 
     for {
       _ <- validateEmailOpt(emailCleanOpt)
@@ -119,19 +111,19 @@ class UsersService(authService: AuthService, usersRepository: UsersRepository):
       Option.empty[String]
     )
 
-  private def checkUserDoesNotExistByEmail(email: String): IO[Exception, Unit] =
+  private def checkUserDoesNotExistByEmail(email: String): Task[Unit] =
     for {
       maybeUserByEmail <- usersRepository.findUserByEmail(email)
       _ <- ZIO.fail(AlreadyInUse(UserWithEmailAlreadyInUseMessage(email))).when(maybeUserByEmail.isDefined)
     } yield ()
 
-  private def checkUserDoesNotExistByUsername(username: String): IO[Exception, Unit] =
+  private def checkUserDoesNotExistByUsername(username: String): Task[Unit] =
     for {
       maybeUserByUsername <- usersRepository.findUserByUsername(username)
       _ <- ZIO.fail(AlreadyInUse(UserWithUsernameAlreadyInUseMessage(username))).when(maybeUserByUsername.isDefined)
     } yield ()
 
-  private def validateEmail(email: String): IO[Exception, Unit] = {
+  private def validateEmail(email: String): Task[Unit] = {
     val emailValidator = EmailValidator.getInstance()
 
     if (!emailValidator.isValid(email)) ZIO.fail(BadRequest(InvalidEmailMessage(email))) else ZIO.unit
