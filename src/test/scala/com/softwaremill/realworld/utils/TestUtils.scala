@@ -2,9 +2,11 @@ package com.softwaremill.realworld.utils
 
 import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm
+import com.softwaremill.realworld.articles.core.ArticlesRepository
 import com.softwaremill.realworld.auth.AuthService
 import com.softwaremill.realworld.common.{CustomDecodeFailureHandler, DefectHandler}
 import com.softwaremill.realworld.db.{Db, DbConfig, DbMigrator}
+import com.softwaremill.realworld.users.UsersRepository
 import com.softwaremill.realworld.utils.DbData.exampleUser1
 import io.getquill.*
 import io.getquill.jdbczio.*
@@ -73,3 +75,13 @@ object TestUtils:
 
   val testDbLayerWithEmptyDb: ZLayer[Any, Nothing, TestDbLayer] =
     testDbLayer >+> ZLayer.fromZIO(initializeDb.orDie)
+
+  def findUserIdByEmail(userRepo: UsersRepository, email: String): ZIO[Any, Serializable, Int] =
+    userRepo
+      .findUserIdByEmail(email)
+      .someOrFail(s"User with email $email doesn't exist.")
+
+  def findArticleIdBySlug(articleRepo: ArticlesRepository, slug: String): ZIO[Any, Serializable, Int] =
+    articleRepo
+      .findArticleIdBySlug(slug)
+      .someOrFail(s"Article $slug doesn't exist")

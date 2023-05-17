@@ -6,7 +6,7 @@ import sttp.tapir.{ValidationResult, Validator}
 import zio.json.{DeriveJsonDecoder, DeriveJsonEncoder, JsonDecoder, JsonEncoder}
 
 def validateTagList(tagList: List[String]): ValidationResult =
-  if (tagList.contains("")) Invalid("each element in the tagList is expected to have a length greater than or equal to 1") else Valid
+  if (tagList.exists(_.isEmpty)) Invalid("each element in the tagList is expected to have a length greater than or equal to 1") else Valid
 
 case class ArticleCreateData(
     @validate(Validator.nonEmptyString) title: String,
