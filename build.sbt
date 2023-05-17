@@ -1,4 +1,5 @@
 val diffxVersion = "0.8.3"
+val emailValidatorVersion = "1.7"
 val flywayVersion = "9.17.0"
 val hikariVersion = "5.0.1"
 val jwtVersion = "4.4.0"
@@ -46,6 +47,8 @@ val tests = Seq(
   "com.softwaremill.sttp.client3" %% "zio-json" % zioJsonVersion % Test
 )
 
+val emailValidator = Seq("commons-validator" % "commons-validator" % emailValidatorVersion)
+
 lazy val rootProject = (project in file(".")).settings(
   Seq(
     name := "realworld-tapir-zio",
@@ -63,7 +66,7 @@ lazy val rootProject = (project in file(".")).settings(
       "-Xfatal-warnings",
       "-Ycheck-all-patmat"
     ),
-    libraryDependencies ++= tapir ++ config ++ security ++ db ++ tests,
+    libraryDependencies ++= tapir ++ config ++ security ++ db ++ tests ++ emailValidator,
     testFrameworks := Seq(new TestFramework("zio.test.sbt.ZTestFramework"))
   )
 )

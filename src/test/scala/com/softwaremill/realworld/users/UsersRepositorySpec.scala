@@ -12,13 +12,13 @@ object UsersRepositorySpec extends ZIOSpecDefault:
     suite("find user by email")(
       test("user not found") {
         for {
-          _ <- prepareBasicUsersData
+          _ <- prepareOneUser
           result <- checkUserNotFoundByEmail("notExisting@example.com")
         } yield result
       },
       test("user found") {
         for {
-          _ <- prepareBasicUsersData
+          _ <- prepareOneUser
           result <- checkUserFoundByEmail("jake@example.com")
         } yield result
       }
@@ -26,13 +26,13 @@ object UsersRepositorySpec extends ZIOSpecDefault:
     suite("find user by id")(
       test("user not found") {
         for {
-          _ <- prepareBasicUsersData
+          _ <- prepareOneUser
           result <- checkUserNotFoundById(0)
         } yield result
       },
       test("user found") {
         for {
-          _ <- prepareBasicUsersData
+          _ <- prepareOneUser
           result <- checkUserFoundById(1)
         } yield result
       }
@@ -40,27 +40,69 @@ object UsersRepositorySpec extends ZIOSpecDefault:
     suite("find user by username")(
       test("user not found") {
         for {
-          _ <- prepareBasicUsersData
+          _ <- prepareOneUser
           result <- checkUserNotFoundByUsername("notExisting")
         } yield result
       },
       test("user found") {
         for {
-          _ <- prepareBasicUsersData
+          _ <- prepareOneUser
           result <- checkUserFoundByUsername("jake")
+        } yield result
+      }
+    ),
+    suite("find user with id by username")(
+      test("user not found") {
+        for {
+          _ <- prepareOneUser
+          result <- checkUserWithIdNotFoundByUsername("notExisting")
+        } yield result
+      },
+      test("user found") {
+        for {
+          _ <- prepareOneUser
+          result <- checkUserWithIdFoundByUsername("jake")
+        } yield result
+      }
+    ),
+    suite("find user id by email")(
+      test("user not found") {
+        for {
+          _ <- prepareOneUser
+          result <- checkUserIdNotFoundByEmail("notExisting@example.com")
+        } yield result
+      },
+      test("user found") {
+        for {
+          _ <- prepareOneUser
+          result <- checkUserIdFoundByEmail("jake@example.com")
+        } yield result
+      }
+    ),
+    suite("find user id by username")(
+      test("user not found") {
+        for {
+          _ <- prepareOneUser
+          result <- checkUserIdNotFoundByUsername("notExisting")
+        } yield result
+      },
+      test("user found") {
+        for {
+          _ <- prepareOneUser
+          result <- checkUserIdFoundByUsername("jake")
         } yield result
       }
     ),
     suite("find user with password by email")(
       test("user with password not found") {
         for {
-          _ <- prepareBasicUsersData
+          _ <- prepareOneUser
           result <- checkUserWithPasswordNotFoundByEmail("notExisting@example.com")
         } yield result
       },
       test("user with password found") {
         for {
-          _ <- prepareBasicUsersData
+          _ <- prepareOneUser
           result <- checkUserWithPasswordFoundByEmail("jake@example.com")
         } yield result
       }
@@ -68,13 +110,13 @@ object UsersRepositorySpec extends ZIOSpecDefault:
     suite("find user with password by id")(
       test("user with password not found") {
         for {
-          _ <- prepareBasicUsersData
+          _ <- prepareOneUser
           result <- checkUserWithPasswordNotFoundById(0)
         } yield result
       },
       test("user with password found") {
         for {
-          _ <- prepareBasicUsersData
+          _ <- prepareOneUser
           result <- checkUserWithPasswordFoundById(1)
         } yield result
       }
@@ -82,7 +124,7 @@ object UsersRepositorySpec extends ZIOSpecDefault:
     suite("add user")(
       test("user added") {
         for {
-          _ <- prepareBasicUsersData
+          _ <- prepareOneUser
           result <- checkUserAdd(UserRegisterData(email = "test@test.com", username = "tested", password = "tested"))
         } yield result
       }
@@ -102,6 +144,26 @@ object UsersRepositorySpec extends ZIOSpecDefault:
             userRegisterData = UserRegisterData(email = "test@test.com", username = "tested", password = "tested"),
             userUpdateData = UserUpdateData(Some("updated@test.com"), None, None, Some("Updated test bio"), None)
           )
+        } yield result
+      }
+    ),
+    suite("check following")(
+      test("check is following") {
+        for {
+          _ <- prepareTwoUsersWithFollowing
+          result <- checkIsFollowing(followedId = 1, followerId = 2)
+        } yield result
+      },
+      test("check follow") {
+        for {
+          _ <- prepareTwoUsers
+          result <- checkFollow(followedId = 1, followerId = 2)
+        } yield result
+      },
+      test("check unfollow") {
+        for {
+          _ <- prepareTwoUsersWithFollowing
+          result <- checkUnfollow(followedId = 1, followerId = 2)
         } yield result
       }
     )

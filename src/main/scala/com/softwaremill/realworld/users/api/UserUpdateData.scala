@@ -2,14 +2,16 @@ package com.softwaremill.realworld.users.api
 
 import com.softwaremill.realworld.common.NoneAsNullOptionEncoder.*
 import com.softwaremill.realworld.users.UserWithPassword
+import sttp.tapir.Schema.annotations.validateEach
+import sttp.tapir.Validator
 import zio.json.{DeriveJsonDecoder, DeriveJsonEncoder}
 
 case class UserUpdateData(
-    email: Option[String],
-    username: Option[String],
-    password: Option[String],
-    bio: Option[String],
-    image: Option[String]
+    @validateEach(Validator.nonEmptyString) email: Option[String],
+    @validateEach(Validator.minLength(3)) username: Option[String],
+    @validateEach(Validator.nonEmptyString) password: Option[String],
+    @validateEach(Validator.nonEmptyString) bio: Option[String],
+    @validateEach(Validator.nonEmptyString) image: Option[String]
 ) {
   def update(userDataWithPassword: UserWithPassword): UserUpdateData =
     val user = userDataWithPassword.user

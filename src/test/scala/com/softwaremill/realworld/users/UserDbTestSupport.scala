@@ -3,10 +3,17 @@ package com.softwaremill.realworld.users
 import com.softwaremill.realworld.utils.DbData.*
 import zio.ZIO
 object UserDbTestSupport:
-  def prepareBasicUsersData =
+  def prepareOneUser =
     ZIO.service[UsersRepository].flatMap(_.add(exampleUser1))
 
-  def prepareBasicProfileData =
+  def prepareTwoUsers =
+    for {
+      userRepo <- ZIO.service[UsersRepository]
+      _ <- userRepo.add(exampleUser1)
+      _ <- userRepo.add(exampleUser2)
+    } yield ()
+
+  def prepareTwoUsersWithFollowing =
     for {
       userRepo <- ZIO.service[UsersRepository]
       _ <- userRepo.add(exampleUser1)
