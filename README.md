@@ -14,8 +14,19 @@ For more information on how to this works with other frontends/backends, head ov
 
 
 # How it works
+### Aplication stack 
 
-### Architecture 
+This application uses basically Scala with tapir and ZIO with some other technologies:
+* Json Web Token to authorization
+* SQLite as database
+* Quill to express SQL queries in Scala
+* HikariCP to initialize database
+* Flyway to database migrations
+* Swagger to create API documentation
+
+Additionally, execution of Realworld Postman collection is part of CI.
+
+### Architecture
 The application has been divided by functionalities into the following packages:
 * `common`
 * `db`
@@ -126,6 +137,9 @@ sbt compile # build the project
 sbt test # run the tests
 sbt run # run the application (Main)
 ```
+
+Swagger documentation by default is available at URL:
+http://localhost:8080/docs
 
 ## Links:
 
