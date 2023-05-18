@@ -1,6 +1,5 @@
 package com.softwaremill.realworld.articles.core
 
-import com.softwaremill.diffx.{Diff, compare}
 import com.softwaremill.realworld.articles.core.api.*
 import com.softwaremill.realworld.articles.core.{Article, ArticleAuthor, ArticlesServerEndpoints}
 import com.softwaremill.realworld.articles.tags.TagsRepository

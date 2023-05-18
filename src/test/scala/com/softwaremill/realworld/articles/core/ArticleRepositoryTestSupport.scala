@@ -1,6 +1,5 @@
 package com.softwaremill.realworld.articles.core
 
-import com.softwaremill.diffx.{Diff, compare}
 import com.softwaremill.realworld.articles.comments.{Comment, CommentsRepository}
 import com.softwaremill.realworld.articles.core.ArticleRepositoryTestSupport.callFindArticleIdBySlug
 import com.softwaremill.realworld.articles.core.api.ArticleCreateData
