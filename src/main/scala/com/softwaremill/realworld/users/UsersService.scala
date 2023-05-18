@@ -60,8 +60,8 @@ class UsersService(authService: AuthService, usersRepository: UsersRepository):
 
     for {
       _ <- ZIO.foreach(emailCleanOpt)(validateEmail)
-      _ <- ZIO.foreach(emailCleanOpt)(checkUserDoesNotExistByEmail)
-      _ <- ZIO.foreach(usernameCleanOpt)(checkUserDoesNotExistByUsername)
+      _ <- ZIO.foreach(emailCleanOpt)(emailClean => checkUserDoesNotExistByEmail(emailClean, userId))
+      _ <- ZIO.foreach(usernameCleanOpt)(usernameClean => checkUserDoesNotExistByUsername(usernameClean, userId))
       oldUser <- usersRepository
         .findUserWithPasswordById(userId)
         .someOrFail(NotFound(UserWithIdNotFoundMessage(userId)))
@@ -116,6 +116,32 @@ class UsersService(authService: AuthService, usersRepository: UsersRepository):
     for {
       maybeUserByUsername <- usersRepository.findUserByUsername(username)
       _ <- ZIO.fail(AlreadyInUse(UserWithUsernameAlreadyInUseMessage(username))).when(maybeUserByUsername.isDefined)
+    } yield ()
+
+  private def checkUserDoesNotExistByEmail(email: String, userIdFromSession: Int): Task[Unit] =
+    for {
+      maybeUserByEmail <- usersRepository.findUserByEmail(email)
+      maybeUserFromSession <- usersRepository.findUserById(userIdFromSession)
+      _ <- ZIO
+        .fail(AlreadyInUse(UserWithEmailAlreadyInUseMessage(email)))
+        .when(
+          maybeUserByEmail.isDefined && maybeUserByEmail
+            .flatMap(userByUsername => maybeUserFromSession.map(userBySession => userByUsername.email != userBySession.email))
+            .getOrElse(true)
+        )
+    } yield ()
+
+  private def checkUserDoesNotExistByUsername(username: String, userIdFromSession: Int): Task[Unit] =
+    for {
+      maybeUserByUsername <- usersRepository.findUserByUsername(username)
+      maybeUserFromSession <- usersRepository.findUserById(userIdFromSession)
+      _ <- ZIO
+        .fail(AlreadyInUse(UserWithUsernameAlreadyInUseMessage(username)))
+        .when(
+          maybeUserByUsername.isDefined && maybeUserByUsername
+            .flatMap(userByUsername => maybeUserFromSession.map(userBySession => userByUsername.username != userBySession.username))
+            .getOrElse(true)
+        )
     } yield ()
 
   private def validateEmail(email: String): Task[Unit] = {
