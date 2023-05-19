@@ -1,10 +1,6 @@
 # ![RealWorld Example App](logo.png)
 
-> ### Scala+ZIO+Quill+tapir codebase containing real world examples (CRUD, auth, advanced patterns, etc) that adheres to the [RealWorld](https://github.com/gothinkster/realworld) spec and API.
-
-
-### [Demo](https://demo.realworld.io/)&nbsp;&nbsp;&nbsp;&nbsp;[RealWorld](https://github.com/gothinkster/realworld)
-
+### Scala+ZIO+Quill+tapir codebase containing real world examples (CRUD, auth, advanced patterns, etc) that adheres to the [RealWorld](https://github.com/gothinkster/realworld) spec and API.
 
 This codebase was created to demonstrate a backend application built with **Scala, ZIO, Quill and tapir** including CRUD operations, authentication, routing, pagination, and more.
 
