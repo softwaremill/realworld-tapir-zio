@@ -1,14 +1,14 @@
 # ![RealWorld Example App](logo.png)
 
-> ### [Scala with tapir and ZIO] codebase containing real world examples (CRUD, auth, advanced patterns, etc) that adheres to the [RealWorld](https://github.com/gothinkster/realworld) spec and API.
+> ### Scala+ZIO+Quill+tapir codebase containing real world examples (CRUD, auth, advanced patterns, etc) that adheres to the [RealWorld](https://github.com/gothinkster/realworld) spec and API.
 
 
 ### [Demo](https://demo.realworld.io/)&nbsp;&nbsp;&nbsp;&nbsp;[RealWorld](https://github.com/gothinkster/realworld)
 
 
-This codebase was created to demonstrate a backend application built with **[Scala with tapir and ZIO]** including CRUD operations, authentication, routing, pagination, and more.
+This codebase was created to demonstrate a backend application built with **Scala, ZIO, Quill and tapir** including CRUD operations, authentication, routing, pagination, and more.
 
-We've gone to great lengths to adhere to the **[Scala with tapir and ZIO]** community styleguides & best practices.
+We've gone to great lengths to adhere to the **Scala's** & **ZIO's** community styleguides & best practices.
 
 For more information on how to this works with other frontends/backends, head over to the [RealWorld](https://github.com/gothinkster/realworld) repo.
 
@@ -16,15 +16,19 @@ For more information on how to this works with other frontends/backends, head ov
 # How it works
 ### Aplication stack 
 
-This application uses basically Scala with tapir and ZIO with some other technologies:
-* Json Web Token to authorization
-* SQLite as database
-* Quill to express SQL queries in Scala
-* HikariCP to initialize database
-* Flyway to database migrations
-* Swagger to create API documentation
+This application uses:
 
-Additionally, execution of Realworld Postman collection is part of CI.
+* [Scala](https://scala-lang.org), a functional & object-oriented JVM programming language
+* [ZIO](https://zio.dev), a type-safe, composable asynchronous and concurrent programming library for Scala
+* [tapir](https://tapir.softwaremill.com/en/latest/), a declarative, type-safe web endpoints libarry
+* [Quill](https://github.com/zio/zio-quill), compile-time language integrated queries for Scala
+* Json Web Token for authorization
+* SQLite as the database
+* HikariCP to manage the database connection pool
+* Flyway for database migrations
+* Swagger to expose API documentation
+
+Additionally, executing Realworld Postman collection is part of CI acceptance tests.
 
 ### Architecture
 The application has been divided by functionalities into the following packages:
@@ -38,8 +42,7 @@ The `common` package contains auxiliary structures that are used in the project.
 The `db` package has the necessary data to operate the database.
 The `auth` package contains the tools needed to authorize the user.
 
-
-The `articles` consist of 3 smaller submodules: `core`, `comments` and `users`.
+The `articles` package consist of 3 smaller submodules: `core`, `comments` and `users`.
 Each of them has a similar structure. They contain specific endpoints, service them using services and communicate with the database using repositories.
 These packages include domain classes and clearly separated api layer that contains "the contract", i.e. the endpoint descriptions, without logic.
 
@@ -119,7 +122,7 @@ Main
 ```
 # Getting started
 
-If you don't have [sbt](https://www.scala-sbt.org) installed already, you can use the provided wrapper script:
+If you don't have [sbt](https://www.scala-sbt.org) installed already, you can use the provided wrapper script, [sbtx](https://github.com/dwijnand/sbt-extras#installation):
 
 ```shell
 ./sbtx -h # shows an usage of a wrapper script
@@ -140,13 +143,3 @@ sbt run # run the application (Main)
 
 Swagger documentation by default is available at URL:
 http://localhost:8080/docs
-
-## Links:
-
-* [tapir documentation](https://tapir.softwaremill.com/en/latest/)
-* [tapir github](https://github.com/softwaremill/tapir)
-* [ZIO documentation](https://zio.dev/)
-* [ZIO github](https://github.com/zio/zio)
-* [bootzooka: template microservice using tapir](https://softwaremill.github.io/bootzooka/)
-* [sbtx wrapper](https://github.com/dwijnand/sbt-extras#installation)
-
