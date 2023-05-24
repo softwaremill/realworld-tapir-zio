@@ -1,15 +1,15 @@
 val emailValidatorVersion = "1.7"
-val flywayVersion = "9.17.0"
+val flywayVersion = "9.19.0"
 val hikariVersion = "5.0.1"
 val jwtVersion = "4.4.0"
 val logbackVersion = "1.4.7"
 val password4jVersion = "1.7.0"
 val quillVersion = "4.6.0.1"
-val sqliteVersion = "3.41.2.1"
+val sqliteVersion = "3.41.2.2"
 val tapirVersion = "1.4.0"
 val zioConfigVersion = "3.0.7"
 val zioJsonVersion = "3.8.15"
-val zioLoggingVersion = "2.1.12"
+val zioLoggingVersion = "2.1.13"
 val zioTestVersion = "2.0.13"
 
 val tapir = Seq(
@@ -52,7 +52,7 @@ lazy val rootProject = (project in file(".")).settings(
     name := "realworld-tapir-zio",
     version := "0.1.0-SNAPSHOT",
     organization := "com.softwaremill",
-    scalaVersion := "3.2.1",
+    scalaVersion := "3.2.2",
     Test / fork := true,
     scalacOptions ++= Seq(
       "-deprecation",
