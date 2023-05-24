@@ -1,5 +1,5 @@
 val emailValidatorVersion = "1.7"
-val flywayVersion = "9.17.0"
+val flywayVersion = "9.19.0"
 val hikariVersion = "5.0.1"
 val jwtVersion = "4.4.0"
 val logbackVersion = "1.4.7"
@@ -20,19 +20,19 @@ val tapir = Seq(
 
 val config = Seq(
   "dev.zio" %% "zio-config-typesafe" % zioConfigVersion,
-  "dev.zio" %% "zio-config-magnolia" % zioConfigVersion,
+  "dev.zio" %% "zio-config-magnolia" % zioConfigVersion
 )
 
 val security = Seq(
   "com.password4j" % "password4j" % password4jVersion,
-  "com.auth0" % "java-jwt" % jwtVersion,
+  "com.auth0" % "java-jwt" % jwtVersion
 )
 
 val db = Seq(
   "org.xerial" % "sqlite-jdbc" % sqliteVersion,
   "org.flywaydb" % "flyway-core" % flywayVersion,
   "com.zaxxer" % "HikariCP" % hikariVersion,
-  "io.getquill" %% "quill-jdbc-zio" % quillVersion,
+  "io.getquill" %% "quill-jdbc-zio" % quillVersion
 )
 
 val tests = Seq(
@@ -60,7 +60,8 @@ lazy val rootProject = (project in file(".")).settings(
       "-unchecked",
       "-explain",
       "-Wunused:all",
-      "-Xmax-inlines", "64",
+      "-Xmax-inlines",
+      "64",
       "-Xfatal-warnings",
       "-Ycheck-all-patmat"
     ),
