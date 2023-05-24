@@ -3,45 +3,45 @@ pull_request_rules:
     conditions: []
     actions:
       delete_head_branch: {}
-  - name: automatic merge for github-actions pull requests affecting build.sbt
+  - name: automatic merge for softwaremill-ci pull requests affecting build.sbt
     conditions:
-      - author=github-actions
+      - author=softwaremill-ci
       - check-success=CI
       - "#files=1"
       - files=build.sbt
     actions:
       merge:
         method: merge
-  - name: automatic merge for github-actions pull requests affecting project plugins.sbt
+  - name: automatic merge for softwaremill-ci pull requests affecting project plugins.sbt
     conditions:
-      - author=github-actions
+      - author=softwaremill-ci
       - check-success=CI
       - "#files=1"
       - files=project/plugins.sbt
     actions:
       merge:
         method: merge
-  - name: automatic merge for github-actions pull requests affecting project build.properties
+  - name: automatic merge for softwaremill-ci pull requests affecting project build.properties
     conditions:
-      - author=github-actions
+      - author=softwaremill-ci
       - check-success=CI
       - "#files=1"
       - files=project/build.properties
     actions:
       merge:
         method: merge
-  - name: automatic merge for github-actions pull requests affecting .scalafmt.conf
+  - name: automatic merge for softwaremill-ci pull requests affecting .scalafmt.conf
     conditions:
-      - author=github-actions
+      - author=softwaremill-ci
       - check-success=CI
       - "#files=1"
       - files=.scalafmt.conf
     actions:
       merge:
         method: merge
-  - name: semi-automatic merge for github-actions pull requests
+  - name: semi-automatic merge for softwaremill-ci pull requests
     conditions:
-      - author=github-actions
+      - author=softwaremill-ci
       - check-success=CI
       - "#approved-reviews-by>=1"
     actions:
@@ -49,7 +49,7 @@ pull_request_rules:
         method: merge
   - name: add label to bot PRs
     conditions:
-      - author=github-actions
+      - author=softwaremill-ci
     actions:
       label:
         add:
