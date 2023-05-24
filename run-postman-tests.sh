@@ -35,6 +35,4 @@ exit_status=$?
 
 kill $sbt_pid
 
-# TODO - replace with the line below to make CI fail in case there are POSTMAN test errors
-# exit $exit_status
-exit 0
+exit $exit_status

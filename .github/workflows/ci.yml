@@ -25,3 +25,11 @@ jobs:
         id: postman-tests
         run: ./run-postman-tests.sh
         shell: bash
+        continue-on-error: true
+      - name: Handle Postman tests result
+        run: |
+          exit_status=$? 
+            if [[ $exit_status -ne 0 ]]; then
+              echo "Postman tests failed. Exiting with error."
+              exit 1
+          fi
