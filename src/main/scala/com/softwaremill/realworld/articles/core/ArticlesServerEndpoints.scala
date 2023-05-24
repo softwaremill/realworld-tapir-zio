@@ -104,7 +104,7 @@ class ArticlesServerEndpoints(articlesEndpoints: ArticlesEndpoints, articlesServ
       feedArticlesServerEndpoint,
       getServerEndpoint,
       updateServerEndpoint,
-      createServerEndpoint,
+//      createServerEndpoint,
       deleteServerEndpoint,
       makeFavoriteServerEndpoint,
       removeFavoriteServerEndpoint
