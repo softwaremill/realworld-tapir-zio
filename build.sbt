@@ -1,5 +1,5 @@
 val emailValidatorVersion = "1.7"
-val flywayVersion = "9.17.0"
+val flywayVersion = "9.19.0"
 val hikariVersion = "5.0.1"
 val jwtVersion = "4.4.0"
 val logbackVersion = "1.4.7"
