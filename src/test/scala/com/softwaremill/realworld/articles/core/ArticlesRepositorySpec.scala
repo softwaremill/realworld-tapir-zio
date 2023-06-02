@@ -79,13 +79,13 @@ object ArticlesRepositorySpec extends ZIOSpecDefault:
       test("article id not found") {
         for {
           _ <- prepareDataForFindingArticle
-          result <- checkArticleIdNotFoundBySlug("not-existing-slug")
+          result <- checkArticleIdNotFoundBySlug(ArticleSlug("not-existing-slug"))
         } yield result
       },
       test("article id found") {
         for {
           _ <- prepareDataForFindingArticle
-          result <- checkArticleIdFoundBySlug("how-to-train-your-dragon")
+          result <- checkArticleIdFoundBySlug(ArticleSlug("how-to-train-your-dragon"))
         } yield result
       }
     ),
@@ -93,13 +93,13 @@ object ArticlesRepositorySpec extends ZIOSpecDefault:
       test("article and author id not found") {
         for {
           _ <- prepareDataForFindingArticle
-          result <- checkArticleAndAuthorIdNotFoundBySlug("not-existing-slug")
+          result <- checkArticleAndAuthorIdNotFoundBySlug(ArticleSlug("not-existing-slug"))
         } yield result
       },
       test("article and author id found") {
         for {
           _ <- prepareDataForFindingArticle
-          result <- checkArticleAndAuthorIdFoundBySlug("how-to-train-your-dragon")
+          result <- checkArticleAndAuthorIdFoundBySlug(ArticleSlug("how-to-train-your-dragon"))
         } yield result
       }
     ),
@@ -107,19 +107,19 @@ object ArticlesRepositorySpec extends ZIOSpecDefault:
       test("find article - check article not found") {
         for {
           _ <- prepareDataForListingArticles
-          result <- checkArticleNotFound(slug = "non-existing-article-slug", viewerId = 1)
+          result <- checkArticleNotFound(slug = ArticleSlug("non-existing-article-slug"), viewerId = 1)
         } yield result
       },
       test("find by slug") {
         for {
           _ <- prepareDataForListingArticles
-          result <- findArticleBySlug(slug = "how-to-train-your-dragon", viewerId = 2)
+          result <- findArticleBySlug(slug = ArticleSlug("how-to-train-your-dragon"), viewerId = 2)
         } yield result
       },
       test("find article by slug as seen by user that marked it as favorite") {
         for {
           _ <- prepareDataForListingArticles
-          result <- findBySlugAsSeenBy(slug = "how-to-train-your-dragon-2", viewerId = 2)
+          result <- findBySlugAsSeenBy(slug = ArticleSlug("how-to-train-your-dragon-2"), viewerId = 2)
         } yield result
       }
     ),
