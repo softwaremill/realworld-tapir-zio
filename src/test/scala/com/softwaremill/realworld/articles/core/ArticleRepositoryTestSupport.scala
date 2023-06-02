@@ -41,19 +41,19 @@ object ArticleRepositoryTestSupport:
       result <- repo.listArticlesByFollowedUsers(pagination, viewerId)
     } yield result
 
-  def callFindBySlug(slug: String, viewerId: Int): ZIO[ArticlesRepository, SQLException, Option[Article]] =
+  def callFindBySlug(slug: ArticleSlug, viewerId: Int): ZIO[ArticlesRepository, SQLException, Option[Article]] =
     for {
       repo <- ZIO.service[ArticlesRepository]
       result <- repo.findBySlug(slug, viewerId)
     } yield result
 
-  def callFindArticleIdBySlug(slug: String): ZIO[ArticlesRepository, Throwable, Option[Int]] =
+  def callFindArticleIdBySlug(slug: ArticleSlug): ZIO[ArticlesRepository, Throwable, Option[Int]] =
     for {
       repo <- ZIO.service[ArticlesRepository]
       result <- repo.findArticleIdBySlug(slug)
     } yield result
 
-  def findArticleAndAuthorIdsBySlug(slug: String): ZIO[ArticlesRepository, SQLException, Option[(Int, Int)]] =
+  def findArticleAndAuthorIdsBySlug(slug: ArticleSlug): ZIO[ArticlesRepository, SQLException, Option[(Int, Int)]] =
     for {
       repo <- ZIO.service[ArticlesRepository]
       result <- repo.findArticleAndAuthorIdsBySlug(slug)
@@ -123,17 +123,17 @@ object ArticleRepositoryTestSupport:
     assertZIO(callListArticlesByFollowedUsers(pagination, viewerId))(isEmpty)
 
   def checkArticleIdNotFoundBySlug(
-      slug: String
+      slug: ArticleSlug
   ): ZIO[ArticlesRepository, Throwable, TestResult] =
     assertZIO(callFindArticleIdBySlug(slug))(isNone)
 
   def checkArticleAndAuthorIdNotFoundBySlug(
-      slug: String
+      slug: ArticleSlug
   ): ZIO[ArticlesRepository, Throwable, TestResult] =
     assertZIO(findArticleAndAuthorIdsBySlug(slug))(isNone)
 
   def checkArticleNotFound(
-      slug: String,
+      slug: ArticleSlug,
       viewerId: Int
   ): ZIO[ArticlesRepository, SQLException, TestResult] =
     assertZIO(callFindBySlug(slug, viewerId))(isNone)
@@ -152,8 +152,8 @@ object ArticleRepositoryTestSupport:
     )
 
   def checkIfArticleAlreadyExistsInUpdate(
-      existingSlug: String,
-      updatedSlug: String,
+      existingSlug: ArticleSlug,
+      updatedSlug: ArticleSlug,
       updatedTitle: String,
       updatedDescription: String,
       updatedBody: String,
@@ -182,7 +182,7 @@ object ArticleRepositoryTestSupport:
     )
 
   def checkIfRollbackWorksCorrectlyInAddArticle(
-      slug: String,
+      slug: ArticleSlug,
       articleCreateData: ArticleCreateData,
       userEmail: String,
       viewerId: Int
@@ -482,12 +482,12 @@ object ArticleRepositoryTestSupport:
     )
 
   def checkArticleIdFoundBySlug(
-      slug: String
+      slug: ArticleSlug
   ): ZIO[ArticlesRepository, Throwable, TestResult] =
     assertZIO(callFindArticleIdBySlug(slug))(isSome(equalTo(1)))
 
   def checkArticleAndAuthorIdFoundBySlug(
-      slug: String
+      slug: ArticleSlug
   ): ZIO[ArticlesRepository, Throwable, TestResult] =
     for {
       articleAndAuthorOpt <- findArticleAndAuthorIdsBySlug(slug)
@@ -497,7 +497,7 @@ object ArticleRepositoryTestSupport:
     }
 
   def findArticleBySlug(
-      slug: String,
+      slug: ArticleSlug,
       viewerId: Int
   ): ZIO[ArticlesRepository, SQLException, TestResult] =
     assertZIO(callFindBySlug(slug, viewerId))(
@@ -522,7 +522,7 @@ object ArticleRepositoryTestSupport:
     )
 
   def findBySlugAsSeenBy(
-      slug: String,
+      slug: ArticleSlug,
       viewerId: Int
   ): ZIO[ArticlesRepository, SQLException, TestResult] =
     assertZIO(callFindBySlug(slug, viewerId))(
@@ -547,7 +547,7 @@ object ArticleRepositoryTestSupport:
     )
 
   def createAndCheckArticle(
-      slug: String,
+      slug: ArticleSlug,
       articleCreateData: ArticleCreateData,
       userEmail: String,
       viewerId: Int
@@ -578,8 +578,8 @@ object ArticleRepositoryTestSupport:
     }
 
   def updateAndCheckArticle(
-      existingSlug: String,
-      updatedSlug: String,
+      existingSlug: ArticleSlug,
+      updatedSlug: ArticleSlug,
       updatedTitle: String,
       updatedDescription: String,
       updatedBody: String,
@@ -611,7 +611,7 @@ object ArticleRepositoryTestSupport:
     }
 
   def deleteArticle(
-      slug: String,
+      slug: ArticleSlug,
       viewerId: Int
   ): ZIO[ArticlesRepository with UsersRepository with CommentsRepository with TagsRepository, Object, TestResult] =
     for {
@@ -635,7 +635,7 @@ object ArticleRepositoryTestSupport:
     }
 
   def checkMarkFavorite(
-      slug: String,
+      slug: ArticleSlug,
       viewerId: Int
   ): ZIO[ArticlesRepository with UsersRepository, Object, TestResult] =
     for {
@@ -650,7 +650,7 @@ object ArticleRepositoryTestSupport:
     }
 
   def checkRemoveFavorite(
-      slug: String,
+      slug: ArticleSlug,
       viewerId: Int
   ): ZIO[ArticlesRepository with UsersRepository, Object, TestResult] =
     for {

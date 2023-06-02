@@ -128,7 +128,7 @@ object ArticlesRepositorySpec extends ZIOSpecDefault:
         for {
           _ <- prepareDataForArticleCreation
           result <- checkIfRollbackWorksCorrectlyInAddArticle(
-            slug = "new-article-under-test",
+            slug = ArticleSlug("new-article-under-test"),
             articleCreateData = ArticleCreateData(
               title = "New-article-under-test",
               description = "What a nice day!",
@@ -145,7 +145,7 @@ object ArticlesRepositorySpec extends ZIOSpecDefault:
           _ <- prepareDataForListingArticles
           result <- checkIfArticleAlreadyExistsInCreate(
             articleCreateData = ArticleCreateData(
-              title = "How-to-train-your-dragon",
+              title = ArticleSlug("How-to-train-your-dragon"),
               description = "What a nice day!",
               body = "Writing scala code is quite challenging pleasure",
               tagList = None
@@ -158,7 +158,7 @@ object ArticlesRepositorySpec extends ZIOSpecDefault:
         for {
           _ <- prepareDataForArticleCreation
           result <- createAndCheckArticle(
-            slug = "new-article-under-test",
+            slug = ArticleSlug("new-article-under-test"),
             articleCreateData = ArticleCreateData(
               title = "New-article-under-test",
               description = "What a nice day!",
@@ -176,8 +176,8 @@ object ArticlesRepositorySpec extends ZIOSpecDefault:
         for {
           _ <- prepareDataForListingArticles
           result <- checkIfArticleAlreadyExistsInUpdate(
-            existingSlug = "how-to-train-your-dragon",
-            updatedSlug = "how-to-train-your-dragon-2",
+            existingSlug = ArticleSlug("how-to-train-your-dragon"),
+            updatedSlug = ArticleSlug("how-to-train-your-dragon-2"),
             updatedTitle = "How to train your dragon 2",
             updatedDescription = "What a nice updated day!",
             updatedBody = "Updating scala code is quite challenging pleasure",
@@ -189,8 +189,8 @@ object ArticlesRepositorySpec extends ZIOSpecDefault:
         for {
           _ <- prepareDataForListingArticles
           result <- updateAndCheckArticle(
-            existingSlug = "how-to-train-your-dragon",
-            updatedSlug = "updated-article-under-test",
+            existingSlug = ArticleSlug("how-to-train-your-dragon"),
+            updatedSlug = ArticleSlug("updated-article-under-test"),
             updatedTitle = "Updated article under test",
             updatedDescription = "What a nice updated day!",
             updatedBody = "Updating scala code is quite challenging pleasure",
@@ -204,7 +204,7 @@ object ArticlesRepositorySpec extends ZIOSpecDefault:
         for {
           _ <- prepareDataForArticleDeletion
           result <- deleteArticle(
-            slug = "how-to-train-your-dragon",
+            slug = ArticleSlug("how-to-train-your-dragon"),
             viewerId = 1
           )
         } yield result
@@ -215,7 +215,7 @@ object ArticlesRepositorySpec extends ZIOSpecDefault:
         for {
           _ <- prepareDataForMarkingFavorites
           result <- checkMarkFavorite(
-            slug = "how-to-train-your-dragon",
+            slug = ArticleSlug("how-to-train-your-dragon"),
             viewerId = 2
           )
         } yield result
@@ -224,7 +224,7 @@ object ArticlesRepositorySpec extends ZIOSpecDefault:
         for {
           _ <- prepareDataForRemovingFavorites
           result <- checkRemoveFavorite(
-            slug = "how-to-train-your-dragon",
+            slug = ArticleSlug("how-to-train-your-dragon"),
             viewerId = 2
           )
         } yield result
