@@ -49,13 +49,13 @@ class CommentsRepository(quill: Quill.Sqlite[SnakeCase]):
     }
   }
 
-  def deleteComment(commentId: Int): Task[Long] =
-    run(queryComment.filter(_.commentId == lift(commentId)).delete)
+  def deleteComment(commentId: CommentId): Task[Long] =
+    run(queryComment.filter(_.commentId == lift(commentId.value)).delete)
 
-  def findArticleAndAuthorIdsFromComment(commentId: Int): Task[Option[(Int, Int)]] =
+  def findArticleAndAuthorIdsFromComment(commentId: CommentId): Task[Option[(Int, Int)]] =
     run(
       for {
-        cr <- queryComment if cr.commentId == lift(commentId)
+        cr <- queryComment if cr.commentId == lift(commentId.value)
         pr <- queryProfile.join(pr => pr.userId == cr.authorId)
         ar <- queryArticle.join(ar => cr.articleId == ar.articleId)
       } yield (pr.userId, ar.articleId)
@@ -88,7 +88,7 @@ class CommentsRepository(quill: Quill.Sqlite[SnakeCase]):
 
   private def comment(cs: CommentQueryBuildSupport): Comment =
     Comment(
-      id = cs.commentRow.commentId,
+      id = CommentId(cs.commentRow.commentId),
       createdAt = cs.commentRow.createdAt,
       updatedAt = cs.commentRow.updatedAt,
       body = cs.commentRow.body,
