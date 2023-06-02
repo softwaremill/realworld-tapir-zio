@@ -1,7 +1,7 @@
 package com.softwaremill.realworld.users.api
 
 import com.softwaremill.realworld.common.{BaseEndpoints, ErrorInfo, UserSession}
-import com.softwaremill.realworld.users.{Profile, User}
+import com.softwaremill.realworld.users.{Profile, ProfileUsername, User}
 import sttp.tapir.Endpoint
 import sttp.tapir.generic.auto.*
 import sttp.tapir.json.zio.jsonBody
@@ -104,7 +104,7 @@ class UsersEndpoints(base: BaseEndpoints):
 
     val profileResponse: ProfileResponse = ProfileResponse(profile =
       Profile(
-        username = "user123",
+        username = ProfileUsername("user123"),
         bio = Some("userBio"),
         image = Some("userImage"),
         following = false
