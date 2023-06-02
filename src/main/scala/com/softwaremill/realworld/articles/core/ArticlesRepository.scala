@@ -117,8 +117,10 @@ class ArticlesRepository(quill: Quill.Sqlite[SnakeCase]):
     run(articleQuery).map(_.map(article))
   }
 
-  def findBySlug(slug: String, viewerId: Int): IO[SQLException, Option[Article]] = {
-    val articleRow: Quoted[EntityQuery[ArticleRow]] = quote { queryArticle.filter(ar => ar.slug == lift(slug)) }
+  def findBySlug(slug: ArticleSlug, viewerId: Int): IO[SQLException, Option[Article]] = {
+    val cleanSlug = slug.value.trim.toLowerCase
+
+    val articleRow: Quoted[EntityQuery[ArticleRow]] = quote { queryArticle.filter(ar => ar.slug == lift(cleanSlug)) }
     val articleQuery = buildArticleQueryWithFavoriteAndFollowing(articleRow, viewerId)
 
     run(articleQuery)
@@ -126,16 +128,16 @@ class ArticlesRepository(quill: Quill.Sqlite[SnakeCase]):
       .map(_.map(article))
   }
 
-  def findArticleIdBySlug(slug: String): IO[SQLException, Option[Int]] =
+  def findArticleIdBySlug(slug: ArticleSlug): IO[SQLException, Option[Int]] =
     run(
       queryArticle
-        .filter(a => a.slug == lift(slug))
+        .filter(a => a.slug == lift(slug.value))
         .map(_.articleId)
     )
       .map(_.headOption)
 
-  def findArticleAndAuthorIdsBySlug(slug: String): IO[SQLException, Option[(Int, Int)]] =
-    run(queryArticle.filter(a => a.slug == lift(slug)))
+  def findArticleAndAuthorIdsBySlug(slug: ArticleSlug): IO[SQLException, Option[(Int, Int)]] =
+    run(queryArticle.filter(a => a.slug == lift(slug.value)))
       .map(
         _.headOption
           .map(ar => (ar.articleId, ar.authorId))
@@ -190,7 +192,7 @@ class ArticlesRepository(quill: Quill.Sqlite[SnakeCase]):
     queryArticle
       .filter(_.articleId == lift(articleId))
       .update(
-        record => record.slug -> lift(updateData.slug),
+        record => record.slug -> lift(updateData.slug.value),
         record => record.title -> lift(updateData.title),
         record => record.description -> lift(updateData.description),
         record => record.body -> lift(updateData.body),
@@ -213,7 +215,7 @@ class ArticlesRepository(quill: Quill.Sqlite[SnakeCase]):
 
   private def article(as: ArticleQueryBuildSupport): Article =
     Article(
-      slug = as.articleRow.slug,
+      slug = ArticleSlug(as.articleRow.slug),
       title = as.articleRow.title,
       description = as.articleRow.description,
       body = as.articleRow.body,
