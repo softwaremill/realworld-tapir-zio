@@ -348,9 +348,9 @@ object UserEndpointTestSupport:
         hasField(
           "user",
           _.user,
-          (hasField("email", _.email, equalTo("jake@example.com")): Assertion[User]) &&
+          (hasField("email", _.email.value, equalTo("jake@example.com")): Assertion[User]) &&
             hasField("token", _.token, isNone) &&
-            hasField("username", _.username, equalTo("jake")) &&
+            hasField("username", _.username.value, equalTo("jake")) &&
             hasField("bio", _.bio, isNone) &&
             hasField("image", _.image, isNone)
         )
@@ -365,9 +365,9 @@ object UserEndpointTestSupport:
         hasField(
           "user",
           _.user,
-          (hasField("email", _.email, equalTo("jake@example.com")): Assertion[User]) &&
+          (hasField("email", _.email.value, equalTo("jake@example.com")): Assertion[User]) &&
             hasField("token", _.token, isNone) &&
-            hasField("username", _.username, equalTo("jake")) &&
+            hasField("username", _.username.value, equalTo("jake")) &&
             hasField("bio", _.bio, isNone) &&
             hasField("image", _.image, isNone)
         )
@@ -386,9 +386,9 @@ object UserEndpointTestSupport:
         hasField(
           "user",
           _.user,
-          (hasField("email", _.email, equalTo("new_user@example.com")): Assertion[User]) &&
+          (hasField("email", _.email.value, equalTo("new_user@example.com")): Assertion[User]) &&
             hasField("token", _.token, isSome) &&
-            hasField("username", _.username, equalTo("user")) &&
+            hasField("username", _.username.value, equalTo("user")) &&
             hasField("bio", _.bio, isNone) &&
             hasField("image", _.image, isNone)
         )
@@ -407,9 +407,9 @@ object UserEndpointTestSupport:
         hasField(
           "user",
           _.user,
-          (hasField("email", _.email, equalTo("jake@example.com")): Assertion[User]) &&
+          (hasField("email", _.email.value, equalTo("jake@example.com")): Assertion[User]) &&
             hasField("token", _.token, isSome) &&
-            hasField("username", _.username, equalTo("jake")) &&
+            hasField("username", _.username.value, equalTo("jake")) &&
             hasField("bio", _.bio, isNone) &&
             hasField("image", _.image, isNone)
         )
@@ -428,9 +428,9 @@ object UserEndpointTestSupport:
         hasField(
           "user",
           _.user,
-          (hasField("email", _.email, equalTo("updateduser@email.com")): Assertion[User]) &&
+          (hasField("email", _.email.value, equalTo("updateduser@email.com")): Assertion[User]) &&
             hasField("token", _.token, isNone) &&
-            hasField("username", _.username, equalTo("updatedUser")) &&
+            hasField("username", _.username.value, equalTo("updatedUser")) &&
             hasField("bio", _.bio, equalTo(Some("updatedUserBio"))) &&
             hasField("image", _.image, equalTo(Some("updatedImageBio")))
         )

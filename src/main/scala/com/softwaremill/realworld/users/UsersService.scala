@@ -76,13 +76,13 @@ class UsersService(authService: AuthService, usersRepository: UsersRepository):
         .someOrFail(NotFound(UserWithIdNotFoundMessage(userId)))
     } yield updatedUser
 
-  def getProfile(username: String, followerId: Int): Task[ProfileResponse] = for {
+  def getProfile(username: UserUsername, followerId: Int): Task[ProfileResponse] = for {
     userWithIdTuple <- getUserWithIdByUsername(username)
     (followed, followedId) = userWithIdTuple
     profile <- getProfileData(followed, followedId, Some(followerId))
   } yield ProfileResponse(profile)
 
-  def follow(username: String, followerId: Int): Task[ProfileResponse] = for {
+  def follow(username: UserUsername, followerId: Int): Task[ProfileResponse] = for {
     userWithIdTuple <- getUserWithIdByUsername(username)
     (followed, followedId) = userWithIdTuple
     _ <- ZIO.fail(BadRequest(CannotFollowYourselfMessage)).when(followedId == followerId)
@@ -90,7 +90,7 @@ class UsersService(authService: AuthService, usersRepository: UsersRepository):
     profile <- getProfileData(followed, followedId, Some(followerId))
   } yield ProfileResponse(profile)
 
-  def unfollow(username: String, followerId: Int): Task[ProfileResponse] = for {
+  def unfollow(username: UserUsername, followerId: Int): Task[ProfileResponse] = for {
     userWithIdTuple <- getUserWithIdByUsername(username)
     (followed, followedId) = userWithIdTuple
     _ <- usersRepository.unfollow(followedId, followerId)
@@ -99,9 +99,9 @@ class UsersService(authService: AuthService, usersRepository: UsersRepository):
 
   private def userWithToken(email: String, username: String, jwt: String): User =
     User(
-      email,
+      UserEmail(email),
       Some(jwt),
-      username,
+      UserUsername(username),
       Option.empty[String],
       Option.empty[String]
     )
@@ -149,20 +149,21 @@ class UsersService(authService: AuthService, usersRepository: UsersRepository):
 
     if (!emailValidator.isValid(email)) ZIO.fail(BadRequest(InvalidEmailMessage(email))) else ZIO.unit
   }
-  private def getUserWithIdByUsername(username: String): Task[(User, Int)] = usersRepository
+  private def getUserWithIdByUsername(username: UserUsername): Task[(User, Int)] = usersRepository
     .findUserWithIdByUsername(username)
     .someOrFail(NotFound(UserWithUsernameNotFoundMessage(username)))
 
   private def getProfileData(user: User, userId: Int, asSeenByUserWithIdOpt: Option[Int]): Task[Profile] =
     asSeenByUserWithIdOpt match
       case Some(asSeenByUserWithId) =>
-        usersRepository.isFollowing(userId, asSeenByUserWithId).map(Profile(user.username, user.bio, user.image, _))
-      case None => ZIO.succeed(Profile(user.username, user.bio, user.image, false))
+        usersRepository.isFollowing(userId, asSeenByUserWithId).map(Profile(user.username.value, user.bio, user.image, _))
+      case None => ZIO.succeed(Profile(user.username.value, user.bio, user.image, false))
 
 object UsersService:
   private val InvalidEmailMessage: String => String = (email: String) => s"Email $email is not valid"
   private val UserWithIdNotFoundMessage: Int => String = (id: Int) => s"User with id $id doesn't exist"
-  private val UserWithUsernameNotFoundMessage: String => String = (username: String) => s"User with username $username doesn't exist"
+  private val UserWithUsernameNotFoundMessage: UserUsername => String = (username: UserUsername) =>
+    s"User with username ${username.value} doesn't exist"
   private val UserWithEmailAlreadyInUseMessage: String => String = (email: String) => s"User with email $email already in use"
   private val UserWithUsernameAlreadyInUseMessage: String => String = (username: String) => s"User with username $username already in use"
   private val CannotFollowYourselfMessage: String = "You can't follow yourself"

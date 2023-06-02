@@ -55,13 +55,13 @@ object UsersRepositorySpec extends ZIOSpecDefault:
       test("user not found") {
         for {
           _ <- prepareOneUser
-          result <- checkUserWithIdNotFoundByUsername("notExisting")
+          result <- checkUserWithIdNotFoundByUsername(UserUsername("notExisting"))
         } yield result
       },
       test("user found") {
         for {
           _ <- prepareOneUser
-          result <- checkUserWithIdFoundByUsername("jake")
+          result <- checkUserWithIdFoundByUsername(UserUsername("jake"))
         } yield result
       }
     ),
