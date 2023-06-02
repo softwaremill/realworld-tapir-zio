@@ -145,7 +145,7 @@ object ArticlesRepositorySpec extends ZIOSpecDefault:
           _ <- prepareDataForListingArticles
           result <- checkIfArticleAlreadyExistsInCreate(
             articleCreateData = ArticleCreateData(
-              title = ArticleSlug("How-to-train-your-dragon"),
+              title = "How-to-train-your-dragon",
               description = "What a nice day!",
               body = "Writing scala code is quite challenging pleasure",
               tagList = None

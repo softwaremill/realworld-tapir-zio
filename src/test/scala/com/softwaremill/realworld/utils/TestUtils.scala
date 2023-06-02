@@ -2,7 +2,7 @@ package com.softwaremill.realworld.utils
 
 import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm
-import com.softwaremill.realworld.articles.core.ArticlesRepository
+import com.softwaremill.realworld.articles.core.{ArticleSlug, ArticlesRepository}
 import com.softwaremill.realworld.auth.AuthService
 import com.softwaremill.realworld.common.{CustomDecodeFailureHandler, DefectHandler}
 import com.softwaremill.realworld.db.{Db, DbConfig, DbMigrator}
@@ -81,7 +81,7 @@ object TestUtils:
       .findUserIdByEmail(email)
       .someOrFail(s"User with email $email doesn't exist.")
 
-  def findArticleIdBySlug(articleRepo: ArticlesRepository, slug: String): ZIO[Any, Serializable, Int] =
+  def findArticleIdBySlug(articleRepo: ArticlesRepository, slug: ArticleSlug): ZIO[Any, Serializable, Int] =
     articleRepo
       .findArticleIdBySlug(slug)
-      .someOrFail(s"Article $slug doesn't exist")
+      .someOrFail(s"Article ${slug.value} doesn't exist")
