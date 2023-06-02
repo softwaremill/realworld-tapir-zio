@@ -297,7 +297,7 @@ object ArticleEndpointTestSupport:
             "articles",
             _.articles,
             exists(
-              (hasField("slug", _.slug, equalTo("how-to-train-your-dragon-2")): Assertion[Article])
+              (hasField("slug", _.slug.value, equalTo("how-to-train-your-dragon-2")): Assertion[Article])
                 && hasField("title", _.title, equalTo("How to train your dragon 2"))
                 && hasField("description", _.description, equalTo("So toothless"))
                 && hasField("body", _.body, equalTo("Its a dragon"))
@@ -331,7 +331,7 @@ object ArticleEndpointTestSupport:
             "articles",
             _.articles,
             exists(
-              (hasField("slug", _.slug, equalTo("how-to-train-your-dragon-2")): Assertion[Article])
+              (hasField("slug", _.slug.value, equalTo("how-to-train-your-dragon-2")): Assertion[Article])
                 && hasField("title", _.title, equalTo("How to train your dragon 2"))
                 && hasField("description", _.description, equalTo("So toothless"))
                 && hasField("body", _.body, equalTo("Its a dragon"))
@@ -365,7 +365,7 @@ object ArticleEndpointTestSupport:
             "articles",
             _.articles,
             exists(
-              (hasField("slug", _.slug, equalTo("how-to-train-your-dragon-2")): Assertion[Article])
+              (hasField("slug", _.slug.value, equalTo("how-to-train-your-dragon-2")): Assertion[Article])
                 && hasField("title", _.title, equalTo("How to train your dragon 2"))
                 && hasField("description", _.description, equalTo("So toothless"))
                 && hasField("body", _.body, equalTo("Its a dragon"))
@@ -399,7 +399,7 @@ object ArticleEndpointTestSupport:
             "articles",
             _.articles,
             exists(
-              (hasField("slug", _.slug, equalTo("how-to-train-your-dragon")): Assertion[Article])
+              (hasField("slug", _.slug.value, equalTo("how-to-train-your-dragon")): Assertion[Article])
                 && hasField("title", _.title, equalTo("How to train your dragon"))
                 && hasField("description", _.description, equalTo("Ever wonder how?"))
                 && hasField("body", _.body, equalTo("It takes a Jacobian"))
@@ -417,7 +417,7 @@ object ArticleEndpointTestSupport:
                 )
             ) &&
               exists(
-                (hasField("slug", _.slug, equalTo("how-to-train-your-dragon-2")): Assertion[Article])
+                (hasField("slug", _.slug.value, equalTo("how-to-train-your-dragon-2")): Assertion[Article])
                   && hasField("title", _.title, equalTo("How to train your dragon 2"))
                   && hasField("description", _.description, equalTo("So toothless"))
                   && hasField("body", _.body, equalTo("Its a dragon"))
@@ -435,7 +435,7 @@ object ArticleEndpointTestSupport:
                   )
               ) &&
               exists(
-                (hasField("slug", _.slug, equalTo("how-to-train-your-dragon-3")): Assertion[Article])
+                (hasField("slug", _.slug.value, equalTo("how-to-train-your-dragon-3")): Assertion[Article])
                   && hasField("title", _.title, equalTo("How to train your dragon 3"))
                   && hasField("description", _.description, equalTo("The tagless one"))
                   && hasField("body", _.body, equalTo("Its not a dragon"))
@@ -469,7 +469,7 @@ object ArticleEndpointTestSupport:
             "articles",
             _.articles,
             exists(
-              (hasField("slug", _.slug, equalTo("how-to-train-your-dragon")): Assertion[Article])
+              (hasField("slug", _.slug.value, equalTo("how-to-train-your-dragon")): Assertion[Article])
                 && hasField("title", _.title, equalTo("How to train your dragon"))
                 && hasField("description", _.description, equalTo("Ever wonder how?"))
                 && hasField("body", _.body, equalTo("It takes a Jacobian"))
@@ -487,7 +487,7 @@ object ArticleEndpointTestSupport:
                 )
             ) &&
               exists(
-                (hasField("slug", _.slug, equalTo("how-to-train-your-dragon-2")): Assertion[Article])
+                (hasField("slug", _.slug.value, equalTo("how-to-train-your-dragon-2")): Assertion[Article])
                   && hasField("title", _.title, equalTo("How to train your dragon 2"))
                   && hasField("description", _.description, equalTo("So toothless"))
                   && hasField("body", _.body, equalTo("Its a dragon"))
@@ -505,7 +505,7 @@ object ArticleEndpointTestSupport:
                   )
               ) &&
               exists(
-                (hasField("slug", _.slug, equalTo("how-to-train-your-dragon-5")): Assertion[Article])
+                (hasField("slug", _.slug.value, equalTo("how-to-train-your-dragon-5")): Assertion[Article])
                   && hasField("title", _.title, equalTo("How to train your dragon 5"))
                   && hasField("description", _.description, equalTo("The tagfull one"))
                   && hasField("body", _.body, equalTo("Its a blue dragon"))
@@ -554,7 +554,7 @@ object ArticleEndpointTestSupport:
         hasField(
           "article",
           _.article,
-          (hasField("slug", _.slug, equalTo("how-to-train-your-dragon-2")): Assertion[Article])
+          (hasField("slug", _.slug.value, equalTo("how-to-train-your-dragon-2")): Assertion[Article])
             && hasField("title", _.title, equalTo("How to train your dragon 2"))
             && hasField("description", _.description, equalTo("So toothless"))
             && hasField("body", _.body, equalTo("Its a dragon"))
@@ -586,7 +586,7 @@ object ArticleEndpointTestSupport:
         hasField(
           "article",
           _.article,
-          (hasField("slug", _.slug, equalTo("how-to-train-your-dragon-2")): Assertion[Article])
+          (hasField("slug", _.slug.value, equalTo("how-to-train-your-dragon-2")): Assertion[Article])
             && hasField("title", _.title, equalTo("How to train your dragon 2"))
             && hasField("description", _.description, equalTo("So toothless"))
             && hasField("body", _.body, equalTo("Its a dragon"))
@@ -618,7 +618,7 @@ object ArticleEndpointTestSupport:
         hasField(
           "article",
           _.article,
-          (hasField("slug", _.slug, equalTo("updated-slug")): Assertion[Article])
+          (hasField("slug", _.slug.value, equalTo("updated-slug")): Assertion[Article])
             && hasField("title", _.title, equalTo("Updated slug"))
             && hasField("description", _.description, equalTo("updated description"))
             && hasField("body", _.body, equalTo("updated body"))
