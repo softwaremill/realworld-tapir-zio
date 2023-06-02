@@ -1,5 +1,6 @@
 package com.softwaremill.realworld.utils
 
+import com.softwaremill.realworld.articles.core.ArticleSlug
 import com.softwaremill.realworld.articles.core.api.ArticleCreateData
 import com.softwaremill.realworld.users.api.UserRegisterData
 
@@ -40,7 +41,7 @@ object DbData:
     tagList = Some(List("dragons", "training"))
   )
 
-  val exampleArticle1Slug = "how-to-train-your-dragon"
+  val exampleArticle1Slug = ArticleSlug("how-to-train-your-dragon")
 
   val exampleArticle2 = ArticleCreateData(
     title = "How to train your dragon 2",
@@ -49,7 +50,7 @@ object DbData:
     tagList = Some(List("dragons", "goats", "training"))
   )
 
-  val exampleArticle2Slug = "how-to-train-your-dragon-2"
+  val exampleArticle2Slug = ArticleSlug("how-to-train-your-dragon-2")
 
   val exampleArticle3 = ArticleCreateData(
     title = "How to train your dragon 3",
@@ -58,7 +59,7 @@ object DbData:
     tagList = None
   )
 
-  val exampleArticle3Slug = "how-to-train-your-dragon-3"
+  val exampleArticle3Slug = ArticleSlug("how-to-train-your-dragon-3")
 
   val exampleArticle4 = ArticleCreateData(
     title = "How to train your dragon 4",
@@ -67,7 +68,7 @@ object DbData:
     tagList = None
   )
 
-  val exampleArticle4Slug = "how-to-train-your-dragon-4"
+  val exampleArticle4Slug = ArticleSlug("how-to-train-your-dragon-4")
 
   val exampleArticle5 = ArticleCreateData(
     title = "How to train your dragon 5",
@@ -76,7 +77,7 @@ object DbData:
     tagList = None
   )
 
-  val exampleArticle5Slug = "how-to-train-your-dragon-5"
+  val exampleArticle5Slug = ArticleSlug("how-to-train-your-dragon-5")
 
   val exampleArticle6 = ArticleCreateData(
     title = "How to train your dragon 6",
@@ -85,4 +86,4 @@ object DbData:
     tagList = None
   )
 
-  val exampleArticle6Slug = "how-to-train-your-dragon-6"
+  val exampleArticle6Slug = ArticleSlug("how-to-train-your-dragon-6")
