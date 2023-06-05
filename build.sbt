@@ -52,7 +52,7 @@ lazy val rootProject = (project in file(".")).settings(
     name := "realworld-tapir-zio",
     version := "0.1.0-SNAPSHOT",
     organization := "com.softwaremill",
-    scalaVersion := "3.2.2",
+    scalaVersion := "3.3.0",
     Test / fork := true,
     scalacOptions ++= Seq(
       "-deprecation",
