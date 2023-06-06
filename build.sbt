@@ -1,3 +1,4 @@
+val currentScalaVersion = "3.2.2"
 val emailValidatorVersion = "1.7"
 val flywayVersion = "9.19.1"
 val hikariVersion = "5.0.1"
@@ -52,18 +53,11 @@ lazy val rootProject = (project in file(".")).settings(
     name := "realworld-tapir-zio",
     version := "0.1.0-SNAPSHOT",
     organization := "com.softwaremill",
-    scalaVersion := "3.2.2",
+    scalaVersion := currentScalaVersion,
     Test / fork := true,
     scalacOptions ++= Seq(
-      "-deprecation",
-      "-feature",
-      "-unchecked",
-      "-explain",
-      "-Wunused:all",
       "-Xmax-inlines",
-      "64",
-      "-Xfatal-warnings",
-      "-Ycheck-all-patmat"
+      "64"
     ),
     libraryDependencies ++= tapir ++ config ++ security ++ db ++ tests ++ emailValidator,
     testFrameworks := Seq(new TestFramework("zio.test.sbt.ZTestFramework"))
