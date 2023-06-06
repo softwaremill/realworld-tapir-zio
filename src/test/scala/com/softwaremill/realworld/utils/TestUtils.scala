@@ -1,7 +1,5 @@
 package com.softwaremill.realworld.utils
 
-import com.auth0.jwt.JWT
-import com.auth0.jwt.algorithms.Algorithm
 import com.softwaremill.realworld.articles.core.ArticlesRepository
 import com.softwaremill.realworld.auth.AuthService
 import com.softwaremill.realworld.common.{CustomDecodeFailureHandler, DefectHandler}
@@ -15,13 +13,10 @@ import sttp.client3.testing.SttpBackendStub
 import sttp.tapir.server.stub.TapirStubInterpreter
 import sttp.tapir.server.ziohttp.ZioHttpServerOptions
 import sttp.tapir.ztapir.{RIOMonadError, ZServerEndpoint}
-import zio.{RIO, Random, Scope, ZIO, ZLayer}
+import zio.{RIO, Random, ZIO, ZLayer}
 
-import java.nio.file.{Files, Path, Paths}
-import java.sql.{Connection, Statement}
-import java.util.UUID
+import java.nio.file.{Files, Paths}
 import javax.sql.DataSource
-import scala.io.Source
 
 object TestUtils:
 
