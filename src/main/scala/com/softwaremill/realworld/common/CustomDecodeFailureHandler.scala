@@ -1,6 +1,5 @@
 package com.softwaremill.realworld.common
 
-import com.softwaremill.realworld.common.ValidationFailed
 import sttp.model.{Header, StatusCode}
 import sttp.tapir.generic.auto.*
 import sttp.tapir.json.zio.jsonBody
@@ -8,8 +7,7 @@ import sttp.tapir.server.interceptor.DecodeFailureContext
 import sttp.tapir.server.interceptor.decodefailure.DefaultDecodeFailureHandler.FailureMessages
 import sttp.tapir.server.interceptor.decodefailure.{DecodeFailureHandler, DefaultDecodeFailureHandler}
 import sttp.tapir.server.model.ValuedEndpointOutput
-import sttp.tapir.{EndpointIO, EndpointInput, headers, statusCode, stringBody}
-import zio.json.{DeriveJsonDecoder, DeriveJsonEncoder}
+import sttp.tapir.{EndpointIO, EndpointInput, headers, statusCode}
 
 // Spec requires using invalid field name as a key in object returned in response.
 // Tapir gives us only a message, thus custom handler.

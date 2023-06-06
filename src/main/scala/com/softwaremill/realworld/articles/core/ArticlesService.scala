@@ -1,17 +1,13 @@
 package com.softwaremill.realworld.articles.core
 
-import com.softwaremill.realworld.articles.comments.Comment
 import com.softwaremill.realworld.articles.core.ArticlesService.*
 import com.softwaremill.realworld.articles.core.api.{ArticleCreateData, ArticleUpdateData}
-import com.softwaremill.realworld.articles.core.{Article, ArticlesFilters, ArticlesRepository}
-import com.softwaremill.realworld.common.Exceptions.{BadRequest, NotFound, Unauthorized}
+import com.softwaremill.realworld.common.Exceptions.{NotFound, Unauthorized}
 import com.softwaremill.realworld.common.{Exceptions, Pagination}
-import com.softwaremill.realworld.users.{User, UsersRepository, UsersService}
-import zio.{Console, IO, Task, ZIO, ZLayer}
+import com.softwaremill.realworld.users.UsersRepository
+import zio.{Task, ZIO, ZLayer}
 
-import java.sql.SQLException
 import java.time.Instant
-import javax.sql.DataSource
 
 class ArticlesService(
     articlesRepository: ArticlesRepository,

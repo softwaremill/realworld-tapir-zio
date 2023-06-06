@@ -2,7 +2,7 @@ package com.softwaremill.realworld.articles.tags
 
 import io.getquill.*
 import io.getquill.jdbczio.*
-import zio.{Task, ZIO, ZLayer}
+import zio.{ZIO, ZLayer}
 
 import java.sql.SQLException
 

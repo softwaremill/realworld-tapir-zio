@@ -1,6 +1,5 @@
 package com.softwaremill.realworld.articles.comments
 
-import com.softwaremill.realworld.articles.core.{ArticleFavoriteRow, ArticleRow, ArticlesRepository, FollowerRow}
 import io.getquill.*
 import io.getquill.jdbczio.*
 import zio.{Task, ZLayer}

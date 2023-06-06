@@ -1,16 +1,13 @@
 package com.softwaremill.realworld.articles.comments
 
-import com.softwaremill.realworld.articles.comments.CommentAuthor
 import com.softwaremill.realworld.articles.comments.api.*
-import com.softwaremill.realworld.articles.core.ArticlesServerEndpoints
 import com.softwaremill.realworld.utils.TestUtils.backendStub
 import sttp.client3.ziojson.{asJson, zioJsonBodySerializer}
-import sttp.client3.{HttpError, Response, ResponseException, basicRequest}
+import sttp.client3.{HttpError, ResponseException, basicRequest}
 import sttp.model.Uri
-import sttp.tapir.json.zio.jsonBody
 import zio.ZIO
 import zio.test.Assertion.*
-import zio.test.{Assertion, TestResult, assertTrue, assertZIO}
+import zio.test.{Assertion, TestResult, assertZIO}
 
 object CommentTestSupport:
 
