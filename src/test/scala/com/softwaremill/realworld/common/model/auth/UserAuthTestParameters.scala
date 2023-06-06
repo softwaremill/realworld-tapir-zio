@@ -2,7 +2,6 @@ package com.softwaremill.realworld.common.model.auth
 
 import com.softwaremill.realworld.users.UsersServerEndpoints
 import sttp.client3.{Request, UriContext, basicRequest}
-import sttp.model.Uri
 import sttp.tapir.ztapir.ZServerEndpoint
 import zio.ZIO
 

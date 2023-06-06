@@ -3,11 +3,10 @@ package com.softwaremill.realworld
 import com.softwaremill.realworld.articles.comments.CommentsServerEndpoints
 import com.softwaremill.realworld.articles.core.ArticlesServerEndpoints
 import com.softwaremill.realworld.articles.tags.TagsServerEndpoints
-import com.softwaremill.realworld.db.DbConfig
 import com.softwaremill.realworld.users.UsersServerEndpoints
 import sttp.tapir.swagger.bundle.SwaggerInterpreter
 import sttp.tapir.ztapir.ZServerEndpoint
-import zio.{Task, ZIO, ZLayer}
+import zio.{Task, ZLayer}
 
 class Endpoints(
     articlesEndpoints: ArticlesServerEndpoints,
