@@ -48,5 +48,5 @@ object CustomDecodeFailureHandler:
     new CustomDecodeFailureHandler(
       DefaultDecodeFailureHandler.default,
       FailureMessages.failureMessage,
-      DefaultDecodeFailureHandler.respond(_, false, true)
+      DefaultDecodeFailureHandler.respond
     )
