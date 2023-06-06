@@ -3,7 +3,7 @@ package com.softwaremill.realworld.common
 import com.softwaremill.realworld.articles.core.api.ArticleResponse
 import com.softwaremill.realworld.articles.core.{Article, ArticleAuthor}
 import com.softwaremill.realworld.users.api.UserResponse
-import com.softwaremill.realworld.users.{User, api}
+import com.softwaremill.realworld.users.{User, UserEmail, UserUsername, api}
 import com.softwaremill.realworld.{articles, users}
 import zio.json.*
 import zio.test.*
