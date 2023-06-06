@@ -1,12 +1,10 @@
 package com.softwaremill.realworld.db
 
-import io.getquill.SnakeCase
 import org.flywaydb.core.Flyway
-import org.flywaydb.core.api.output.{MigrateErrorResult, MigrateOutput, MigrateResult}
+import org.flywaydb.core.api.output.MigrateErrorResult
 import zio.{Task, ZIO, ZLayer}
 
 import javax.sql.DataSource
-import scala.util.Try
 
 class DbMigrator(ds: DataSource):
 

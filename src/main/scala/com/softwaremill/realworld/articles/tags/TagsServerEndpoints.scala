@@ -2,8 +2,6 @@ package com.softwaremill.realworld.articles.tags
 
 import com.softwaremill.realworld.articles.tags.api.{TagsEndpoints, TagsListResponse}
 import com.softwaremill.realworld.common.ErrorMapper.defaultErrorsMappings
-import sttp.tapir.generic.auto.*
-import sttp.tapir.json.zio.jsonBody
 import sttp.tapir.ztapir.*
 import zio.ZLayer
 
