@@ -1,11 +1,9 @@
 package com.softwaremill.realworld.articles.comments
 
 import com.softwaremill.realworld.articles.comments.CommentsService.*
-import com.softwaremill.realworld.articles.core.{ArticleAuthor, ArticleSlug, ArticlesRepository}
-import com.softwaremill.realworld.articles.tags.TagsRepository
+import com.softwaremill.realworld.articles.core.{ArticleSlug, ArticlesRepository}
+import com.softwaremill.realworld.common.Exceptions
 import com.softwaremill.realworld.common.Exceptions.{BadRequest, NotFound, Unauthorized}
-import com.softwaremill.realworld.common.{Exceptions, UserSession}
-import com.softwaremill.realworld.users.User
 import zio.{Task, ZIO, ZLayer}
 
 class CommentsService(

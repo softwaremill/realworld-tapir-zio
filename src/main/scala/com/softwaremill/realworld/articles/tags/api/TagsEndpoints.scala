@@ -1,7 +1,6 @@
 package com.softwaremill.realworld.articles.tags.api
 
-import com.softwaremill.realworld.common.{BaseEndpoints, ErrorInfo}
-import sttp.tapir.Endpoint
+import com.softwaremill.realworld.common.BaseEndpoints
 import sttp.tapir.generic.auto.*
 import sttp.tapir.json.zio.jsonBody
 import sttp.tapir.ztapir.*

@@ -1,21 +1,16 @@
 package com.softwaremill.realworld.common
 
-import com.softwaremill.realworld.articles.core.{ArticlesServerEndpoints, ArticlesService}
 import com.softwaremill.realworld.auth.AuthService
 import com.softwaremill.realworld.common.*
 import com.softwaremill.realworld.common.BaseEndpoints.{UserWithEmailNotFoundMessage, defaultErrorOutputs}
-import com.softwaremill.realworld.db.{Db, DbConfig}
 import com.softwaremill.realworld.users.UsersRepository
-import io.getquill.SnakeCase
+import sttp.model.StatusCode
 import sttp.model.headers.WWWAuthenticateChallenge
-import sttp.model.{HeaderNames, StatusCode}
 import sttp.tapir.generic.auto.*
 import sttp.tapir.json.zio.jsonBody
-import sttp.tapir.server.ServerEndpoint.Full
 import sttp.tapir.ztapir.*
-import sttp.tapir.{Endpoint, EndpointIO, EndpointInput, EndpointOutput, PublicEndpoint, Validator}
-import zio.json.{DeriveJsonDecoder, DeriveJsonEncoder}
-import zio.{Cause, Exit, IO, Task, ZIO, ZLayer}
+import sttp.tapir.{EndpointOutput, PublicEndpoint, Validator}
+import zio.{IO, Task, ZIO, ZLayer}
 
 case class UserSession(userId: Int)
 

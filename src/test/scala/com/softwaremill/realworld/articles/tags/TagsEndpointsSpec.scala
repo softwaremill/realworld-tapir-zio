@@ -4,7 +4,6 @@ import com.softwaremill.realworld.articles.core.ArticlesRepository
 import com.softwaremill.realworld.articles.tags.TagDbTestSupport.*
 import com.softwaremill.realworld.articles.tags.TagEndpointTestSupport.*
 import com.softwaremill.realworld.articles.tags.api.TagsEndpoints
-import com.softwaremill.realworld.articles.tags.{TagsRepository, TagsServerEndpoints, TagsService}
 import com.softwaremill.realworld.auth.AuthService
 import com.softwaremill.realworld.common.{BaseEndpoints, Configuration}
 import com.softwaremill.realworld.users.UsersRepository

@@ -1,21 +1,14 @@
 package com.softwaremill.realworld.articles.core
 
 import com.softwaremill.realworld.articles.comments.{Comment, CommentsRepository}
-import com.softwaremill.realworld.articles.core.ArticleRepositoryTestSupport.callFindArticleIdBySlug
 import com.softwaremill.realworld.articles.core.api.ArticleCreateData
-import com.softwaremill.realworld.articles.core.{Article, ArticleAuthor, ArticlesFilters, ArticlesRepository}
 import com.softwaremill.realworld.articles.tags.TagsRepository
 import com.softwaremill.realworld.common.Exceptions.AlreadyInUse
 import com.softwaremill.realworld.common.Pagination
-import com.softwaremill.realworld.users.{Profile, User, UsersRepository}
-import sttp.client3.testing.SttpBackendStub
-import sttp.client3.{HttpError, Response, ResponseException, UriContext, basicRequest}
-import sttp.tapir.EndpointOutput.StatusCode
-import sttp.tapir.server.stub.TapirStubInterpreter
-import sttp.tapir.ztapir.{RIOMonadError, ZServerEndpoint}
+import com.softwaremill.realworld.users.UsersRepository
 import zio.test.*
 import zio.test.Assertion.*
-import zio.{Cause, RIO, Random, ZIO, ZLayer}
+import zio.{Cause, ZIO}
 
 import java.sql.SQLException
 import java.time.Instant

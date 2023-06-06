@@ -3,15 +3,13 @@ package com.softwaremill.realworld.users
 import com.softwaremill.realworld.users
 import com.softwaremill.realworld.users.api.*
 import com.softwaremill.realworld.utils.TestUtils.backendStub
-import sttp.client3.testing.SttpBackendStub
 import sttp.client3.ziojson.*
-import sttp.client3.{HttpError, Request, Response, ResponseException, basicRequest}
+import sttp.client3.{HttpError, Request, ResponseException, basicRequest}
 import sttp.model.{StatusCode, Uri}
-import sttp.tapir.server.stub.TapirStubInterpreter
 import sttp.tapir.ztapir.ZServerEndpoint
+import zio.ZIO
 import zio.test.Assertion.*
-import zio.test.{Assertion, TestResult, assertTrue, assertZIO}
-import zio.{RIO, Random, ZIO, ZLayer}
+import zio.test.{Assertion, TestResult, assertZIO}
 
 object UserEndpointTestSupport:
 

@@ -3,14 +3,14 @@ package com.softwaremill.realworld.auth
 import com.auth0.jwt.algorithms.Algorithm
 import com.auth0.jwt.{JWT, JWTVerifier}
 import com.password4j.{Argon2Function, Password}
-import com.softwaremill.realworld.common.Exceptions.{BadRequest, Unauthorized}
+import com.softwaremill.realworld.common.Exceptions.Unauthorized
 import com.softwaremill.realworld.common.{AppConfig, Exceptions}
 import zio.ZIO.ifZIO
-import zio.{Clock, IO, RIO, Random, Task, ZIO, ZLayer}
+import zio.{IO, Task, ZIO, ZLayer}
 
 import java.time.{Duration, Instant}
 import java.util.UUID
-import scala.util.{Failure, Success, Try}
+import scala.util.{Success, Try}
 
 class AuthService(config: AppConfig):
   def encryptPassword(password: String): Task[String] = PasswordHashing.encryptPassword(password)
