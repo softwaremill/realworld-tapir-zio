@@ -3,17 +3,9 @@ package com.softwaremill.realworld.articles.comments
 import com.softwaremill.realworld.articles.comments.api.*
 import com.softwaremill.realworld.common.*
 import com.softwaremill.realworld.common.ErrorMapper.defaultErrorsMappings
-import com.softwaremill.realworld.db.{Db, DbConfig}
-import io.getquill.SnakeCase
-import sttp.model.StatusCode
-import sttp.tapir.generic.auto.*
-import sttp.tapir.json.zio.jsonBody
-import sttp.tapir.server.ServerEndpoint.Full
 import sttp.tapir.ztapir.*
-import sttp.tapir.{EndpointInput, PublicEndpoint, Validator}
-import zio.{Cause, Console, Exit, ZIO, ZLayer}
+import zio.ZLayer
 
-import javax.sql.DataSource
 import scala.util.chaining.*
 
 class CommentsServerEndpoints(commentsService: CommentsService, commentsEndpoints: CommentsEndpoints):

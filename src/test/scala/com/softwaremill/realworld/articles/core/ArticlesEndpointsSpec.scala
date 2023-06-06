@@ -3,17 +3,13 @@ package com.softwaremill.realworld.articles.core
 import com.softwaremill.realworld.articles.comments.CommentsRepository
 import com.softwaremill.realworld.articles.core.ArticleDbTestSupport.*
 import com.softwaremill.realworld.articles.core.ArticleEndpointTestSupport.*
-import com.softwaremill.realworld.articles.core.api.{ArticleCreateData, ArticleUpdateData, ArticleUpdateRequest, ArticlesEndpoints}
-import com.softwaremill.realworld.articles.core.{ArticlesRepository, ArticlesServerEndpoints, ArticlesService}
-import com.softwaremill.realworld.articles.tags.TagsRepository
+import com.softwaremill.realworld.articles.core.api.{ArticleCreateData, ArticleUpdateData, ArticlesEndpoints}
 import com.softwaremill.realworld.auth.AuthService
 import com.softwaremill.realworld.common.{BaseEndpoints, Configuration}
-import com.softwaremill.realworld.users.api.UserRegisterData
-import com.softwaremill.realworld.users.{UsersRepository, UsersService}
+import com.softwaremill.realworld.users.UsersRepository
 import com.softwaremill.realworld.utils.DbData.{exampleArticle2, exampleUser2}
 import com.softwaremill.realworld.utils.TestUtils.*
 import sttp.client3.UriContext
-import sttp.model.Uri
 import zio.ZLayer
 import zio.config.ReadError
 import zio.test.ZIOSpecDefault

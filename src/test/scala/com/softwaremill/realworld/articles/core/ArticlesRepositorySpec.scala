@@ -3,15 +3,12 @@ package com.softwaremill.realworld.articles.core
 import com.softwaremill.realworld.articles.comments.CommentsRepository
 import com.softwaremill.realworld.articles.core.ArticleDbTestSupport.*
 import com.softwaremill.realworld.articles.core.ArticleRepositoryTestSupport.*
-import com.softwaremill.realworld.articles.core.ArticlesServerEndpoints.{*, given}
 import com.softwaremill.realworld.articles.core.api.ArticleCreateData
-import com.softwaremill.realworld.articles.core.{ArticlesFilters, ArticlesRepository}
 import com.softwaremill.realworld.articles.tags.TagsRepository
 import com.softwaremill.realworld.common.Pagination
 import com.softwaremill.realworld.users.UsersRepository
-import com.softwaremill.realworld.utils.DbData.{exampleUser1, exampleUser2}
+import com.softwaremill.realworld.utils.DbData.exampleUser1
 import com.softwaremill.realworld.utils.TestUtils.*
-import sttp.client3.UriContext
 import zio.test.*
 
 object ArticlesRepositorySpec extends ZIOSpecDefault:

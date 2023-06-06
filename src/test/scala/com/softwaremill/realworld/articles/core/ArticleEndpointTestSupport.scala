@@ -1,10 +1,6 @@
 package com.softwaremill.realworld.articles.core
 
 import com.softwaremill.realworld.articles.core.api.*
-import com.softwaremill.realworld.articles.core.{Article, ArticleAuthor, ArticlesServerEndpoints}
-import com.softwaremill.realworld.articles.tags.TagsRepository
-import com.softwaremill.realworld.users.api.UserRegisterData
-import com.softwaremill.realworld.users.{Profile, UsersRepository}
 import com.softwaremill.realworld.utils.TestUtils.backendStub
 import sttp.client3.ziojson.{asJson, zioJsonBodySerializer}
 import sttp.client3.{HttpError, Response, ResponseException, basicRequest}
@@ -12,7 +8,7 @@ import sttp.model.Uri
 import sttp.tapir.ztapir.ZServerEndpoint
 import zio.ZIO
 import zio.test.Assertion.*
-import zio.test.{Assertion, TestResult, assertTrue, assertZIO}
+import zio.test.{Assertion, TestResult, assertZIO}
 
 import scala.collection.immutable.Map
 

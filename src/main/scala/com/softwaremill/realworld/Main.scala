@@ -11,17 +11,10 @@ import com.softwaremill.realworld.common.*
 import com.softwaremill.realworld.db.{Db, DbConfig, DbMigrator}
 import com.softwaremill.realworld.users.api.UsersEndpoints
 import com.softwaremill.realworld.users.{UsersRepository, UsersServerEndpoints, UsersService}
-import sttp.model.StatusCode
-import sttp.tapir.DecodeResult
-import sttp.tapir.server.interceptor.decodefailure.DefaultDecodeFailureHandler
-import sttp.tapir.server.interceptor.exception.ExceptionHandler
-import sttp.tapir.server.interceptor.log.DefaultServerLog
 import sttp.tapir.server.ziohttp
 import sttp.tapir.server.ziohttp.{ZioHttpInterpreter, ZioHttpServerOptions}
 import zio.*
-import zio.Cause.Die
 import zio.http.*
-import zio.http.netty.server.NettyDriver
 import zio.logging.LogFormat
 import zio.logging.backend.SLF4J
 
