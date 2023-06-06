@@ -2,27 +2,19 @@ package com.softwaremill.realworld.common
 
 import com.softwaremill.realworld.articles.comments.api.{CommentResponse, CommentsEndpoints}
 import com.softwaremill.realworld.articles.comments.{CommentsRepository, CommentsServerEndpoints, CommentsService}
-import com.softwaremill.realworld.articles.core.api.{ArticleResponse, ArticlesEndpoints, ArticlesListResponse}
-import com.softwaremill.realworld.articles.core.{Article, ArticlesRepository, ArticlesServerEndpoints, ArticlesService}
-import com.softwaremill.realworld.articles.tags.TagsRepository
+import com.softwaremill.realworld.articles.core.api.{ArticleResponse, ArticlesEndpoints}
+import com.softwaremill.realworld.articles.core.{ArticlesRepository, ArticlesServerEndpoints, ArticlesService}
 import com.softwaremill.realworld.auth.AuthService
 import com.softwaremill.realworld.common.model.auth.*
-import com.softwaremill.realworld.common.{BaseEndpoints, Configuration}
-import com.softwaremill.realworld.db.{Db, DbConfig, DbMigrator}
 import com.softwaremill.realworld.users.UsersEndpointsSpec.test
-import com.softwaremill.realworld.users.api.{ProfileResponse, UserResponse, UsersEndpoints}
+import com.softwaremill.realworld.users.api.{UserResponse, UsersEndpoints}
 import com.softwaremill.realworld.users.{UsersRepository, UsersServerEndpoints, UsersService}
 import com.softwaremill.realworld.utils.TestUtils.*
-import sttp.client3.testing.SttpBackendStub
 import sttp.client3.ziojson.*
-import sttp.client3.{HttpError, Request, Response, ResponseException, UriContext, basicRequest}
-import sttp.model.Uri
-import sttp.tapir.EndpointOutput.StatusCode
-import sttp.tapir.server.stub.TapirStubInterpreter
-import sttp.tapir.ztapir.{RIOMonadError, ZServerEndpoint}
+import sttp.client3.{HttpError, ResponseException}
 import zio.test.Assertion.*
-import zio.test.{Spec, TestAspect, TestRandom, ZIOSpecDefault, assertZIO}
-import zio.{RIO, Random, ZIO, ZLayer}
+import zio.test.{Spec, ZIOSpecDefault, assertZIO}
+import zio.{ZIO, ZLayer}
 
 object AuthorizationSpec extends ZIOSpecDefault:
 

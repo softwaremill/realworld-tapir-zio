@@ -1,16 +1,9 @@
 package com.softwaremill.realworld.users
 
-import com.softwaremill.realworld.users.UserRepositoryTestSupport.callFollow
 import com.softwaremill.realworld.users.api.{UserRegisterData, UserUpdateData}
-import sttp.client3.testing.SttpBackendStub
-import sttp.client3.ziojson.*
-import sttp.client3.{HttpError, Response, ResponseException, UriContext, basicRequest}
-import sttp.tapir.EndpointOutput.StatusCode
-import sttp.tapir.server.stub.TapirStubInterpreter
-import sttp.tapir.ztapir.{RIOMonadError, ZServerEndpoint}
+import zio.ZIO
 import zio.test.Assertion.*
-import zio.test.{Assertion, TestAspect, TestRandom, TestResult, ZIOSpecDefault, assertTrue, assertZIO}
-import zio.{RIO, Random, ZIO, ZLayer}
+import zio.test.{Assertion, TestResult, assertZIO}
 
 import java.sql.SQLException
 

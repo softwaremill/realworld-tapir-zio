@@ -1,15 +1,12 @@
 package com.softwaremill.realworld.users
 
 import com.softwaremill.realworld.auth.AuthService
+import com.softwaremill.realworld.common.Exceptions
 import com.softwaremill.realworld.common.Exceptions.{AlreadyInUse, BadRequest, NotFound, Unauthorized}
-import com.softwaremill.realworld.common.{Exceptions, Pagination, UserSession}
 import com.softwaremill.realworld.users.UsersService.*
 import com.softwaremill.realworld.users.api.*
 import org.apache.commons.validator.routines.EmailValidator
-import zio.{Console, IO, Task, ZIO, ZLayer}
-
-import java.sql.SQLException
-import javax.sql.DataSource
+import zio.{IO, Task, ZIO, ZLayer}
 
 class UsersService(authService: AuthService, usersRepository: UsersRepository):
 

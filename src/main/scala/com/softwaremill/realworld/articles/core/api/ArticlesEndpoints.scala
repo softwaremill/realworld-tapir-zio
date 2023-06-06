@@ -2,17 +2,13 @@ package com.softwaremill.realworld.articles.core.api
 
 import com.softwaremill.realworld.articles.core.{Article, ArticleAuthor, ArticlesFilters}
 import com.softwaremill.realworld.common.{BaseEndpoints, ErrorInfo, Pagination, UserSession}
-import io.getquill.SnakeCase
-import sttp.model.StatusCode
 import sttp.tapir.generic.auto.*
 import sttp.tapir.json.zio.jsonBody
-import sttp.tapir.server.ServerEndpoint.Full
 import sttp.tapir.ztapir.*
-import sttp.tapir.{EndpointInput, PublicEndpoint, Validator}
-import zio.{Cause, Console, Exit, ZIO, ZLayer}
+import sttp.tapir.{EndpointInput, Validator}
+import zio.ZLayer
 
 import java.time.Instant
-import javax.sql.DataSource
 import scala.util.chaining.*
 
 class ArticlesEndpoints(base: BaseEndpoints):

@@ -6,10 +6,9 @@ import io.getquill.*
 import io.getquill.jdbczio.*
 import org.sqlite.SQLiteErrorCode.SQLITE_CONSTRAINT_UNIQUE
 import org.sqlite.SQLiteException
-import zio.{Console, IO, RIO, Task, UIO, ZIO, ZLayer}
+import zio.{IO, RIO, Task, ZIO, ZLayer}
 
 import java.sql.SQLException
-import javax.sql.DataSource
 import scala.util.chaining.*
 
 case class FollowerRow(userId: Int, followerId: Int)

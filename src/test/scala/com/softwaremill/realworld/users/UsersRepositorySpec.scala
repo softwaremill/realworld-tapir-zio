@@ -1,6 +1,5 @@
 package com.softwaremill.realworld.users
 
-import com.softwaremill.realworld.db.{Db, DbConfig, DbMigrator}
 import com.softwaremill.realworld.users.UserDbTestSupport.*
 import com.softwaremill.realworld.users.UserRepositoryTestSupport.*
 import com.softwaremill.realworld.users.api.{UserRegisterData, UserUpdateData}
