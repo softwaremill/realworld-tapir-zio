@@ -1,6 +1,7 @@
 package com.softwaremill.realworld.articles.core.api
 
 import com.softwaremill.realworld.articles.core.Article
+import com.softwaremill.realworld.articles.core.ArticleSlug.*
 import zio.json.{DeriveJsonDecoder, DeriveJsonEncoder, JsonDecoder, JsonEncoder}
 
 case class ArticleResponse(article: Article)
