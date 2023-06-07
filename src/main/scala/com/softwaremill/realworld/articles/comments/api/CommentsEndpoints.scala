@@ -20,9 +20,9 @@ class CommentsEndpoints(base: BaseEndpoints):
       .in(jsonBody[CommentCreateRequest].example(Examples.commentCreateRequest))
       .out(jsonBody[CommentResponse].example(Examples.commentResponse))
 
-  val deleteCommentEndpoint: ZPartialServerEndpoint[Any, String, UserSession, (String, CommentId), ErrorInfo, Unit, Any] =
+  val deleteCommentEndpoint: ZPartialServerEndpoint[Any, String, UserSession, (ArticleSlug, CommentId), ErrorInfo, Unit, Any] =
     base.secureEndpoint.delete
-      .in("api" / "articles" / path[String]("slug") / "comments" / path[CommentId]("id"))
+      .in("api" / "articles" / path[ArticleSlug]("slug") / "comments" / path[CommentId]("id"))
 
   val getCommentsFromArticleEndpoint
       : ZPartialServerEndpoint[Any, Option[String], Option[UserSession], ArticleSlug, ErrorInfo, CommentsListResponse, Any] =
