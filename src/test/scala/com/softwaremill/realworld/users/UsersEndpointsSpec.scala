@@ -26,21 +26,21 @@ object UsersEndpointsSpec extends ZIOSpecDefault:
       test("get profile") {
         for {
           _ <- prepareTwoUsers
-          authHeader <- getValidTokenAuthorizationHeader("john@example.com")
+          authHeader <- getValidTokenAuthenticationHeader("john@example.com")
           result <- checkGetProfile(authorizationHeaderOpt = Some(authHeader), uri = uri"http://test.com/api/profiles/jake")
         } yield result
       },
       test("follow profile") {
         for {
           _ <- prepareTwoUsers
-          authHeader <- getValidTokenAuthorizationHeader()
+          authHeader <- getValidTokenAuthenticationHeader()
           result <- checkFollowUser(authorizationHeaderOpt = Some(authHeader), uri = uri"http://test.com/api/profiles/john/follow")
         } yield result
       },
       test("unfollow profile") {
         for {
           _ <- prepareTwoUsers
-          authHeader <- getValidTokenAuthorizationHeader("john@example.com")
+          authHeader <- getValidTokenAuthenticationHeader("john@example.com")
           result <- checkUnfollowUser(authorizationHeaderOpt = Some(authHeader), uri = uri"http://test.com/api/profiles/jake/follow")
         } yield result
       },
@@ -48,14 +48,14 @@ object UsersEndpointsSpec extends ZIOSpecDefault:
         test("return not found error") {
           for {
             _ <- prepareOneUser
-            authHeader <- getValidTokenAuthorizationHeader("invalid_email@invalid.com")
+            authHeader <- getValidTokenAuthenticationHeader("invalid_email@invalid.com")
             result <- checkIfUserNotExistsErrorOccurInGet(authorizationHeader = authHeader, uri = uri"http://test.com/api/user")
           } yield result
         },
         test("return valid user") {
           for {
             _ <- prepareOneUser
-            authHeader <- getValidTokenAuthorizationHeader()
+            authHeader <- getValidTokenAuthenticationHeader()
             result <- checkGetCurrentUser(authorizationHeader = authHeader, uri = uri"http://test.com/api/user")
           } yield result
         }
@@ -64,7 +64,7 @@ object UsersEndpointsSpec extends ZIOSpecDefault:
         test("return empty string fields error") {
           for {
             _ <- prepareOneUser
-            authHeader <- getValidTokenAuthorizationHeader()
+            authHeader <- getValidTokenAuthenticationHeader()
             result <- checkIfEmptyFieldsErrorOccurInRegister(
               authorizationHeader = authHeader,
               uri = uri"http://test.com/api/users",
@@ -75,7 +75,7 @@ object UsersEndpointsSpec extends ZIOSpecDefault:
         test("return not valid email error") {
           for {
             _ <- prepareOneUser
-            authHeader <- getValidTokenAuthorizationHeader()
+            authHeader <- getValidTokenAuthenticationHeader()
             result <- checkIfInvalidEmailErrorOccurInRegister(
               authorizationHeader = authHeader,
               uri = uri"http://test.com/api/users",
@@ -86,7 +86,7 @@ object UsersEndpointsSpec extends ZIOSpecDefault:
         test("return email already in use error") {
           for {
             _ <- prepareOneUser
-            authHeader <- getValidTokenAuthorizationHeader()
+            authHeader <- getValidTokenAuthenticationHeader()
             result <- checkIfUserEmailAlreadyExistsErrorOccurInRegister(
               authorizationHeader = authHeader,
               uri = uri"http://test.com/api/users",
@@ -97,7 +97,7 @@ object UsersEndpointsSpec extends ZIOSpecDefault:
         test("return username already in use error") {
           for {
             _ <- prepareOneUser
-            authHeader <- getValidTokenAuthorizationHeader()
+            authHeader <- getValidTokenAuthenticationHeader()
             result <- checkIfUserUsernameAlreadyExistsErrorOccurInRegister(
               authorizationHeader = authHeader,
               uri = uri"http://test.com/api/users",
@@ -108,7 +108,7 @@ object UsersEndpointsSpec extends ZIOSpecDefault:
         test("return registered user") {
           for {
             _ <- prepareOneUser
-            authHeader <- getValidTokenAuthorizationHeader()
+            authHeader <- getValidTokenAuthenticationHeader()
             result <- checkRegisterUser(
               authorizationHeader = authHeader,
               uri = uri"http://test.com/api/users",
@@ -121,7 +121,7 @@ object UsersEndpointsSpec extends ZIOSpecDefault:
         test("return invalid credentials error") {
           for {
             _ <- prepareOneUser
-            authHeader <- getValidTokenAuthorizationHeader()
+            authHeader <- getValidTokenAuthenticationHeader()
             result <- checkIfEmptyFieldsErrorOccurInLogin(
               authorizationHeader = authHeader,
               uri = uri"http://test.com/api/users/login",
@@ -132,7 +132,7 @@ object UsersEndpointsSpec extends ZIOSpecDefault:
         test("return not valid email error") {
           for {
             _ <- prepareOneUser
-            authHeader <- getValidTokenAuthorizationHeader()
+            authHeader <- getValidTokenAuthenticationHeader()
             result <- checkIfInvalidEmailErrorOccurInLogin(
               authorizationHeader = authHeader,
               uri = uri"http://test.com/api/users/login",
@@ -143,7 +143,7 @@ object UsersEndpointsSpec extends ZIOSpecDefault:
         test("return invalid credentials error") {
           for {
             _ <- prepareOneUser
-            authHeader <- getValidTokenAuthorizationHeader()
+            authHeader <- getValidTokenAuthenticationHeader()
             result <- checkIfInvalidPasswordErrorOccurInLogin(
               authorizationHeader = authHeader,
               uri = uri"http://test.com/api/users/login",
@@ -154,7 +154,7 @@ object UsersEndpointsSpec extends ZIOSpecDefault:
         test("return logged in user") {
           for {
             _ <- prepareOneUser
-            authHeader <- getValidTokenAuthorizationHeader()
+            authHeader <- getValidTokenAuthenticationHeader()
             result <- checkLoginUser(
               authorizationHeader = authHeader,
               uri = uri"http://test.com/api/users/login",
@@ -167,7 +167,7 @@ object UsersEndpointsSpec extends ZIOSpecDefault:
         test("return empty string fields error") {
           for {
             _ <- prepareOneUser
-            authHeader <- getValidTokenAuthorizationHeader()
+            authHeader <- getValidTokenAuthenticationHeader()
             result <- checkIfEmptyFieldsErrorOccurInUpdate(
               authorizationHeader = authHeader,
               uri = uri"http://test.com/api/user",
@@ -184,7 +184,7 @@ object UsersEndpointsSpec extends ZIOSpecDefault:
         test("return not valid email error") {
           for {
             _ <- prepareOneUser
-            authHeader <- getValidTokenAuthorizationHeader()
+            authHeader <- getValidTokenAuthenticationHeader()
             result <- checkIfInvalidEmailErrorOccurInUpdate(
               authorizationHeader = authHeader,
               uri = uri"http://test.com/api/user",
@@ -201,7 +201,7 @@ object UsersEndpointsSpec extends ZIOSpecDefault:
         test("return email already in use error") {
           for {
             _ <- prepareTwoUsers
-            authHeader <- getValidTokenAuthorizationHeader()
+            authHeader <- getValidTokenAuthenticationHeader()
             result <- checkIfUserEmailAlreadyExistsErrorOccurInUpdate(
               authorizationHeader = authHeader,
               uri = uri"http://test.com/api/user",
@@ -218,7 +218,7 @@ object UsersEndpointsSpec extends ZIOSpecDefault:
         test("return username already in use error") {
           for {
             _ <- prepareTwoUsers
-            authHeader <- getValidTokenAuthorizationHeader()
+            authHeader <- getValidTokenAuthenticationHeader()
             result <- checkIfUserUsernameAlreadyExistsErrorOccurInUpdate(
               authorizationHeader = authHeader,
               uri = uri"http://test.com/api/user",
@@ -235,7 +235,7 @@ object UsersEndpointsSpec extends ZIOSpecDefault:
         test("return not changed user") {
           for {
             _ <- prepareOneUser
-            authHeader <- getValidTokenAuthorizationHeader()
+            authHeader <- getValidTokenAuthenticationHeader()
             result <- checkIfUserNotChangeInUpdate(
               authorizationHeader = authHeader,
               uri = uri"http://test.com/api/user",
@@ -252,7 +252,7 @@ object UsersEndpointsSpec extends ZIOSpecDefault:
         test("return logged in user") {
           for {
             _ <- prepareOneUser
-            authHeader <- getValidTokenAuthorizationHeader()
+            authHeader <- getValidTokenAuthenticationHeader()
             result <- checkUpdateUser(
               authorizationHeader = authHeader,
               uri = uri"http://test.com/api/user",

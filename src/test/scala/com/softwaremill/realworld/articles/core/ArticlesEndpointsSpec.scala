@@ -21,7 +21,7 @@ object ArticlesEndpointsSpec extends ZIOSpecDefault:
       suite("with token auth header")(
         test("validation failed on filter") {
           for {
-            authHeader <- getValidTokenAuthorizationHeader()
+            authHeader <- getValidTokenAuthenticationHeader()
             result <- checkIfFilterErrorOccur(
               authorizationHeaderOpt = Some(authHeader),
               uri = uri"http://test.com/api/articles?tag=invalid-tag"
@@ -30,7 +30,7 @@ object ArticlesEndpointsSpec extends ZIOSpecDefault:
         },
         test("validation failed on pagination") {
           for {
-            authHeader <- getValidTokenAuthorizationHeader()
+            authHeader <- getValidTokenAuthenticationHeader()
             result <- checkIfPaginationErrorOccur(
               authorizationHeaderOpt = Some(authHeader),
               uri = uri"http://test.com/api/articles?limit=invalid-limit&offset=invalid-offset"
@@ -40,7 +40,7 @@ object ArticlesEndpointsSpec extends ZIOSpecDefault:
         test("check pagination") {
           for {
             _ <- prepareDataForListingArticles
-            authHeader <- getValidTokenAuthorizationHeader()
+            authHeader <- getValidTokenAuthenticationHeader()
             result <- checkPagination(
               authorizationHeaderOpt = Some(authHeader),
               uri = uri"http://test.com/api/articles?limit=1&offset=1"
@@ -50,7 +50,7 @@ object ArticlesEndpointsSpec extends ZIOSpecDefault:
         test("check filters") {
           for {
             _ <- prepareDataForListingArticles
-            authHeader <- getValidTokenAuthorizationHeader()
+            authHeader <- getValidTokenAuthenticationHeader()
             result <- checkFilters(
               authorizationHeaderOpt = Some(authHeader),
               uri = uri"http://test.com/api/articles?author=jake&favorited=john&tag=goats"
@@ -60,14 +60,14 @@ object ArticlesEndpointsSpec extends ZIOSpecDefault:
         test("return empty list") {
           for {
             _ <- prepareDataForListingEmptyList
-            authHeader <- getValidTokenAuthorizationHeader()
+            authHeader <- getValidTokenAuthenticationHeader()
             result <- checkIfArticleListIsEmpty(authorizationHeaderOpt = Some(authHeader), uri = uri"http://test.com/api/articles")
           } yield result
         },
         test("list available articles") {
           for {
             _ <- prepareDataForListingArticles
-            authHeader <- getValidTokenAuthorizationHeader()
+            authHeader <- getValidTokenAuthenticationHeader()
             result <- listAvailableArticles(
               authorizationHeaderOpt = Some(authHeader),
               uri = uri"http://test.com/api/articles"
@@ -185,7 +185,7 @@ object ArticlesEndpointsSpec extends ZIOSpecDefault:
       suite("with token auth header")(
         test("validation failed on pagination") {
           for {
-            authHeader <- getValidTokenAuthorizationHeader(email = "john@example.com")
+            authHeader <- getValidTokenAuthenticationHeader(email = "john@example.com")
             result <- checkIfPaginationErrorOccurInFeed(
               authorizationHeaderOpt = Some(authHeader),
               uri = uri"http://test.com/api/articles/feed?limit=invalid-limit&offset=invalid-offset"
@@ -195,7 +195,7 @@ object ArticlesEndpointsSpec extends ZIOSpecDefault:
         test("check pagination") {
           for {
             _ <- prepareDataForFeedingArticles
-            authHeader <- getValidTokenAuthorizationHeader(email = "john@example.com")
+            authHeader <- getValidTokenAuthenticationHeader(email = "john@example.com")
             result <- checkFeedPagination(
               authorizationHeaderOpt = Some(authHeader),
               uri = uri"http://test.com/api/articles/feed?limit=1&offset=1"
@@ -205,7 +205,7 @@ object ArticlesEndpointsSpec extends ZIOSpecDefault:
         test("list available articles") {
           for {
             _ <- prepareDataForFeedingArticles
-            authHeader <- getValidTokenAuthorizationHeader(email = "john@example.com")
+            authHeader <- getValidTokenAuthenticationHeader(email = "john@example.com")
             result <- listFeedAvailableArticles(
               authorizationHeaderOpt = Some(authHeader),
               uri = uri"http://test.com/api/articles/feed"
@@ -250,7 +250,7 @@ object ArticlesEndpointsSpec extends ZIOSpecDefault:
         test("article not exists") {
           for {
             _ <- prepareDataForGettingArticle
-            authHeader <- getValidTokenAuthorizationHeader()
+            authHeader <- getValidTokenAuthenticationHeader()
             result <- checkIfNonExistentArticleErrorOccur(
               authorizationHeader = authHeader,
               uri = uri"http://test.com/api/articles/unknown-article"
@@ -260,7 +260,7 @@ object ArticlesEndpointsSpec extends ZIOSpecDefault:
         test("get existing article") {
           for {
             _ <- prepareDataForGettingArticle
-            authHeader <- getValidTokenAuthorizationHeader()
+            authHeader <- getValidTokenAuthenticationHeader()
             result <- getAndCheckExistingArticle(
               authorizationHeader = authHeader,
               uri = uri"http://test.com/api/articles/how-to-train-your-dragon-2"
@@ -296,7 +296,7 @@ object ArticlesEndpointsSpec extends ZIOSpecDefault:
         test("return empty string fields error") {
           for {
             _ <- prepareDataForArticleCreation
-            authHeader <- getValidTokenAuthorizationHeader()
+            authHeader <- getValidTokenAuthenticationHeader()
             result <- checkIfEmptyFieldsErrorOccurInCreate(
               authorizationHeader = authHeader,
               uri = uri"http://test.com/api/articles",
@@ -312,7 +312,7 @@ object ArticlesEndpointsSpec extends ZIOSpecDefault:
         test("article creation - check conflict") {
           for {
             _ <- prepareDataForCreatingNameConflict
-            authHeader <- getValidTokenAuthorizationHeader()
+            authHeader <- getValidTokenAuthenticationHeader()
             result <- createAndCheckIfInvalidNameErrorOccur(
               authorizationHeader = authHeader,
               uri = uri"http://test.com/api/articles",
@@ -323,7 +323,7 @@ object ArticlesEndpointsSpec extends ZIOSpecDefault:
         test("positive article creation") {
           for {
             _ <- prepareDataForArticleCreation
-            authHeader <- getValidTokenAuthorizationHeader()
+            authHeader <- getValidTokenAuthenticationHeader()
             result <- createAndCheckArticle(
               authorizationHeader = authHeader,
               uri = uri"http://test.com/api/articles",
@@ -378,7 +378,7 @@ object ArticlesEndpointsSpec extends ZIOSpecDefault:
         test("positive article deletion")(
           for {
             _ <- prepareDataForArticleDeletion
-            authHeader <- getValidTokenAuthorizationHeader(exampleUser2.email)
+            authHeader <- getValidTokenAuthenticationHeader(exampleUser2.email)
             _ <- callDeleteArticle(
               authorizationHeader = authHeader,
               uri = uri"http://test.com/api/articles/how-to-train-your-dragon-3"
@@ -412,7 +412,7 @@ object ArticlesEndpointsSpec extends ZIOSpecDefault:
         test("return empty string fields error") {
           for {
             _ <- prepareDataForArticleUpdating
-            authHeader <- getValidTokenAuthorizationHeader()
+            authHeader <- getValidTokenAuthenticationHeader()
             result <- checkIfEmptyFieldsErrorOccurInUpdate(
               authorizationHeader = authHeader,
               uri = uri"http://test.com/api/articles/how-to-train-your-dragon",
@@ -427,7 +427,7 @@ object ArticlesEndpointsSpec extends ZIOSpecDefault:
         test("article update - check conflict") {
           for {
             _ <- prepareDataForUpdatingNameConflict
-            authHeader <- getValidTokenAuthorizationHeader()
+            authHeader <- getValidTokenAuthenticationHeader()
             result <- updateAndCheckIfInvalidNameErrorOccur(
               authorizationHeader = authHeader,
               uri = uri"http://test.com/api/articles/how-to-train-your-dragon",
@@ -442,7 +442,7 @@ object ArticlesEndpointsSpec extends ZIOSpecDefault:
         test("positive article update") {
           for {
             _ <- prepareDataForArticleUpdating
-            authHeader <- getValidTokenAuthorizationHeader()
+            authHeader <- getValidTokenAuthenticationHeader()
             result <- updateAndCheckArticle(
               authorizationHeader = authHeader,
               uri = uri"http://test.com/api/articles/how-to-train-your-dragon",

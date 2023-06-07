@@ -19,7 +19,7 @@ object CommentsEndpointsSpec extends ZIOSpecDefault:
         test("return empty list if there are no comments for article") {
           for {
             _ <- prepareDataForCommentsNotFound
-            authHeader <- getValidTokenAuthorizationHeader()
+            authHeader <- getValidTokenAuthenticationHeader()
             result <- checkIfCommentsListIsEmpty(
               authorizationHeaderOpt = Some(authHeader),
               uri = uri"http://test.com/api/articles/how-to-train-your-dragon-2/comments"
@@ -29,7 +29,7 @@ object CommentsEndpointsSpec extends ZIOSpecDefault:
         test("return non empty comments list") {
           for {
             _ <- prepareDataForCommentsList
-            authHeader <- getValidTokenAuthorizationHeader(email = "john@example.com")
+            authHeader <- getValidTokenAuthenticationHeader(email = "john@example.com")
             result <- checkCommentsList(
               authorizationHeaderOpt = Some(authHeader),
               uri = uri"http://test.com/api/articles/how-to-train-your-dragon-3/comments"
@@ -41,7 +41,7 @@ object CommentsEndpointsSpec extends ZIOSpecDefault:
         test("negative comment removing - not author of comment") {
           for {
             _ <- prepareDataForCommentsRemoving
-            authHeader <- getValidTokenAuthorizationHeader(email = "michael@example.com")
+            authHeader <- getValidTokenAuthenticationHeader(email = "michael@example.com")
             result <- checkIfNotAuthorOfCommentErrorOccurInDelete(
               authorizationHeader = authHeader,
               uri = uri"http://test.com/api/articles/how-to-train-your-dragon-4/comments/2"
@@ -51,7 +51,7 @@ object CommentsEndpointsSpec extends ZIOSpecDefault:
         test("negative comment removing - comment not linked to slug") {
           for {
             _ <- prepareDataForCommentsRemoving
-            authHeader <- getValidTokenAuthorizationHeader(email = "bill@example.com")
+            authHeader <- getValidTokenAuthenticationHeader(email = "bill@example.com")
             result <- checkIfCommentNotLinkedToSlugErrorOccurInDelete(
               authorizationHeader = authHeader,
               uri = uri"http://test.com/api/articles/how-to-train-your-dragon-4/comments/1"
@@ -61,7 +61,7 @@ object CommentsEndpointsSpec extends ZIOSpecDefault:
         test("positive comment removing") {
           for {
             _ <- prepareDataForCommentsRemoving
-            authHeader <- getValidTokenAuthorizationHeader(email = "bill@example.com")
+            authHeader <- getValidTokenAuthenticationHeader(email = "bill@example.com")
             _ <- deleteCommentRequest(
               authorizationHeader = authHeader,
               uri = uri"http://test.com/api/articles/how-to-train-your-dragon-4/comments/2"
@@ -77,7 +77,7 @@ object CommentsEndpointsSpec extends ZIOSpecDefault:
         test("negative comment removing - empty body") {
           for {
             _ <- prepareDataForCommentsCreation
-            authHeader <- getValidTokenAuthorizationHeader(email = "michael@example.com")
+            authHeader <- getValidTokenAuthenticationHeader(email = "michael@example.com")
             result <- checkIfEmptyFieldsErrorOccurInCreate(
               authorizationHeader = authHeader,
               uri = uri"http://test.com/api/articles/how-to-train-your-dragon-6/comments",
@@ -88,7 +88,7 @@ object CommentsEndpointsSpec extends ZIOSpecDefault:
         test("positive comment creation") {
           for {
             _ <- prepareDataForCommentsCreation
-            authHeader <- getValidTokenAuthorizationHeader(email = "michael@example.com")
+            authHeader <- getValidTokenAuthenticationHeader(email = "michael@example.com")
             result <- createAndCheckComment(
               authorizationHeader = authHeader,
               uri = uri"http://test.com/api/articles/how-to-train-your-dragon-6/comments",

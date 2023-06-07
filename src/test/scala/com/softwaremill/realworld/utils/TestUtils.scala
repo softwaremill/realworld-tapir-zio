@@ -36,7 +36,7 @@ object TestUtils:
 
   type TestDbLayer = DbConfig with DataSource with DbMigrator with Quill.Sqlite[SnakeCase]
 
-  def getValidTokenAuthorizationHeader(email: String = exampleUser1.email): RIO[AuthService, Map[String, String]] =
+  def getValidTokenAuthenticationHeader(email: String = exampleUser1.email): RIO[AuthService, Map[String, String]] =
     for {
       authService <- ZIO.service[AuthService]
       jwt <- authService.generateJwt(email)
