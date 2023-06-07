@@ -6,6 +6,6 @@ import zio.json.{JsonDecoder, JsonEncoder}
 case class Username(value: String) extends AnyVal
 
 object Username:
-  given profileUsernameEncoder: JsonEncoder[Username] = JsonEncoder[String].contramap((p: Username) => p.value)
-  given profileUsernameDecoder: JsonDecoder[Username] = JsonDecoder[String].map(username => Username(username))
-  given profileUsernameSchema: Schema[Username] = Schema(SchemaType.SString())
+  given usernameEncoder: JsonEncoder[Username] = JsonEncoder[String].contramap((p: Username) => p.value)
+  given usernameDecoder: JsonDecoder[Username] = JsonDecoder[String].map(username => Username(username))
+  given usernameSchema: Schema[Username] = Schema(SchemaType.SString())
