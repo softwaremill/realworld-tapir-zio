@@ -1,7 +1,7 @@
 package com.softwaremill.realworld.users.api
 
 import com.softwaremill.realworld.common.NoneAsNullOptionEncoder.*
-import com.softwaremill.realworld.users.{UserEmail, UserWithPassword}
+import com.softwaremill.realworld.users.UserWithPassword
 import sttp.tapir.Schema.annotations.validateEach
 import sttp.tapir.Validator
 import zio.json.{DeriveJsonDecoder, DeriveJsonEncoder}

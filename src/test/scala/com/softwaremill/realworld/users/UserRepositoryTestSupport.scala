@@ -1,6 +1,7 @@
 package com.softwaremill.realworld.users
 
 import com.softwaremill.realworld.users.api.{UserRegisterData, UserUpdateData}
+import com.softwaremill.realworld.users.domain.Username
 import zio.ZIO
 import zio.test.Assertion.*
 import zio.test.{Assertion, TestResult, assertZIO}
@@ -27,7 +28,7 @@ object UserRepositoryTestSupport:
       result <- repo.findUserByUsername(username)
     } yield result
 
-  def callUserWithIdByUsername(username: UserUsername): ZIO[UsersRepository, Exception, Option[(User, Int)]] =
+  def callUserWithIdByUsername(username: Username): ZIO[UsersRepository, Exception, Option[(User, Int)]] =
     for {
       repo <- ZIO.service[UsersRepository]
       result <- repo.findUserWithIdByUsername(username)
@@ -112,7 +113,7 @@ object UserRepositoryTestSupport:
       )
     )
 
-  def checkUserWithIdNotFoundByUsername(username: UserUsername): ZIO[UsersRepository, Exception, TestResult] =
+  def checkUserWithIdNotFoundByUsername(username: Username): ZIO[UsersRepository, Exception, TestResult] =
     assertZIO(callUserWithIdByUsername(username))(
       Assertion.equalTo(
         Option.empty
@@ -167,7 +168,7 @@ object UserRepositoryTestSupport:
       )
     )
 
-  def checkUserWithIdFoundByUsername(username: UserUsername): ZIO[UsersRepository, Exception, TestResult] =
+  def checkUserWithIdFoundByUsername(username: Username): ZIO[UsersRepository, Exception, TestResult] =
     for {
       userOpt <- callUserWithIdByUsername(username)
     } yield {

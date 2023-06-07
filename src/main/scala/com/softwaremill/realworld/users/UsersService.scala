@@ -5,6 +5,7 @@ import com.softwaremill.realworld.common.Exceptions
 import com.softwaremill.realworld.common.Exceptions.{AlreadyInUse, BadRequest, NotFound, Unauthorized}
 import com.softwaremill.realworld.users.UsersService.*
 import com.softwaremill.realworld.users.api.*
+import com.softwaremill.realworld.users.domain.{Email, Username}
 import org.apache.commons.validator.routines.EmailValidator
 import zio.{IO, Task, ZIO, ZLayer}
 
@@ -73,13 +74,13 @@ class UsersService(authService: AuthService, usersRepository: UsersRepository):
         .someOrFail(NotFound(UserWithIdNotFoundMessage(userId)))
     } yield updatedUser
 
-  def getProfile(username: UserUsername, followerId: Int): Task[ProfileResponse] = for {
+  def getProfile(username: Username, followerId: Int): Task[ProfileResponse] = for {
     userWithIdTuple <- getUserWithIdByUsername(username)
     (followed, followedId) = userWithIdTuple
     profile <- getProfileData(followed, followedId, Some(followerId))
   } yield ProfileResponse(profile)
 
-  def follow(username: UserUsername, followerId: Int): Task[ProfileResponse] = for {
+  def follow(username: Username, followerId: Int): Task[ProfileResponse] = for {
     userWithIdTuple <- getUserWithIdByUsername(username)
     (followed, followedId) = userWithIdTuple
     _ <- ZIO.fail(BadRequest(CannotFollowYourselfMessage)).when(followedId == followerId)
@@ -87,7 +88,7 @@ class UsersService(authService: AuthService, usersRepository: UsersRepository):
     profile <- getProfileData(followed, followedId, Some(followerId))
   } yield ProfileResponse(profile)
 
-  def unfollow(username: UserUsername, followerId: Int): Task[ProfileResponse] = for {
+  def unfollow(username: Username, followerId: Int): Task[ProfileResponse] = for {
     userWithIdTuple <- getUserWithIdByUsername(username)
     (followed, followedId) = userWithIdTuple
     _ <- usersRepository.unfollow(followedId, followerId)
@@ -96,9 +97,9 @@ class UsersService(authService: AuthService, usersRepository: UsersRepository):
 
   private def userWithToken(email: String, username: String, jwt: String): User =
     User(
-      UserEmail(email),
+      Email(email),
       Some(jwt),
-      UserUsername(username),
+      Username(username),
       Option.empty[String],
       Option.empty[String]
     )
@@ -146,7 +147,7 @@ class UsersService(authService: AuthService, usersRepository: UsersRepository):
 
     if (!emailValidator.isValid(email)) ZIO.fail(BadRequest(InvalidEmailMessage(email))) else ZIO.unit
   }
-  private def getUserWithIdByUsername(username: UserUsername): Task[(User, Int)] = usersRepository
+  private def getUserWithIdByUsername(username: Username): Task[(User, Int)] = usersRepository
     .findUserWithIdByUsername(username)
     .someOrFail(NotFound(UserWithUsernameNotFoundMessage(username)))
 
@@ -159,7 +160,7 @@ class UsersService(authService: AuthService, usersRepository: UsersRepository):
 object UsersService:
   private val InvalidEmailMessage: String => String = (email: String) => s"Email $email is not valid"
   private val UserWithIdNotFoundMessage: Int => String = (id: Int) => s"User with id $id doesn't exist"
-  private val UserWithUsernameNotFoundMessage: UserUsername => String = (username: UserUsername) =>
+  private val UserWithUsernameNotFoundMessage: Username => String = (username: Username) =>
     s"User with username ${username.value} doesn't exist"
   private val UserWithEmailAlreadyInUseMessage: String => String = (email: String) => s"User with email $email already in use"
   private val UserWithUsernameAlreadyInUseMessage: String => String = (username: String) => s"User with username $username already in use"

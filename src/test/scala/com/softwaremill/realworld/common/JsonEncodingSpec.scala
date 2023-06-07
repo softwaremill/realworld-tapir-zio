@@ -3,7 +3,8 @@ package com.softwaremill.realworld.common
 import com.softwaremill.realworld.articles.core.api.ArticleResponse
 import com.softwaremill.realworld.articles.core.{Article, ArticleAuthor}
 import com.softwaremill.realworld.users.api.UserResponse
-import com.softwaremill.realworld.users.{User, UserEmail, UserUsername, api}
+import com.softwaremill.realworld.users.domain.{Email, Username}
+import com.softwaremill.realworld.users.{User, api}
 import com.softwaremill.realworld.{articles, users}
 import zio.json.*
 import zio.test.*
@@ -18,9 +19,9 @@ object JsonEncodingSpec extends ZIOSpecDefault {
       test("user fields with None value are present in rendered json as null values") {
         val user: UserResponse = UserResponse(
           User(
-            email = UserEmail("email@domain.com"),
+            email = Email("email@domain.com"),
             token = None,
-            username = UserUsername("username"),
+            username = Username("username"),
             bio = None,
             image = None
           )

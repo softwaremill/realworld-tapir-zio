@@ -1,7 +1,8 @@
 package com.softwaremill.realworld.users.api
 
 import com.softwaremill.realworld.common.{BaseEndpoints, ErrorInfo, UserSession}
-import com.softwaremill.realworld.users.{Profile, User, UserEmail, UserUsername}
+import com.softwaremill.realworld.users.domain.{Email, Username}
+import com.softwaremill.realworld.users.{Profile, User}
 import sttp.tapir.Endpoint
 import sttp.tapir.generic.auto.*
 import sttp.tapir.json.zio.jsonBody
@@ -32,19 +33,19 @@ class UsersEndpoints(base: BaseEndpoints):
       .in(jsonBody[UserUpdateRequest].example(Examples.userUpdateRequest))
       .out(jsonBody[UserResponse].example(Examples.updatedUserResponse))
 
-  val getProfileEndpoint: ZPartialServerEndpoint[Any, String, UserSession, UserUsername, ErrorInfo, ProfileResponse, Any] =
+  val getProfileEndpoint: ZPartialServerEndpoint[Any, String, UserSession, Username, ErrorInfo, ProfileResponse, Any] =
     base.secureEndpoint.get
-      .in("api" / "profiles" / path[UserUsername]("username"))
+      .in("api" / "profiles" / path[Username]("username"))
       .out(jsonBody[ProfileResponse].example(Examples.profileResponse))
 
-  val followUserEndpoint: ZPartialServerEndpoint[Any, String, UserSession, UserUsername, ErrorInfo, ProfileResponse, Any] =
+  val followUserEndpoint: ZPartialServerEndpoint[Any, String, UserSession, Username, ErrorInfo, ProfileResponse, Any] =
     base.secureEndpoint.post
-      .in("api" / "profiles" / path[UserUsername]("username") / "follow")
+      .in("api" / "profiles" / path[Username]("username") / "follow")
       .out(jsonBody[ProfileResponse].example(Examples.profileResponse))
 
-  val unfollowUserEndpoint: ZPartialServerEndpoint[Any, String, UserSession, UserUsername, ErrorInfo, ProfileResponse, Any] =
+  val unfollowUserEndpoint: ZPartialServerEndpoint[Any, String, UserSession, Username, ErrorInfo, ProfileResponse, Any] =
     base.secureEndpoint.delete
-      .in("api" / "profiles" / path[UserUsername]("username") / "follow")
+      .in("api" / "profiles" / path[Username]("username") / "follow")
       .out(jsonBody[ProfileResponse].example(Examples.profileResponse))
 
   private object Examples:
@@ -84,9 +85,9 @@ class UsersEndpoints(base: BaseEndpoints):
     ): UserResponse =
       UserResponse(user =
         User(
-          email = UserEmail(email),
+          email = Email(email),
           token = token,
-          username = UserUsername(username),
+          username = Username(username),
           bio = bio,
           image = image
         )

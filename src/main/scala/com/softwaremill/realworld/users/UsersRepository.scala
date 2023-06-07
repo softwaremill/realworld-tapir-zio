@@ -2,6 +2,7 @@ package com.softwaremill.realworld.users
 
 import com.softwaremill.realworld.common.Exceptions
 import com.softwaremill.realworld.users.api.{UserRegisterData, UserUpdateData}
+import com.softwaremill.realworld.users.domain.{Email, Username}
 import io.getquill.*
 import io.getquill.jdbczio.*
 import org.sqlite.SQLiteErrorCode.SQLITE_CONSTRAINT_UNIQUE
@@ -43,7 +44,7 @@ class UsersRepository(quill: Quill.Sqlite[SnakeCase]):
       .map(_.headOption)
       .map(_.map(user))
 
-  def findUserWithIdByUsername(username: UserUsername): IO[Exception, Option[(User, Int)]] =
+  def findUserWithIdByUsername(username: Username): IO[Exception, Option[(User, Int)]] =
     run(queryUser.filter(ur => ur.username == lift(username.value)))
       .map(_.headOption)
       .map(_.map(userRow => (user(userRow), userRow.userId)))
@@ -116,9 +117,9 @@ class UsersRepository(quill: Quill.Sqlite[SnakeCase]):
 
   private def user(userRow: UserRow): User =
     User(
-      email = UserEmail(userRow.email),
+      email = Email(userRow.email),
       token = None,
-      username = UserUsername(userRow.username),
+      username = Username(userRow.username),
       bio = userRow.bio,
       image = userRow.image
     )
