@@ -154,8 +154,8 @@ class UsersService(authService: AuthService, usersRepository: UsersRepository):
   private def getProfileData(user: User, userId: Int, asSeenByUserWithIdOpt: Option[Int]): Task[Profile] =
     asSeenByUserWithIdOpt match
       case Some(asSeenByUserWithId) =>
-        usersRepository.isFollowing(userId, asSeenByUserWithId).map(Profile(user.username.value, user.bio, user.image, _))
-      case None => ZIO.succeed(Profile(user.username.value, user.bio, user.image, false))
+        usersRepository.isFollowing(userId, asSeenByUserWithId).map(Profile(user.username, user.bio, user.image, _))
+      case None => ZIO.succeed(Profile(user.username, user.bio, user.image, false))
 
 object UsersService:
   private val InvalidEmailMessage: String => String = (email: String) => s"Email $email is not valid"

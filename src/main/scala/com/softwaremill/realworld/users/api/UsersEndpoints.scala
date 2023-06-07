@@ -105,7 +105,7 @@ class UsersEndpoints(base: BaseEndpoints):
 
     val profileResponse: ProfileResponse = ProfileResponse(profile =
       Profile(
-        username = "user123",
+        username = Username("user123"),
         bio = Some("userBio"),
         image = Some("userImage"),
         following = false
