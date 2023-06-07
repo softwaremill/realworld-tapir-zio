@@ -1,5 +1,6 @@
 package com.softwaremill.realworld.users.api
 
+import com.softwaremill.realworld.common.domain.Username
 import com.softwaremill.realworld.common.{BaseEndpoints, ErrorInfo, UserSession}
 import com.softwaremill.realworld.users.{Profile, User}
 import sttp.tapir.Endpoint
@@ -104,7 +105,7 @@ class UsersEndpoints(base: BaseEndpoints):
 
     val profileResponse: ProfileResponse = ProfileResponse(profile =
       Profile(
-        username = "user123",
+        username = Username("user123"),
         bio = Some("userBio"),
         image = Some("userImage"),
         following = false

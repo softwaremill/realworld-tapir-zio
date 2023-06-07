@@ -444,7 +444,7 @@ object UserEndpointTestSupport:
         hasField(
           "profile",
           _.profile,
-          (hasField("username", _.username, equalTo("jake")): Assertion[Profile])
+          (hasField("username", _.username.value, equalTo("jake")): Assertion[Profile])
             && hasField("bio", _.bio, isNone)
             && hasField("image", _.image, isNone)
             && hasField("following", _.following, isFalse)
@@ -461,7 +461,7 @@ object UserEndpointTestSupport:
         hasField(
           "profile",
           _.profile,
-          (hasField("username", _.username, equalTo("john")): Assertion[Profile])
+          (hasField("username", _.username.value, equalTo("john")): Assertion[Profile])
             && hasField("bio", _.bio, isNone)
             && hasField("image", _.image, isNone)
             && hasField("following", _.following, isTrue)
@@ -478,7 +478,7 @@ object UserEndpointTestSupport:
         hasField(
           "profile",
           _.profile,
-          (hasField("username", _.username, equalTo("jake")): Assertion[Profile])
+          (hasField("username", _.username.value, equalTo("jake")): Assertion[Profile])
             && hasField("bio", _.bio, isNone)
             && hasField("image", _.image, isNone)
             && hasField("following", _.following, isFalse)
