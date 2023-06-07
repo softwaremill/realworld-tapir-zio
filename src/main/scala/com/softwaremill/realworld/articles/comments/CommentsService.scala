@@ -14,10 +14,10 @@ class CommentsService(
   def addComment(slug: ArticleSlug, userId: Int, comment: String): Task[Comment] = for {
     articleId <- articleIdBySlug(slug)
     commentId <- commentsRepository.addComment(articleId, userId, comment)
-    comment <- commentsRepository.findComment(commentId, userId).someOrFail(NotFound(CommentNotFoundMessage(commentId)))
+    comment <- commentsRepository.findComment(commentId, userId).someOrFail(NotFound(CommentNotFoundMessage(CommentId(commentId))))
   } yield comment
 
-  def deleteComment(slug: ArticleSlug, userId: Int, commentId: Int): Task[Unit] = for {
+  def deleteComment(slug: ArticleSlug, userId: Int, commentId: CommentId): Task[Unit] = for {
     articleId <- articleIdBySlug(slug)
     tupleWithIds <- commentsRepository
       .findArticleAndAuthorIdsFromComment(commentId)
@@ -41,12 +41,12 @@ class CommentsService(
 
 object CommentsService:
   private val ArticleNotFoundMessage: ArticleSlug => String = (slug: ArticleSlug) => s"Article with slug ${slug.value} doesn't exist."
-  private val CommentNotFoundMessage: Int => String = (commentId: Int) => s"Comment with id=$commentId doesn't exist"
+  private val CommentNotFoundMessage: CommentId => String = (commentId: CommentId) => s"Comment with id=${commentId.value} doesn't exist"
   private val CommentCannotBeRemoveMessage = "Can't remove the comment you're not an author of"
-  private val CommentNotLinkedToSlugMessage: (Int, ArticleSlug) => String = (commentId: Int, slug: ArticleSlug) =>
-    s"Comment with id=$commentId is not linked to slug ${slug.value}"
-  private val ArticleAndAuthorIdsNotFoundMessage: Int => String = (commentId: Int) =>
-    s"ArticleId or authorId for comment with id=$commentId doesn't exist"
+  private val CommentNotLinkedToSlugMessage: (CommentId, ArticleSlug) => String = (commentId: CommentId, slug: ArticleSlug) =>
+    s"Comment with id=${commentId.value} is not linked to slug ${slug.value}"
+  private val ArticleAndAuthorIdsNotFoundMessage: CommentId => String = (commentId: CommentId) =>
+    s"ArticleId or authorId for comment with id=${commentId.value} doesn't exist"
 
   val live: ZLayer[CommentsRepository with ArticlesRepository, Nothing, CommentsService] =
     ZLayer.fromFunction(CommentsService(_, _))

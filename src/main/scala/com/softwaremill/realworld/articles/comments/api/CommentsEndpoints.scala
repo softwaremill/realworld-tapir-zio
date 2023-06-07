@@ -1,6 +1,6 @@
 package com.softwaremill.realworld.articles.comments.api
 
-import com.softwaremill.realworld.articles.comments.{Comment, CommentAuthor}
+import com.softwaremill.realworld.articles.comments.{Comment, CommentAuthor, CommentId}
 import com.softwaremill.realworld.articles.core.ArticleSlug
 import com.softwaremill.realworld.common.{BaseEndpoints, ErrorInfo, UserSession}
 import sttp.tapir.generic.auto.*
@@ -20,9 +20,9 @@ class CommentsEndpoints(base: BaseEndpoints):
       .in(jsonBody[CommentCreateRequest].example(Examples.commentCreateRequest))
       .out(jsonBody[CommentResponse].example(Examples.commentResponse))
 
-  val deleteCommentEndpoint: ZPartialServerEndpoint[Any, String, UserSession, (ArticleSlug, Int), ErrorInfo, Unit, Any] =
+  val deleteCommentEndpoint: ZPartialServerEndpoint[Any, String, UserSession, (ArticleSlug, CommentId), ErrorInfo, Unit, Any] =
     base.secureEndpoint.delete
-      .in("api" / "articles" / path[ArticleSlug]("slug") / "comments" / path[Int]("id"))
+      .in("api" / "articles" / path[ArticleSlug]("slug") / "comments" / path[CommentId]("id"))
 
   val getCommentsFromArticleEndpoint
       : ZPartialServerEndpoint[Any, Option[String], Option[UserSession], ArticleSlug, ErrorInfo, CommentsListResponse, Any] =
@@ -32,7 +32,7 @@ class CommentsEndpoints(base: BaseEndpoints):
 
   private object Examples:
     private val comment1: Comment = Comment(
-      id = 1,
+      id = CommentId(1),
       createdAt = Instant.now(),
       updatedAt = Instant.now(),
       body = "exampleComment1",
@@ -40,7 +40,7 @@ class CommentsEndpoints(base: BaseEndpoints):
     )
 
     private val comment2 = Comment(
-      id = 2,
+      id = CommentId(2),
       createdAt = Instant.now(),
       updatedAt = Instant.now(),
       body = "exampleComment2",
