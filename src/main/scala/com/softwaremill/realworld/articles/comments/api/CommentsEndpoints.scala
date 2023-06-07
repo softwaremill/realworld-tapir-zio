@@ -1,6 +1,7 @@
 package com.softwaremill.realworld.articles.comments.api
 
 import com.softwaremill.realworld.articles.comments.{Comment, CommentAuthor, CommentId}
+import com.softwaremill.realworld.articles.core.ArticleSlug
 import com.softwaremill.realworld.common.{BaseEndpoints, ErrorInfo, UserSession}
 import sttp.tapir.generic.auto.*
 import sttp.tapir.json.zio.jsonBody
@@ -13,9 +14,9 @@ import scala.util.chaining.*
 class CommentsEndpoints(base: BaseEndpoints):
 
   val addCommentEndpoint
-      : ZPartialServerEndpoint[Any, String, UserSession, (String, CommentCreateRequest), ErrorInfo, CommentResponse, Any] =
+      : ZPartialServerEndpoint[Any, String, UserSession, (ArticleSlug, CommentCreateRequest), ErrorInfo, CommentResponse, Any] =
     base.secureEndpoint.post
-      .in("api" / "articles" / path[String]("slug") / "comments")
+      .in("api" / "articles" / path[ArticleSlug]("slug") / "comments")
       .in(jsonBody[CommentCreateRequest].example(Examples.commentCreateRequest))
       .out(jsonBody[CommentResponse].example(Examples.commentResponse))
 
@@ -24,9 +25,9 @@ class CommentsEndpoints(base: BaseEndpoints):
       .in("api" / "articles" / path[String]("slug") / "comments" / path[CommentId]("id"))
 
   val getCommentsFromArticleEndpoint
-      : ZPartialServerEndpoint[Any, Option[String], Option[UserSession], String, ErrorInfo, CommentsListResponse, Any] =
+      : ZPartialServerEndpoint[Any, Option[String], Option[UserSession], ArticleSlug, ErrorInfo, CommentsListResponse, Any] =
     base.optionallySecureEndpoint.get
-      .in("api" / "articles" / path[String]("slug") / "comments")
+      .in("api" / "articles" / path[ArticleSlug]("slug") / "comments")
       .out(jsonBody[CommentsListResponse].example(Examples.commentsListResponse))
 
   private object Examples:
