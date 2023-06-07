@@ -1,6 +1,7 @@
 package com.softwaremill.realworld.articles.comments.api
 
 import com.softwaremill.realworld.articles.comments.{Comment, CommentAuthor}
+import com.softwaremill.realworld.articles.core.ArticleSlug
 import com.softwaremill.realworld.common.{BaseEndpoints, ErrorInfo, UserSession}
 import sttp.tapir.generic.auto.*
 import sttp.tapir.json.zio.jsonBody
@@ -13,20 +14,20 @@ import scala.util.chaining.*
 class CommentsEndpoints(base: BaseEndpoints):
 
   val addCommentEndpoint
-      : ZPartialServerEndpoint[Any, String, UserSession, (String, CommentCreateRequest), ErrorInfo, CommentResponse, Any] =
+      : ZPartialServerEndpoint[Any, String, UserSession, (ArticleSlug, CommentCreateRequest), ErrorInfo, CommentResponse, Any] =
     base.secureEndpoint.post
-      .in("api" / "articles" / path[String]("slug") / "comments")
+      .in("api" / "articles" / path[ArticleSlug]("slug") / "comments")
       .in(jsonBody[CommentCreateRequest].example(Examples.commentCreateRequest))
       .out(jsonBody[CommentResponse].example(Examples.commentResponse))
 
-  val deleteCommentEndpoint: ZPartialServerEndpoint[Any, String, UserSession, (String, Int), ErrorInfo, Unit, Any] =
+  val deleteCommentEndpoint: ZPartialServerEndpoint[Any, String, UserSession, (ArticleSlug, Int), ErrorInfo, Unit, Any] =
     base.secureEndpoint.delete
-      .in("api" / "articles" / path[String]("slug") / "comments" / path[Int]("id"))
+      .in("api" / "articles" / path[ArticleSlug]("slug") / "comments" / path[Int]("id"))
 
   val getCommentsFromArticleEndpoint
-      : ZPartialServerEndpoint[Any, Option[String], Option[UserSession], String, ErrorInfo, CommentsListResponse, Any] =
+      : ZPartialServerEndpoint[Any, Option[String], Option[UserSession], ArticleSlug, ErrorInfo, CommentsListResponse, Any] =
     base.optionallySecureEndpoint.get
-      .in("api" / "articles" / path[String]("slug") / "comments")
+      .in("api" / "articles" / path[ArticleSlug]("slug") / "comments")
       .out(jsonBody[CommentsListResponse].example(Examples.commentsListResponse))
 
   private object Examples:
