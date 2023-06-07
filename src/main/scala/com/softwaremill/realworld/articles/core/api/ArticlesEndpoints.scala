@@ -1,6 +1,7 @@
 package com.softwaremill.realworld.articles.core.api
 
 import com.softwaremill.realworld.articles.core.{Article, ArticleAuthor, ArticleSlug, ArticlesFilters}
+import com.softwaremill.realworld.common.domain.Username
 import com.softwaremill.realworld.common.{BaseEndpoints, ErrorInfo, Pagination, UserSession}
 import sttp.tapir.generic.auto.*
 import sttp.tapir.json.zio.jsonBody
@@ -92,7 +93,7 @@ class ArticlesEndpoints(base: BaseEndpoints):
       updatedAt = Instant.now(),
       favorited = false,
       favoritesCount = 2,
-      author = ArticleAuthor(username = "user1", bio = Some("user1Bio"), image = Some("user1Image"), following = false)
+      author = ArticleAuthor(username = Username("user1"), bio = Some("user1Bio"), image = Some("user1Image"), following = false)
     )
 
     private val article2: Article = Article(
@@ -105,7 +106,7 @@ class ArticlesEndpoints(base: BaseEndpoints):
       updatedAt = Instant.now(),
       favorited = false,
       favoritesCount = 1,
-      author = ArticleAuthor(username = "user1", bio = Some("user1Bio"), image = Some("user1Image"), following = false)
+      author = ArticleAuthor(username = Username("user1"), bio = Some("user1Bio"), image = Some("user1Image"), following = false)
     )
 
     private val article3: Article = Article(
@@ -118,7 +119,7 @@ class ArticlesEndpoints(base: BaseEndpoints):
       updatedAt = Instant.now(),
       favorited = true,
       favoritesCount = 0,
-      author = ArticleAuthor(username = "user2", bio = Some("user2Bio"), image = Some("user2Image"), following = false)
+      author = ArticleAuthor(username = Username("user2"), bio = Some("user2Bio"), image = Some("user2Image"), following = false)
     )
 
     val articleResponse: ArticleResponse = ArticleResponse(article = article1)

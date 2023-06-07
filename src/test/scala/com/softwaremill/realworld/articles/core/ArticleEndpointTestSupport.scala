@@ -303,7 +303,7 @@ object ArticleEndpointTestSupport:
                 && hasField(
                   "author",
                   _.author,
-                  (hasField("username", _.username, equalTo("jake")): Assertion[ArticleAuthor]) && hasField(
+                  (hasField("username", _.username.value, equalTo("jake")): Assertion[ArticleAuthor]) && hasField(
                     "following",
                     _.following,
                     isFalse
@@ -337,7 +337,7 @@ object ArticleEndpointTestSupport:
                 && hasField(
                   "author",
                   _.author,
-                  (hasField("username", _.username, equalTo("jake")): Assertion[ArticleAuthor]) && hasField(
+                  (hasField("username", _.username.value, equalTo("jake")): Assertion[ArticleAuthor]) && hasField(
                     "following",
                     _.following,
                     isTrue
@@ -371,7 +371,7 @@ object ArticleEndpointTestSupport:
                 && hasField(
                   "author",
                   _.author,
-                  (hasField("username", _.username, equalTo("jake")): Assertion[ArticleAuthor]) && hasField(
+                  (hasField("username", _.username.value, equalTo("jake")): Assertion[ArticleAuthor]) && hasField(
                     "following",
                     _.following,
                     isFalse
@@ -405,7 +405,7 @@ object ArticleEndpointTestSupport:
                 && hasField(
                   "author",
                   _.author,
-                  (hasField("username", _.username, equalTo("jake")): Assertion[ArticleAuthor]) && hasField(
+                  (hasField("username", _.username.value, equalTo("jake")): Assertion[ArticleAuthor]) && hasField(
                     "following",
                     _.following,
                     isFalse
@@ -423,7 +423,7 @@ object ArticleEndpointTestSupport:
                   && hasField(
                     "author",
                     _.author,
-                    (hasField("username", _.username, equalTo("jake")): Assertion[ArticleAuthor]) && hasField(
+                    (hasField("username", _.username.value, equalTo("jake")): Assertion[ArticleAuthor]) && hasField(
                       "following",
                       _.following,
                       isFalse
@@ -441,7 +441,7 @@ object ArticleEndpointTestSupport:
                   && hasField(
                     "author",
                     _.author,
-                    (hasField("username", _.username, equalTo("john")): Assertion[ArticleAuthor]) && hasField(
+                    (hasField("username", _.username.value, equalTo("john")): Assertion[ArticleAuthor]) && hasField(
                       "following",
                       _.following,
                       if (authorizationHeaderOpt.isDefined) isTrue else isFalse
@@ -475,7 +475,7 @@ object ArticleEndpointTestSupport:
                 && hasField(
                   "author",
                   _.author,
-                  (hasField("username", _.username, equalTo("jake")): Assertion[ArticleAuthor]) && hasField(
+                  (hasField("username", _.username.value, equalTo("jake")): Assertion[ArticleAuthor]) && hasField(
                     "following",
                     _.following,
                     isTrue
@@ -493,7 +493,7 @@ object ArticleEndpointTestSupport:
                   && hasField(
                     "author",
                     _.author,
-                    (hasField("username", _.username, equalTo("jake")): Assertion[ArticleAuthor]) && hasField(
+                    (hasField("username", _.username.value, equalTo("jake")): Assertion[ArticleAuthor]) && hasField(
                       "following",
                       _.following,
                       isTrue
@@ -511,7 +511,7 @@ object ArticleEndpointTestSupport:
                   && hasField(
                     "author",
                     _.author,
-                    (hasField("username", _.username, equalTo("bill")): Assertion[ArticleAuthor]) && hasField(
+                    (hasField("username", _.username.value, equalTo("bill")): Assertion[ArticleAuthor]) && hasField(
                       "following",
                       _.following,
                       isTrue
@@ -560,7 +560,7 @@ object ArticleEndpointTestSupport:
             && hasField(
               "author",
               _.author,
-              (hasField("username", _.username, equalTo("john")): Assertion[ArticleAuthor]) && hasField(
+              (hasField("username", _.username.value, equalTo("john")): Assertion[ArticleAuthor]) && hasField(
                 "following",
                 _.following,
                 isFalse
@@ -592,7 +592,7 @@ object ArticleEndpointTestSupport:
             && hasField(
               "author",
               _.author,
-              (hasField("username", _.username, equalTo("jake")): Assertion[ArticleAuthor]) && hasField(
+              (hasField("username", _.username.value, equalTo("jake")): Assertion[ArticleAuthor]) && hasField(
                 "following",
                 _.following,
                 isFalse
@@ -624,7 +624,7 @@ object ArticleEndpointTestSupport:
             && hasField(
               "author",
               _.author,
-              (hasField("username", _.username, equalTo("jake")): Assertion[ArticleAuthor]) && hasField(
+              (hasField("username", _.username.value, equalTo("jake")): Assertion[ArticleAuthor]) && hasField(
                 "following",
                 _.following,
                 isFalse

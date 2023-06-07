@@ -1,6 +1,7 @@
 package com.softwaremill.realworld.users
 
 import com.softwaremill.realworld.common.Exceptions
+import com.softwaremill.realworld.common.domain.Username
 import com.softwaremill.realworld.users.api.{UserRegisterData, UserUpdateData}
 import io.getquill.*
 import io.getquill.jdbczio.*
@@ -43,8 +44,8 @@ class UsersRepository(quill: Quill.Sqlite[SnakeCase]):
       .map(_.headOption)
       .map(_.map(user))
 
-  def findUserWithIdByUsername(username: String): IO[Exception, Option[(User, Int)]] =
-    run(queryUser.filter(ur => ur.username == lift(username)))
+  def findUserWithIdByUsername(username: Username): IO[Exception, Option[(User, Int)]] =
+    run(queryUser.filter(ur => ur.username == lift(username.value)))
       .map(_.headOption)
       .map(_.map(userRow => (user(userRow), userRow.userId)))
 
@@ -116,9 +117,9 @@ class UsersRepository(quill: Quill.Sqlite[SnakeCase]):
 
   private def user(userRow: UserRow): User =
     User(
-      email = userRow.email,
+      email = Email(userRow.email),
       token = None,
-      username = userRow.username,
+      username = Username(userRow.username),
       bio = userRow.bio,
       image = userRow.image
     )

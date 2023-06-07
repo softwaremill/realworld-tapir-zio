@@ -1,5 +1,6 @@
 package com.softwaremill.realworld.users
 
+import com.softwaremill.realworld.common.domain.Username
 import com.softwaremill.realworld.users.api.{UserRegisterData, UserUpdateData}
 import zio.ZIO
 import zio.test.Assertion.*
@@ -27,7 +28,7 @@ object UserRepositoryTestSupport:
       result <- repo.findUserByUsername(username)
     } yield result
 
-  def callUserWithIdByUsername(username: String): ZIO[UsersRepository, Exception, Option[(User, Int)]] =
+  def callUserWithIdByUsername(username: Username): ZIO[UsersRepository, Exception, Option[(User, Int)]] =
     for {
       repo <- ZIO.service[UsersRepository]
       result <- repo.findUserWithIdByUsername(username)
@@ -112,7 +113,7 @@ object UserRepositoryTestSupport:
       )
     )
 
-  def checkUserWithIdNotFoundByUsername(username: String): ZIO[UsersRepository, Exception, TestResult] =
+  def checkUserWithIdNotFoundByUsername(username: Username): ZIO[UsersRepository, Exception, TestResult] =
     assertZIO(callUserWithIdByUsername(username))(
       Assertion.equalTo(
         Option.empty
@@ -150,8 +151,8 @@ object UserRepositoryTestSupport:
   def checkUserFoundByEmail(email: String): ZIO[UsersRepository, Exception, TestResult] =
     assertZIO(callFindByEmail(email))(
       isSome(
-        (hasField("email", _.email, equalTo("jake@example.com")): Assertion[User]) &&
-          hasField("username", _.username, equalTo("jake")) &&
+        (hasField("email", _.email.value, equalTo("jake@example.com")): Assertion[User]) &&
+          hasField("username", _.username.value, equalTo("jake")) &&
           hasField("bio", _.bio, isNone) &&
           hasField("image", _.image, isNone)
       )
@@ -160,21 +161,21 @@ object UserRepositoryTestSupport:
   def checkUserFoundByUsername(username: String): ZIO[UsersRepository, Exception, TestResult] =
     assertZIO(callFindByUsername(username))(
       isSome(
-        (hasField("email", _.email, equalTo("jake@example.com")): Assertion[User]) &&
-          hasField("username", _.username, equalTo("jake")) &&
+        (hasField("email", _.email.value, equalTo("jake@example.com")): Assertion[User]) &&
+          hasField("username", _.username.value, equalTo("jake")) &&
           hasField("bio", _.bio, isNone) &&
           hasField("image", _.image, isNone)
       )
     )
 
-  def checkUserWithIdFoundByUsername(username: String): ZIO[UsersRepository, Exception, TestResult] =
+  def checkUserWithIdFoundByUsername(username: Username): ZIO[UsersRepository, Exception, TestResult] =
     for {
       userOpt <- callUserWithIdByUsername(username)
     } yield {
       zio.test.assert(userOpt.map(_._1))(
         isSome(
-          (hasField("email", _.email, equalTo("jake@example.com")): Assertion[User]) &&
-            hasField("username", _.username, equalTo("jake")) &&
+          (hasField("email", _.email.value, equalTo("jake@example.com")): Assertion[User]) &&
+            hasField("username", _.username.value, equalTo("jake")) &&
             hasField("bio", _.bio, isNone) &&
             hasField("image", _.image, isNone)
         )
@@ -190,8 +191,8 @@ object UserRepositoryTestSupport:
   def checkUserFoundById(id: Int): ZIO[UsersRepository, Exception, TestResult] =
     assertZIO(callFindById(id))(
       isSome(
-        (hasField("email", _.email, equalTo("jake@example.com")): Assertion[User]) &&
-          hasField("username", _.username, equalTo("jake")) &&
+        (hasField("email", _.email.value, equalTo("jake@example.com")): Assertion[User]) &&
+          hasField("username", _.username.value, equalTo("jake")) &&
           hasField("bio", _.bio, isNone) &&
           hasField("image", _.image, isNone)
       )
@@ -203,9 +204,9 @@ object UserRepositoryTestSupport:
         (hasField(
           "user",
           _.user,
-          (hasField("email", _.email, equalTo("jake@example.com")): Assertion[User]) &&
+          (hasField("email", _.email.value, equalTo("jake@example.com")): Assertion[User]) &&
             hasField("token", _.token, isNone) &&
-            hasField("username", _.username, equalTo("jake")) &&
+            hasField("username", _.username.value, equalTo("jake")) &&
             hasField("bio", _.bio, isNone) &&
             hasField("image", _.image, isNone)
         ): Assertion[UserWithPassword]) &&
@@ -219,9 +220,9 @@ object UserRepositoryTestSupport:
         (hasField(
           "user",
           _.user,
-          (hasField("email", _.email, equalTo("jake@example.com")): Assertion[User]) &&
+          (hasField("email", _.email.value, equalTo("jake@example.com")): Assertion[User]) &&
             hasField("token", _.token, isNone) &&
-            hasField("username", _.username, equalTo("jake")) &&
+            hasField("username", _.username.value, equalTo("jake")) &&
             hasField("bio", _.bio, isNone) &&
             hasField("image", _.image, isNone)
         ): Assertion[UserWithPassword]) &&
@@ -235,8 +236,8 @@ object UserRepositoryTestSupport:
       userOpt <- callFindByEmail(userRegisterData.email)
     } yield zio.test.assert(userOpt) {
       isSome(
-        (hasField("email", _.email, equalTo("test@test.com")): Assertion[User]) &&
-          hasField("username", _.username, equalTo("tested")) &&
+        (hasField("email", _.email.value, equalTo("test@test.com")): Assertion[User]) &&
+          hasField("username", _.username.value, equalTo("tested")) &&
           hasField("bio", _.bio, isNone) &&
           hasField("image", _.image, isNone)
       )
@@ -260,12 +261,12 @@ object UserRepositoryTestSupport:
           }
         ) && hasField[User, String](
           "email",
-          _.email, {
+          _.email.value, {
             equalTo("test@test.com")
           }
         ) && hasField[User, String](
           "username",
-          _.username, {
+          _.username.value, {
             equalTo("tested")
           }
         )
@@ -290,12 +291,12 @@ object UserRepositoryTestSupport:
           }
         ) && hasField[User, String](
           "email",
-          _.email, {
+          _.email.value, {
             equalTo("updated@test.com")
           }
         ) && hasField[User, String](
           "username",
-          _.username, {
+          _.username.value, {
             equalTo("tested")
           }
         )
