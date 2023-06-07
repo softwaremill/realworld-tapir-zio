@@ -5,6 +5,7 @@ import com.softwaremill.realworld.common.Exceptions
 import com.softwaremill.realworld.common.Exceptions.{AlreadyInUse, BadRequest, NotFound, Unauthorized}
 import com.softwaremill.realworld.users.UsersService.*
 import com.softwaremill.realworld.users.api.*
+import com.softwaremill.realworld.users.domain.Username
 import org.apache.commons.validator.routines.EmailValidator
 import zio.{IO, Task, ZIO, ZLayer}
 
@@ -153,8 +154,8 @@ class UsersService(authService: AuthService, usersRepository: UsersRepository):
   private def getProfileData(user: User, userId: Int, asSeenByUserWithIdOpt: Option[Int]): Task[Profile] =
     asSeenByUserWithIdOpt match
       case Some(asSeenByUserWithId) =>
-        usersRepository.isFollowing(userId, asSeenByUserWithId).map(Profile(ProfileUsername(user.username), user.bio, user.image, _))
-      case None => ZIO.succeed(Profile(ProfileUsername(user.username), user.bio, user.image, false))
+        usersRepository.isFollowing(userId, asSeenByUserWithId).map(Profile(Username(user.username), user.bio, user.image, _))
+      case None => ZIO.succeed(Profile(Username(user.username), user.bio, user.image, false))
 
 object UsersService:
   private val InvalidEmailMessage: String => String = (email: String) => s"Email $email is not valid"
