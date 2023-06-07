@@ -50,7 +50,7 @@ class ArticlesService(
     oldArticle <- articlesRepository
       .findBySlug(slug, userId)
       .someOrFail(NotFound(ArticleNotFoundMessage(slug)))
-    oldArticleUserId <- userIdByUsername(oldArticle.author.username)
+    oldArticleUserId <- userIdByUsername(oldArticle.author.username.value)
     _ <- ZIO
       .fail(Unauthorized(ArticleCannotBeUpdatedMessage))
       .when(userId != oldArticleUserId)

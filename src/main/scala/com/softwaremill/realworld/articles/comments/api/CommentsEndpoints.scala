@@ -2,6 +2,7 @@ package com.softwaremill.realworld.articles.comments.api
 
 import com.softwaremill.realworld.articles.comments.{Comment, CommentAuthor, CommentId}
 import com.softwaremill.realworld.articles.core.ArticleSlug
+import com.softwaremill.realworld.common.domain.Username
 import com.softwaremill.realworld.common.{BaseEndpoints, ErrorInfo, UserSession}
 import sttp.tapir.generic.auto.*
 import sttp.tapir.json.zio.jsonBody
@@ -36,7 +37,7 @@ class CommentsEndpoints(base: BaseEndpoints):
       createdAt = Instant.now(),
       updatedAt = Instant.now(),
       body = "exampleComment1",
-      author = CommentAuthor(username = "user1", bio = Some("user1Bio"), image = Some("user1Image"), following = false)
+      author = CommentAuthor(username = Username("user1"), bio = Some("user1Bio"), image = Some("user1Image"), following = false)
     )
 
     private val comment2 = Comment(
@@ -44,7 +45,7 @@ class CommentsEndpoints(base: BaseEndpoints):
       createdAt = Instant.now(),
       updatedAt = Instant.now(),
       body = "exampleComment2",
-      author = CommentAuthor(username = "user2", bio = Some("user2Bio"), image = Some("user2Image"), following = false)
+      author = CommentAuthor(username = Username("user2"), bio = Some("user2Bio"), image = Some("user2Image"), following = false)
     )
 
     val commentCreateRequest: CommentCreateRequest = CommentCreateRequest(comment = CommentCreateData(body = "exampleComment"))

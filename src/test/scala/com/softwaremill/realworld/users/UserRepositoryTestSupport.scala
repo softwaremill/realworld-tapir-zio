@@ -1,7 +1,7 @@
 package com.softwaremill.realworld.users
 
+import com.softwaremill.realworld.common.domain.Username
 import com.softwaremill.realworld.users.api.{UserRegisterData, UserUpdateData}
-import com.softwaremill.realworld.users.domain.Username
 import zio.ZIO
 import zio.test.Assertion.*
 import zio.test.{Assertion, TestResult, assertZIO}

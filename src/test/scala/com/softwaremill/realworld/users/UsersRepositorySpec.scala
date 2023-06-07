@@ -1,9 +1,9 @@
 package com.softwaremill.realworld.users
 
+import com.softwaremill.realworld.common.domain.Username
 import com.softwaremill.realworld.users.UserDbTestSupport.*
 import com.softwaremill.realworld.users.UserRepositoryTestSupport.*
 import com.softwaremill.realworld.users.api.{UserRegisterData, UserUpdateData}
-import com.softwaremill.realworld.users.domain.Username
 import com.softwaremill.realworld.utils.TestUtils.*
 import zio.test.ZIOSpecDefault
 

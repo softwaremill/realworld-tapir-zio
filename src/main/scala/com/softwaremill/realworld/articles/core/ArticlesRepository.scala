@@ -2,6 +2,7 @@ package com.softwaremill.realworld.articles.core
 
 import com.softwaremill.realworld.articles.*
 import com.softwaremill.realworld.articles.core.api.ArticleCreateData
+import com.softwaremill.realworld.common.domain.Username
 import com.softwaremill.realworld.common.{Exceptions, Pagination}
 import io.getquill.*
 import io.getquill.jdbczio.*
@@ -221,7 +222,8 @@ class ArticlesRepository(quill: Quill.Sqlite[SnakeCase]):
       updatedAt = as.articleRow.updatedAt,
       favorited = as.isFavorite,
       favoritesCount = as.favoritedCountOpt.getOrElse(0),
-      author = ArticleAuthor(as.profileRow.username, Option(as.profileRow.bio), Option(as.profileRow.image), following = as.isFollowing)
+      author =
+        ArticleAuthor(Username(as.profileRow.username), Option(as.profileRow.bio), Option(as.profileRow.image), following = as.isFollowing)
     )
 
   private def buildArticleQuery(arq: Quoted[Query[ArticleRow]]) =

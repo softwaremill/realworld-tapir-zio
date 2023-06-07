@@ -140,7 +140,7 @@ object CommentTestSupport:
             hasField(
               "author",
               _.author,
-              (hasField("username", _.username, equalTo("michael")): Assertion[CommentAuthor]) && hasField(
+              (hasField("username", _.username.value, equalTo("michael")): Assertion[CommentAuthor]) && hasField(
                 "following",
                 _.following,
                 isFalse
@@ -167,7 +167,7 @@ object CommentTestSupport:
                 hasField(
                   "author",
                   _.author,
-                  (hasField("username", _.username, equalTo("jake")): Assertion[CommentAuthor]) && hasField(
+                  (hasField("username", _.username.value, equalTo("jake")): Assertion[CommentAuthor]) && hasField(
                     "following",
                     _.following,
                     if (authorizationHeaderOpt.isDefined) isTrue else isFalse
@@ -179,7 +179,7 @@ object CommentTestSupport:
                 hasField(
                   "author",
                   _.author,
-                  (hasField("username", _.username, equalTo("michael")): Assertion[CommentAuthor]) && hasField(
+                  (hasField("username", _.username.value, equalTo("michael")): Assertion[CommentAuthor]) && hasField(
                     "following",
                     _.following,
                     isFalse
@@ -207,7 +207,7 @@ object CommentTestSupport:
                 hasField(
                   "author",
                   _.author,
-                  (hasField("username", _.username, equalTo("michael")): Assertion[CommentAuthor]) && hasField(
+                  (hasField("username", _.username.value, equalTo("michael")): Assertion[CommentAuthor]) && hasField(
                     "following",
                     _.following,
                     isFalse

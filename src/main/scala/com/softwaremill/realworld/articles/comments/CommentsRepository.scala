@@ -1,5 +1,6 @@
 package com.softwaremill.realworld.articles.comments
 
+import com.softwaremill.realworld.common.domain.Username
 import io.getquill.*
 import io.getquill.jdbczio.*
 import zio.{Task, ZLayer}
@@ -92,7 +93,7 @@ class CommentsRepository(quill: Quill.Sqlite[SnakeCase]):
       updatedAt = cs.commentRow.updatedAt,
       body = cs.commentRow.body,
       author = CommentAuthor(
-        username = cs.profileRow.username,
+        username = Username(cs.profileRow.username),
         bio = cs.profileRow.bio,
         image = cs.profileRow.image,
         following = cs.isFollowing

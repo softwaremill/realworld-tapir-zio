@@ -1,8 +1,8 @@
 package com.softwaremill.realworld.users.api
 
+import com.softwaremill.realworld.common.domain.Username
 import com.softwaremill.realworld.common.{BaseEndpoints, ErrorInfo, UserSession}
-import com.softwaremill.realworld.users.domain.{Email, Username}
-import com.softwaremill.realworld.users.{Profile, User}
+import com.softwaremill.realworld.users.{Email, Profile, User}
 import sttp.tapir.Endpoint
 import sttp.tapir.generic.auto.*
 import sttp.tapir.json.zio.jsonBody

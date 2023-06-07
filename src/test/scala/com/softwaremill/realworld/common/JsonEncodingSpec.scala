@@ -2,9 +2,9 @@ package com.softwaremill.realworld.common
 
 import com.softwaremill.realworld.articles.core.api.ArticleResponse
 import com.softwaremill.realworld.articles.core.{Article, ArticleAuthor, ArticleSlug}
+import com.softwaremill.realworld.common.domain.Username
 import com.softwaremill.realworld.users.api.UserResponse
-import com.softwaremill.realworld.users.domain.{Email, Username}
-import com.softwaremill.realworld.users.{User, api}
+import com.softwaremill.realworld.users.{Email, User, api}
 import com.softwaremill.realworld.{articles, users}
 import zio.json.*
 import zio.test.*
@@ -42,7 +42,7 @@ object JsonEncodingSpec extends ZIOSpecDefault {
             Instant.ofEpochMilli(1455767315824L),
             false,
             1,
-            ArticleAuthor("jake", None, Some("https://i.stack.imgur.com/xHWG8.jpg"), following = false)
+            ArticleAuthor(Username("jake"), None, Some("https://i.stack.imgur.com/xHWG8.jpg"), following = false)
           )
         )
         assert(article.toJson)(

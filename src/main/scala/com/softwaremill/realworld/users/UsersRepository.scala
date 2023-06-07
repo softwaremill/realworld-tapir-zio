@@ -1,8 +1,8 @@
 package com.softwaremill.realworld.users
 
 import com.softwaremill.realworld.common.Exceptions
+import com.softwaremill.realworld.common.domain.Username
 import com.softwaremill.realworld.users.api.{UserRegisterData, UserUpdateData}
-import com.softwaremill.realworld.users.domain.{Email, Username}
 import io.getquill.*
 import io.getquill.jdbczio.*
 import org.sqlite.SQLiteErrorCode.SQLITE_CONSTRAINT_UNIQUE

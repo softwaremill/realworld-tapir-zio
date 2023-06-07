@@ -1,4 +1,4 @@
-package com.softwaremill.realworld.users.domain
+package com.softwaremill.realworld.common.domain
 
 import sttp.tapir.{Schema, SchemaType}
 import zio.json.{JsonDecoder, JsonEncoder}
