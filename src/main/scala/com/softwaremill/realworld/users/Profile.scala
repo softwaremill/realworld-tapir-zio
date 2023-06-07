@@ -1,7 +1,7 @@
 package com.softwaremill.realworld.users
 
 import com.softwaremill.realworld.common.NoneAsNullOptionEncoder.*
-import com.softwaremill.realworld.users.domain.Username
+import com.softwaremill.realworld.common.domain.Username
 import sttp.tapir.{Schema, SchemaType}
 import zio.json.{DeriveJsonDecoder, DeriveJsonEncoder, JsonDecoder, JsonEncoder}
 case class Profile(username: Username, bio: Option[String], image: Option[String], following: Boolean)
