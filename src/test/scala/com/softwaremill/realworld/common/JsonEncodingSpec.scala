@@ -1,7 +1,7 @@
 package com.softwaremill.realworld.common
 
 import com.softwaremill.realworld.articles.core.api.ArticleResponse
-import com.softwaremill.realworld.articles.core.{Article, ArticleAuthor}
+import com.softwaremill.realworld.articles.core.{Article, ArticleAuthor, ArticleSlug}
 import com.softwaremill.realworld.users.api.UserResponse
 import com.softwaremill.realworld.users.{User, api}
 import com.softwaremill.realworld.{articles, users}
@@ -32,7 +32,7 @@ object JsonEncodingSpec extends ZIOSpecDefault {
       test("article fields with None value are present in rendered json as null values") {
         val article: ArticleResponse = ArticleResponse(
           Article(
-            "how-to-train-your-dragon-2",
+            ArticleSlug("how-to-train-your-dragon-2"),
             "How to train your dragon 2",
             "So toothless",
             "Its a dragon",

@@ -1,6 +1,6 @@
 package com.softwaremill.realworld.utils
 
-import com.softwaremill.realworld.articles.core.ArticlesRepository
+import com.softwaremill.realworld.articles.core.{ArticleSlug, ArticlesRepository}
 import com.softwaremill.realworld.auth.AuthService
 import com.softwaremill.realworld.common.{CustomDecodeFailureHandler, DefectHandler}
 import com.softwaremill.realworld.db.{Db, DbConfig, DbMigrator}
@@ -36,11 +36,17 @@ object TestUtils:
 
   type TestDbLayer = DbConfig with DataSource with DbMigrator with Quill.Sqlite[SnakeCase]
 
-  def getValidAuthorizationHeader(email: String = exampleUser1.email): RIO[AuthService, Map[String, String]] =
+  def getValidTokenAuthenticationHeader(email: String = exampleUser1.email): RIO[AuthService, Map[String, String]] =
     for {
       authService <- ZIO.service[AuthService]
       jwt <- authService.generateJwt(email)
     } yield Map("Authorization" -> s"Token $jwt")
+
+  def getValidBearerAuthorizationHeader(email: String = exampleUser1.email): RIO[AuthService, Map[String, String]] =
+    for {
+      authService <- ZIO.service[AuthService]
+      jwt <- authService.generateJwt(email)
+    } yield Map("Authorization" -> s"Bearer $jwt")
 
   private def clearDb(cfg: DbConfig): RIO[Any, Unit] = for {
     dbPath <- ZIO.succeed(
@@ -76,7 +82,7 @@ object TestUtils:
       .findUserIdByEmail(email)
       .someOrFail(s"User with email $email doesn't exist.")
 
-  def findArticleIdBySlug(articleRepo: ArticlesRepository, slug: String): ZIO[Any, Serializable, Int] =
+  def findArticleIdBySlug(articleRepo: ArticlesRepository, slug: ArticleSlug): ZIO[Any, Serializable, Int] =
     articleRepo
       .findArticleIdBySlug(slug)
-      .someOrFail(s"Article $slug doesn't exist")
+      .someOrFail(s"Article ${slug.value} doesn't exist")

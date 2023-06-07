@@ -18,12 +18,12 @@ class BaseEndpoints(authService: AuthService, usersRepository: UsersRepository):
 
   val secureEndpoint: ZPartialServerEndpoint[Any, String, UserSession, Unit, ErrorInfo, Unit, Any] = endpoint
     .errorOut(defaultErrorOutputs)
-    .securityIn(auth.http[String]("Token", WWWAuthenticateChallenge("Token")))
+    .securityIn(CustomAuthInputs.authBearerOrTokenHeaders[String])
     .zServerSecurityLogic[Any, UserSession](handleAuth)
 
   val optionallySecureEndpoint: ZPartialServerEndpoint[Any, Option[String], Option[UserSession], Unit, ErrorInfo, Unit, Any] = endpoint
     .errorOut(defaultErrorOutputs)
-    .securityIn(auth.http[Option[String]]("Token", WWWAuthenticateChallenge("Token")))
+    .securityIn(CustomAuthInputs.authBearerOrTokenHeaders[Option[String]])
     .zServerSecurityLogic[Any, Option[UserSession]](handleAuthOpt)
 
   val publicEndpoint: PublicEndpoint[Unit, ErrorInfo, Unit, Any] = endpoint

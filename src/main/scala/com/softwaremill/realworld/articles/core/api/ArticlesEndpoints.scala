@@ -1,6 +1,6 @@
 package com.softwaremill.realworld.articles.core.api
 
-import com.softwaremill.realworld.articles.core.{Article, ArticleAuthor, ArticlesFilters}
+import com.softwaremill.realworld.articles.core.{Article, ArticleAuthor, ArticleSlug, ArticlesFilters}
 import com.softwaremill.realworld.common.{BaseEndpoints, ErrorInfo, Pagination, UserSession}
 import sttp.tapir.generic.auto.*
 import sttp.tapir.json.zio.jsonBody
@@ -50,8 +50,8 @@ class ArticlesEndpoints(base: BaseEndpoints):
       .in(articlesPagination)
       .out(jsonBody[ArticlesListResponse].example(Examples.articlesFeedResponse))
 
-  val getEndpoint: ZPartialServerEndpoint[Any, String, UserSession, String, ErrorInfo, ArticleResponse, Any] = base.secureEndpoint.get
-    .in("api" / "articles" / path[String]("slug"))
+  val getEndpoint: ZPartialServerEndpoint[Any, String, UserSession, ArticleSlug, ErrorInfo, ArticleResponse, Any] = base.secureEndpoint.get
+    .in("api" / "articles" / path[ArticleSlug]("slug"))
     .out(jsonBody[ArticleResponse].example(Examples.articleResponse))
 
   val createEndpoint: ZPartialServerEndpoint[Any, String, UserSession, ArticleCreateRequest, ErrorInfo, ArticleResponse, Any] =
@@ -60,29 +60,30 @@ class ArticlesEndpoints(base: BaseEndpoints):
       .in(jsonBody[ArticleCreateRequest].example(Examples.articleCreateRequest))
       .out(jsonBody[ArticleResponse].example(Examples.articleResponse))
 
-  val deleteEndpoint: ZPartialServerEndpoint[Any, String, UserSession, String, ErrorInfo, Unit, Any] = base.secureEndpoint.delete
-    .in("api" / "articles" / path[String]("slug"))
+  val deleteEndpoint: ZPartialServerEndpoint[Any, String, UserSession, ArticleSlug, ErrorInfo, Unit, Any] = base.secureEndpoint.delete
+    .in("api" / "articles" / path[ArticleSlug]("slug"))
 
-  val updateEndpoint: ZPartialServerEndpoint[Any, String, UserSession, (String, ArticleUpdateRequest), ErrorInfo, ArticleResponse, Any] =
+  val updateEndpoint
+      : ZPartialServerEndpoint[Any, String, UserSession, (ArticleSlug, ArticleUpdateRequest), ErrorInfo, ArticleResponse, Any] =
     base.secureEndpoint.put
-      .in("api" / "articles" / path[String]("slug"))
+      .in("api" / "articles" / path[ArticleSlug]("slug"))
       .in(jsonBody[ArticleUpdateRequest].example(Examples.articleUpdateRequest))
       .out(jsonBody[ArticleResponse].example(Examples.articleResponse))
 
-  val makeFavoriteEndpoint: ZPartialServerEndpoint[Any, String, UserSession, String, ErrorInfo, ArticleResponse, Any] =
+  val makeFavoriteEndpoint: ZPartialServerEndpoint[Any, String, UserSession, ArticleSlug, ErrorInfo, ArticleResponse, Any] =
     base.secureEndpoint.post
-      .in("api" / "articles" / path[String]("slug") / "favorite")
+      .in("api" / "articles" / path[ArticleSlug]("slug") / "favorite")
       .out(jsonBody[ArticleResponse].example(Examples.favoriteArticleResponse))
 
-  val removeFavoriteEndpoint: ZPartialServerEndpoint[Any, String, UserSession, String, ErrorInfo, ArticleResponse, Any] =
+  val removeFavoriteEndpoint: ZPartialServerEndpoint[Any, String, UserSession, ArticleSlug, ErrorInfo, ArticleResponse, Any] =
     base.secureEndpoint.delete
-      .in("api" / "articles" / path[String]("slug") / "favorite")
+      .in("api" / "articles" / path[ArticleSlug]("slug") / "favorite")
       .out(jsonBody[ArticleResponse].example(Examples.articleResponse))
 
   private object Examples:
 
     private val article1: Article = Article(
-      slug = "how-to-train-your-dragon",
+      slug = ArticleSlug("how-to-train-your-dragon"),
       title = "How to train your dragon",
       description = "Ever wonder how?",
       body = "It takes a Jacobian",
@@ -95,7 +96,7 @@ class ArticlesEndpoints(base: BaseEndpoints):
     )
 
     private val article2: Article = Article(
-      slug = "how-to-train-your-dragon-2",
+      slug = ArticleSlug("how-to-train-your-dragon-2"),
       title = "How to train your dragon 2",
       description = "So toothless",
       body = "Its a dragon",
@@ -108,7 +109,7 @@ class ArticlesEndpoints(base: BaseEndpoints):
     )
 
     private val article3: Article = Article(
-      slug = "how-to-train-your-dragon-3",
+      slug = ArticleSlug("how-to-train-your-dragon-3"),
       title = "How to train your dragon 3",
       description = "So toothless",
       body = "Its a dragon",
