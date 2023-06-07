@@ -36,11 +36,17 @@ object TestUtils:
 
   type TestDbLayer = DbConfig with DataSource with DbMigrator with Quill.Sqlite[SnakeCase]
 
-  def getValidAuthorizationHeader(email: String = exampleUser1.email): RIO[AuthService, Map[String, String]] =
+  def getValidTokenAuthenticationHeader(email: String = exampleUser1.email): RIO[AuthService, Map[String, String]] =
     for {
       authService <- ZIO.service[AuthService]
       jwt <- authService.generateJwt(email)
     } yield Map("Authorization" -> s"Token $jwt")
+
+  def getValidBearerAuthorizationHeader(email: String = exampleUser1.email): RIO[AuthService, Map[String, String]] =
+    for {
+      authService <- ZIO.service[AuthService]
+      jwt <- authService.generateJwt(email)
+    } yield Map("Authorization" -> s"Bearer $jwt")
 
   private def clearDb(cfg: DbConfig): RIO[Any, Unit] = for {
     dbPath <- ZIO.succeed(

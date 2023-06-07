@@ -22,25 +22,25 @@ object UsersEndpointsSpec extends ZIOSpecDefault:
         checkIfUnauthorizedErrorOccurInUnfollow(authorizationHeaderOpt = None, uri = uri"http://test.com/api/profiles/john/follow")
       }
     ),
-    suite("with auth header")(
+    suite("with token auth header")(
       test("get profile") {
         for {
           _ <- prepareTwoUsers
-          authHeader <- getValidAuthorizationHeader("john@example.com")
+          authHeader <- getValidTokenAuthenticationHeader("john@example.com")
           result <- checkGetProfile(authorizationHeaderOpt = Some(authHeader), uri = uri"http://test.com/api/profiles/jake")
         } yield result
       },
       test("follow profile") {
         for {
           _ <- prepareTwoUsers
-          authHeader <- getValidAuthorizationHeader()
+          authHeader <- getValidTokenAuthenticationHeader()
           result <- checkFollowUser(authorizationHeaderOpt = Some(authHeader), uri = uri"http://test.com/api/profiles/john/follow")
         } yield result
       },
       test("unfollow profile") {
         for {
           _ <- prepareTwoUsers
-          authHeader <- getValidAuthorizationHeader("john@example.com")
+          authHeader <- getValidTokenAuthenticationHeader("john@example.com")
           result <- checkUnfollowUser(authorizationHeaderOpt = Some(authHeader), uri = uri"http://test.com/api/profiles/jake/follow")
         } yield result
       },
@@ -48,14 +48,14 @@ object UsersEndpointsSpec extends ZIOSpecDefault:
         test("return not found error") {
           for {
             _ <- prepareOneUser
-            authHeader <- getValidAuthorizationHeader("invalid_email@invalid.com")
+            authHeader <- getValidTokenAuthenticationHeader("invalid_email@invalid.com")
             result <- checkIfUserNotExistsErrorOccurInGet(authorizationHeader = authHeader, uri = uri"http://test.com/api/user")
           } yield result
         },
         test("return valid user") {
           for {
             _ <- prepareOneUser
-            authHeader <- getValidAuthorizationHeader()
+            authHeader <- getValidTokenAuthenticationHeader()
             result <- checkGetCurrentUser(authorizationHeader = authHeader, uri = uri"http://test.com/api/user")
           } yield result
         }
@@ -64,7 +64,7 @@ object UsersEndpointsSpec extends ZIOSpecDefault:
         test("return empty string fields error") {
           for {
             _ <- prepareOneUser
-            authHeader <- getValidAuthorizationHeader()
+            authHeader <- getValidTokenAuthenticationHeader()
             result <- checkIfEmptyFieldsErrorOccurInRegister(
               authorizationHeader = authHeader,
               uri = uri"http://test.com/api/users",
@@ -75,7 +75,7 @@ object UsersEndpointsSpec extends ZIOSpecDefault:
         test("return not valid email error") {
           for {
             _ <- prepareOneUser
-            authHeader <- getValidAuthorizationHeader()
+            authHeader <- getValidTokenAuthenticationHeader()
             result <- checkIfInvalidEmailErrorOccurInRegister(
               authorizationHeader = authHeader,
               uri = uri"http://test.com/api/users",
@@ -86,7 +86,7 @@ object UsersEndpointsSpec extends ZIOSpecDefault:
         test("return email already in use error") {
           for {
             _ <- prepareOneUser
-            authHeader <- getValidAuthorizationHeader()
+            authHeader <- getValidTokenAuthenticationHeader()
             result <- checkIfUserEmailAlreadyExistsErrorOccurInRegister(
               authorizationHeader = authHeader,
               uri = uri"http://test.com/api/users",
@@ -97,7 +97,7 @@ object UsersEndpointsSpec extends ZIOSpecDefault:
         test("return username already in use error") {
           for {
             _ <- prepareOneUser
-            authHeader <- getValidAuthorizationHeader()
+            authHeader <- getValidTokenAuthenticationHeader()
             result <- checkIfUserUsernameAlreadyExistsErrorOccurInRegister(
               authorizationHeader = authHeader,
               uri = uri"http://test.com/api/users",
@@ -108,7 +108,7 @@ object UsersEndpointsSpec extends ZIOSpecDefault:
         test("return registered user") {
           for {
             _ <- prepareOneUser
-            authHeader <- getValidAuthorizationHeader()
+            authHeader <- getValidTokenAuthenticationHeader()
             result <- checkRegisterUser(
               authorizationHeader = authHeader,
               uri = uri"http://test.com/api/users",
@@ -121,7 +121,7 @@ object UsersEndpointsSpec extends ZIOSpecDefault:
         test("return invalid credentials error") {
           for {
             _ <- prepareOneUser
-            authHeader <- getValidAuthorizationHeader()
+            authHeader <- getValidTokenAuthenticationHeader()
             result <- checkIfEmptyFieldsErrorOccurInLogin(
               authorizationHeader = authHeader,
               uri = uri"http://test.com/api/users/login",
@@ -132,7 +132,7 @@ object UsersEndpointsSpec extends ZIOSpecDefault:
         test("return not valid email error") {
           for {
             _ <- prepareOneUser
-            authHeader <- getValidAuthorizationHeader()
+            authHeader <- getValidTokenAuthenticationHeader()
             result <- checkIfInvalidEmailErrorOccurInLogin(
               authorizationHeader = authHeader,
               uri = uri"http://test.com/api/users/login",
@@ -143,7 +143,7 @@ object UsersEndpointsSpec extends ZIOSpecDefault:
         test("return invalid credentials error") {
           for {
             _ <- prepareOneUser
-            authHeader <- getValidAuthorizationHeader()
+            authHeader <- getValidTokenAuthenticationHeader()
             result <- checkIfInvalidPasswordErrorOccurInLogin(
               authorizationHeader = authHeader,
               uri = uri"http://test.com/api/users/login",
@@ -154,7 +154,7 @@ object UsersEndpointsSpec extends ZIOSpecDefault:
         test("return logged in user") {
           for {
             _ <- prepareOneUser
-            authHeader <- getValidAuthorizationHeader()
+            authHeader <- getValidTokenAuthenticationHeader()
             result <- checkLoginUser(
               authorizationHeader = authHeader,
               uri = uri"http://test.com/api/users/login",
@@ -167,7 +167,7 @@ object UsersEndpointsSpec extends ZIOSpecDefault:
         test("return empty string fields error") {
           for {
             _ <- prepareOneUser
-            authHeader <- getValidAuthorizationHeader()
+            authHeader <- getValidTokenAuthenticationHeader()
             result <- checkIfEmptyFieldsErrorOccurInUpdate(
               authorizationHeader = authHeader,
               uri = uri"http://test.com/api/user",
@@ -184,7 +184,7 @@ object UsersEndpointsSpec extends ZIOSpecDefault:
         test("return not valid email error") {
           for {
             _ <- prepareOneUser
-            authHeader <- getValidAuthorizationHeader()
+            authHeader <- getValidTokenAuthenticationHeader()
             result <- checkIfInvalidEmailErrorOccurInUpdate(
               authorizationHeader = authHeader,
               uri = uri"http://test.com/api/user",
@@ -201,7 +201,7 @@ object UsersEndpointsSpec extends ZIOSpecDefault:
         test("return email already in use error") {
           for {
             _ <- prepareTwoUsers
-            authHeader <- getValidAuthorizationHeader()
+            authHeader <- getValidTokenAuthenticationHeader()
             result <- checkIfUserEmailAlreadyExistsErrorOccurInUpdate(
               authorizationHeader = authHeader,
               uri = uri"http://test.com/api/user",
@@ -218,7 +218,7 @@ object UsersEndpointsSpec extends ZIOSpecDefault:
         test("return username already in use error") {
           for {
             _ <- prepareTwoUsers
-            authHeader <- getValidAuthorizationHeader()
+            authHeader <- getValidTokenAuthenticationHeader()
             result <- checkIfUserUsernameAlreadyExistsErrorOccurInUpdate(
               authorizationHeader = authHeader,
               uri = uri"http://test.com/api/user",
@@ -235,7 +235,7 @@ object UsersEndpointsSpec extends ZIOSpecDefault:
         test("return not changed user") {
           for {
             _ <- prepareOneUser
-            authHeader <- getValidAuthorizationHeader()
+            authHeader <- getValidTokenAuthenticationHeader()
             result <- checkIfUserNotChangeInUpdate(
               authorizationHeader = authHeader,
               uri = uri"http://test.com/api/user",
@@ -252,7 +252,253 @@ object UsersEndpointsSpec extends ZIOSpecDefault:
         test("return logged in user") {
           for {
             _ <- prepareOneUser
-            authHeader <- getValidAuthorizationHeader()
+            authHeader <- getValidTokenAuthenticationHeader()
+            result <- checkUpdateUser(
+              authorizationHeader = authHeader,
+              uri = uri"http://test.com/api/user",
+              updateUserData = UserUpdateData(
+                email = Some("updatedUser@email.com"),
+                username = Some("updatedUser"),
+                password = Some("new_password"),
+                bio = Some("updatedUserBio"),
+                image = Some("updatedImageBio")
+              )
+            )
+          } yield result
+        }
+      )
+    ),
+    suite("with bearer auth header")(
+      test("get profile") {
+        for {
+          _ <- prepareTwoUsers
+          authHeader <- getValidBearerAuthorizationHeader("john@example.com")
+          result <- checkGetProfile(authorizationHeaderOpt = Some(authHeader), uri = uri"http://test.com/api/profiles/jake")
+        } yield result
+      },
+      test("follow profile") {
+        for {
+          _ <- prepareTwoUsers
+          authHeader <- getValidBearerAuthorizationHeader()
+          result <- checkFollowUser(authorizationHeaderOpt = Some(authHeader), uri = uri"http://test.com/api/profiles/john/follow")
+        } yield result
+      },
+      test("unfollow profile") {
+        for {
+          _ <- prepareTwoUsers
+          authHeader <- getValidBearerAuthorizationHeader("john@example.com")
+          result <- checkUnfollowUser(authorizationHeaderOpt = Some(authHeader), uri = uri"http://test.com/api/profiles/jake/follow")
+        } yield result
+      },
+      suite("get current user")(
+        test("return not found error") {
+          for {
+            _ <- prepareOneUser
+            authHeader <- getValidBearerAuthorizationHeader("invalid_email@invalid.com")
+            result <- checkIfUserNotExistsErrorOccurInGet(authorizationHeader = authHeader, uri = uri"http://test.com/api/user")
+          } yield result
+        },
+        test("return valid user") {
+          for {
+            _ <- prepareOneUser
+            authHeader <- getValidBearerAuthorizationHeader()
+            result <- checkGetCurrentUser(authorizationHeader = authHeader, uri = uri"http://test.com/api/user")
+          } yield result
+        }
+      ),
+      suite("user register")(
+        test("return empty string fields error") {
+          for {
+            _ <- prepareOneUser
+            authHeader <- getValidBearerAuthorizationHeader()
+            result <- checkIfEmptyFieldsErrorOccurInRegister(
+              authorizationHeader = authHeader,
+              uri = uri"http://test.com/api/users",
+              userRegisterData = UserRegisterData(email = "", username = "", password = "")
+            )
+          } yield result
+        },
+        test("return not valid email error") {
+          for {
+            _ <- prepareOneUser
+            authHeader <- getValidBearerAuthorizationHeader()
+            result <- checkIfInvalidEmailErrorOccurInRegister(
+              authorizationHeader = authHeader,
+              uri = uri"http://test.com/api/users",
+              userRegisterData = UserRegisterData(email = "invalid_email.com", username = "new_username", password = "password")
+            )
+          } yield result
+        },
+        test("return email already in use error") {
+          for {
+            _ <- prepareOneUser
+            authHeader <- getValidBearerAuthorizationHeader()
+            result <- checkIfUserEmailAlreadyExistsErrorOccurInRegister(
+              authorizationHeader = authHeader,
+              uri = uri"http://test.com/api/users",
+              userRegisterData = UserRegisterData(email = "jake@example.com", username = "new_username", password = "password")
+            )
+          } yield result
+        },
+        test("return username already in use error") {
+          for {
+            _ <- prepareOneUser
+            authHeader <- getValidBearerAuthorizationHeader()
+            result <- checkIfUserUsernameAlreadyExistsErrorOccurInRegister(
+              authorizationHeader = authHeader,
+              uri = uri"http://test.com/api/users",
+              userRegisterData = UserRegisterData(email = "new_email@example.com", username = "jake", password = "password")
+            )
+          } yield result
+        },
+        test("return registered user") {
+          for {
+            _ <- prepareOneUser
+            authHeader <- getValidBearerAuthorizationHeader()
+            result <- checkRegisterUser(
+              authorizationHeader = authHeader,
+              uri = uri"http://test.com/api/users",
+              userRegisterData = UserRegisterData(email = "new_user@example.com", username = "user", password = "password")
+            )
+          } yield result
+        }
+      ),
+      suite("user login")(
+        test("return invalid credentials error") {
+          for {
+            _ <- prepareOneUser
+            authHeader <- getValidBearerAuthorizationHeader()
+            result <- checkIfEmptyFieldsErrorOccurInLogin(
+              authorizationHeader = authHeader,
+              uri = uri"http://test.com/api/users/login",
+              userLoginData = UserLoginData(email = "", password = "")
+            )
+          } yield result
+        },
+        test("return not valid email error") {
+          for {
+            _ <- prepareOneUser
+            authHeader <- getValidBearerAuthorizationHeader()
+            result <- checkIfInvalidEmailErrorOccurInLogin(
+              authorizationHeader = authHeader,
+              uri = uri"http://test.com/api/users/login",
+              userLoginData = UserLoginData(email = "invalid_email.com", password = "password")
+            )
+          } yield result
+        },
+        test("return invalid credentials error") {
+          for {
+            _ <- prepareOneUser
+            authHeader <- getValidBearerAuthorizationHeader()
+            result <- checkIfInvalidPasswordErrorOccurInLogin(
+              authorizationHeader = authHeader,
+              uri = uri"http://test.com/api/users/login",
+              userLoginData = UserLoginData(email = "jake@example.com", password = "invalid_password")
+            )
+          } yield result
+        },
+        test("return logged in user") {
+          for {
+            _ <- prepareOneUser
+            authHeader <- getValidBearerAuthorizationHeader()
+            result <- checkLoginUser(
+              authorizationHeader = authHeader,
+              uri = uri"http://test.com/api/users/login",
+              userLoginData = UserLoginData(email = "jake@example.com", password = "password")
+            )
+          } yield result
+        }
+      ),
+      suite("user update")(
+        test("return empty string fields error") {
+          for {
+            _ <- prepareOneUser
+            authHeader <- getValidBearerAuthorizationHeader()
+            result <- checkIfEmptyFieldsErrorOccurInUpdate(
+              authorizationHeader = authHeader,
+              uri = uri"http://test.com/api/user",
+              userUpdateData = UserUpdateData(
+                email = Some(""),
+                username = Some(""),
+                password = Some(""),
+                bio = Some(""),
+                image = Some("")
+              )
+            )
+          } yield result
+        },
+        test("return not valid email error") {
+          for {
+            _ <- prepareOneUser
+            authHeader <- getValidBearerAuthorizationHeader()
+            result <- checkIfInvalidEmailErrorOccurInUpdate(
+              authorizationHeader = authHeader,
+              uri = uri"http://test.com/api/user",
+              userUpdateData = UserUpdateData(
+                email = Some("invalid_email.com"),
+                username = None,
+                password = None,
+                bio = None,
+                image = None
+              )
+            )
+          } yield result
+        },
+        test("return email already in use error") {
+          for {
+            _ <- prepareTwoUsers
+            authHeader <- getValidBearerAuthorizationHeader()
+            result <- checkIfUserEmailAlreadyExistsErrorOccurInUpdate(
+              authorizationHeader = authHeader,
+              uri = uri"http://test.com/api/user",
+              userUpdateData = UserUpdateData(
+                email = Some("john@example.com"),
+                username = None,
+                password = None,
+                bio = None,
+                image = None
+              )
+            )
+          } yield result
+        },
+        test("return username already in use error") {
+          for {
+            _ <- prepareTwoUsers
+            authHeader <- getValidBearerAuthorizationHeader()
+            result <- checkIfUserUsernameAlreadyExistsErrorOccurInUpdate(
+              authorizationHeader = authHeader,
+              uri = uri"http://test.com/api/user",
+              userUpdateData = UserUpdateData(
+                email = None,
+                username = Some("john"),
+                password = None,
+                bio = None,
+                image = None
+              )
+            )
+          } yield result
+        },
+        test("return not changed user") {
+          for {
+            _ <- prepareOneUser
+            authHeader <- getValidBearerAuthorizationHeader()
+            result <- checkIfUserNotChangeInUpdate(
+              authorizationHeader = authHeader,
+              uri = uri"http://test.com/api/user",
+              userUpdateData = UserUpdateData(
+                email = None,
+                username = None,
+                password = None,
+                bio = None,
+                image = None
+              )
+            )
+          } yield result
+        },
+        test("return logged in user") {
+          for {
+            _ <- prepareOneUser
+            authHeader <- getValidBearerAuthorizationHeader()
             result <- checkUpdateUser(
               authorizationHeader = authHeader,
               uri = uri"http://test.com/api/user",
