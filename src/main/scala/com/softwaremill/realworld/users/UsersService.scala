@@ -29,14 +29,15 @@ class UsersService(authService: AuthService, usersRepository: UsersRepository):
     for {
       _ <- validateEmail(emailClean)
       _ <- checkUserDoesNotExist(emailClean, usernameClean)
-      user <- {
+      userResponse <- {
         for {
           hashedPassword <- authService.encryptPassword(passwordClean)
           jwt <- authService.generateJwt(emailClean)
           _ <- usersRepository.add(UserRegisterData(emailClean, usernameClean, hashedPassword))
         } yield UserResponse(userWithToken(emailClean, usernameClean, jwt))
       }
-    } yield user
+      _ <- ZIO.logInfo(s"Successful register of user ${userResponse.user}")
+    } yield userResponse
   }
 
   def login(user: UserLoginData): IO[Throwable, User] = {

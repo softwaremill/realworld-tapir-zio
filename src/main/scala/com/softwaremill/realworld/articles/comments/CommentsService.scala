@@ -15,6 +15,7 @@ class CommentsService(
     articleId <- articleIdBySlug(slug)
     commentId <- commentsRepository.addComment(articleId, userId, comment)
     comment <- commentsRepository.findComment(commentId, userId).someOrFail(NotFound(CommentNotFoundMessage(CommentId(commentId))))
+    _ <- ZIO.logInfo(s"The comment $comment has been created")
   } yield comment
 
   def deleteComment(slug: ArticleSlug, userId: Int, commentId: CommentId): Task[Unit] = for {

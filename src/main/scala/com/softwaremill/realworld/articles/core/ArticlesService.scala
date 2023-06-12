@@ -35,6 +35,7 @@ class ArticlesService(
     for {
       _ <- articlesRepository.addArticle(createData, userId)
       article <- findBySlug(ArticleSlug(articlesRepository.convertToSlug(createData.title)), userId)
+      _ <- ZIO.logInfo(s"The article $article has been created")
     } yield article
 
   def delete(slug: ArticleSlug, userId: Int): Task[Unit] = for {
