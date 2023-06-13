@@ -1,5 +1,6 @@
 package com.softwaremill.realworld.users
 
+import com.softwaremill.realworld.common.domain.Username
 import com.softwaremill.realworld.users.UserDbTestSupport.*
 import com.softwaremill.realworld.users.UserRepositoryTestSupport.*
 import com.softwaremill.realworld.users.api.{UserRegisterData, UserUpdateData}
@@ -54,13 +55,13 @@ object UsersRepositorySpec extends ZIOSpecDefault:
       test("user not found") {
         for {
           _ <- prepareOneUser
-          result <- checkUserWithIdNotFoundByUsername("notExisting")
+          result <- checkUserWithIdNotFoundByUsername(Username("notExisting"))
         } yield result
       },
       test("user found") {
         for {
           _ <- prepareOneUser
-          result <- checkUserWithIdFoundByUsername("jake")
+          result <- checkUserWithIdFoundByUsername(Username("jake"))
         } yield result
       }
     ),

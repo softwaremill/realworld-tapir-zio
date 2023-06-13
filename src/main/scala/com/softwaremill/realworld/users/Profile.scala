@@ -1,9 +1,10 @@
 package com.softwaremill.realworld.users
 
 import com.softwaremill.realworld.common.NoneAsNullOptionEncoder.*
+import com.softwaremill.realworld.common.domain.Username
+import sttp.tapir.{Schema, SchemaType}
 import zio.json.{DeriveJsonDecoder, DeriveJsonEncoder, JsonDecoder, JsonEncoder}
-
-case class Profile(username: String, bio: Option[String], image: Option[String], following: Boolean)
+case class Profile(username: Username, bio: Option[String], image: Option[String], following: Boolean)
 
 object Profile:
   given profileDataEncoder: JsonEncoder[Profile] = DeriveJsonEncoder.gen[Profile]

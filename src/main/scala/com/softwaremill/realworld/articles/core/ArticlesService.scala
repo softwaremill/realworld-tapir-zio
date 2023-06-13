@@ -26,7 +26,7 @@ class ArticlesService(
     articlesRepository
       .listArticlesByFollowedUsers(pagination, userId)
 
-  def findBySlug(slug: String, userId: Int): Task[Article] =
+  def findBySlug(slug: ArticleSlug, userId: Int): Task[Article] =
     articlesRepository
       .findBySlug(slug, userId)
       .someOrFail(NotFound(ArticleNotFoundMessage(slug)))
@@ -34,10 +34,10 @@ class ArticlesService(
   def create(createData: ArticleCreateData, userId: Int): Task[Article] =
     for {
       _ <- articlesRepository.addArticle(createData, userId)
-      articleData <- findBySlug(articlesRepository.convertToSlug(createData.title), userId)
-    } yield articleData
+      article <- findBySlug(ArticleSlug(articlesRepository.convertToSlug(createData.title)), userId)
+    } yield article
 
-  def delete(slug: String, userId: Int): Task[Unit] = for {
+  def delete(slug: ArticleSlug, userId: Int): Task[Unit] = for {
     tupleWithIds <- articlesRepository
       .findArticleAndAuthorIdsBySlug(slug)
       .someOrFail(NotFound(ArticleAndAuthorIdsNotFoundMessage(slug)))
@@ -46,11 +46,11 @@ class ArticlesService(
     _ <- articlesRepository.deleteArticle(articleId)
   } yield ()
 
-  def update(articleUpdateData: ArticleUpdateData, slug: String, userId: Int): Task[Article] = for {
+  def update(articleUpdateData: ArticleUpdateData, slug: ArticleSlug, userId: Int): Task[Article] = for {
     oldArticle <- articlesRepository
-      .findBySlug(slug.trim.toLowerCase, userId)
+      .findBySlug(slug, userId)
       .someOrFail(NotFound(ArticleNotFoundMessage(slug)))
-    oldArticleUserId <- userIdByUsername(oldArticle.author.username)
+    oldArticleUserId <- userIdByUsername(oldArticle.author.username.value)
     _ <- ZIO
       .fail(Unauthorized(ArticleCannotBeUpdatedMessage))
       .when(userId != oldArticleUserId)
@@ -59,7 +59,7 @@ class ArticlesService(
     _ <- articlesRepository.updateById(updatedArticle, articleId)
   } yield updatedArticle
 
-  def makeFavorite(slug: String, userId: Int): Task[Article] = for {
+  def makeFavorite(slug: ArticleSlug, userId: Int): Task[Article] = for {
     articleId <- articlesRepository
       .findArticleIdBySlug(slug)
       .someOrFail(Exceptions.NotFound(ArticleNotFoundMessage(slug)))
@@ -67,7 +67,7 @@ class ArticlesService(
     articleData <- findBySlug(slug, userId)
   } yield articleData
 
-  def removeFavorite(slug: String, userId: Int): Task[Article] = for {
+  def removeFavorite(slug: ArticleSlug, userId: Int): Task[Article] = for {
     articleId <- articlesRepository
       .findArticleIdBySlug(slug)
       .someOrFail(Exceptions.NotFound(ArticleNotFoundMessage(slug)))
@@ -81,6 +81,7 @@ class ArticlesService(
         .map(_.toLowerCase)
         .map(_.trim)
         .map(title => title.replace(" ", "-"))
+        .map(value => ArticleSlug(value))
         .getOrElse(articleData.slug),
       title = updatedData.title.map(_.trim).getOrElse(articleData.title),
       description = updatedData.description.getOrElse(articleData.description),
@@ -92,9 +93,10 @@ class ArticlesService(
     usersRepository.findUserIdByUsername(username).someOrFail(NotFound(UserWithUsernameNotFoundMessage(username)))
 
 object ArticlesService:
-  private val ArticleNotFoundMessage = (slug: String) => s"Article with slug $slug doesn't exist."
+  private val ArticleNotFoundMessage = (slug: ArticleSlug) => s"Article with slug ${slug.value} doesn't exist."
   private val UserWithUsernameNotFoundMessage: String => String = (username: String) => s"User with username $username doesn't exist"
-  private val ArticleAndAuthorIdsNotFoundMessage = (slug: String) => s"ArticleId or AuthorId for article with slug $slug doesn't exist"
+  private val ArticleAndAuthorIdsNotFoundMessage = (slug: ArticleSlug) =>
+    s"ArticleId or AuthorId for article with slug ${slug.value} doesn't exist"
   private val ArticleCannotBeRemovedMessage: String = "Can't remove the article you're not an author of"
   private val ArticleCannotBeUpdatedMessage: String = "You're not an author of article that you're trying to update"
 

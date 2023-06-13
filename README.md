@@ -23,6 +23,7 @@ This application uses:
 * HikariCP to manage the database connection pool
 * Flyway for database migrations
 * Swagger to expose API documentation
+* sbt-revolver for hot reloading when code changes while the app is running 
 
 Additionally, executing Realworld Postman collection is part of CI acceptance tests.
 

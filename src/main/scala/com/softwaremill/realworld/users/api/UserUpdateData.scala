@@ -16,8 +16,8 @@ case class UserUpdateData(
   def update(userDataWithPassword: UserWithPassword): UserUpdateData =
     val user = userDataWithPassword.user
     UserUpdateData(
-      this.email.orElse(Some(user.email)),
-      this.username.orElse(Some(user.username)),
+      this.email.orElse(Some(user.email.value)),
+      this.username.orElse(Some(user.username.value)),
       Some(userDataWithPassword.hashedPassword),
       this.bio.orElse(user.bio),
       this.image.orElse(user.image)
