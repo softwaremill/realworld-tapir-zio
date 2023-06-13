@@ -35,7 +35,7 @@ class ArticlesService(
     for {
       _ <- articlesRepository.addArticle(createData, userId)
       article <- findBySlug(ArticleSlug(articlesRepository.convertToSlug(createData.title)), userId)
-      _ <- ZIO.logInfo(s"The article $article has been created")
+      _ <- ZIO.logInfo(SuccessfullyCreatedArticleMessage(article))
     } yield article
 
   def delete(slug: ArticleSlug, userId: Int): Task[Unit] = for {
@@ -45,6 +45,7 @@ class ArticlesService(
     (articleId, authorId) = tupleWithIds
     _ <- ZIO.fail(Unauthorized(ArticleCannotBeRemovedMessage)).when(userId != authorId)
     _ <- articlesRepository.deleteArticle(articleId)
+    _ <- ZIO.logInfo(SuccessfullyDeletedArticleMessage(articleId))
   } yield ()
 
   def update(articleUpdateData: ArticleUpdateData, slug: ArticleSlug, userId: Int): Task[Article] = for {
@@ -58,6 +59,7 @@ class ArticlesService(
     updatedArticle = updateArticleData(oldArticle, articleUpdateData)
     articleId <- articlesRepository.findArticleIdBySlug(slug).someOrFail(NotFound(ArticleNotFoundMessage(slug)))
     _ <- articlesRepository.updateById(updatedArticle, articleId)
+    _ <- ZIO.logInfo(SuccessfullyUpdatedArticleMessage(updatedArticle))
   } yield updatedArticle
 
   def makeFavorite(slug: ArticleSlug, userId: Int): Task[Article] = for {
@@ -66,6 +68,7 @@ class ArticlesService(
       .someOrFail(Exceptions.NotFound(ArticleNotFoundMessage(slug)))
     _ <- articlesRepository.makeFavorite(articleId, userId)
     articleData <- findBySlug(slug, userId)
+    _ <- ZIO.logInfo(SuccessfullyMadeFavoriteMessage(articleId, userId))
   } yield articleData
 
   def removeFavorite(slug: ArticleSlug, userId: Int): Task[Article] = for {
@@ -74,6 +77,7 @@ class ArticlesService(
       .someOrFail(Exceptions.NotFound(ArticleNotFoundMessage(slug)))
     _ <- articlesRepository.removeFavorite(articleId, userId)
     articleData <- findBySlug(slug, userId)
+    _ <- ZIO.logInfo(SuccessfullyRemovedFavoritedMessage(articleId, userId))
   } yield articleData
 
   private def updateArticleData(articleData: Article, updatedData: ArticleUpdateData): Article =
@@ -95,11 +99,18 @@ class ArticlesService(
 
 object ArticlesService:
   private val ArticleNotFoundMessage = (slug: ArticleSlug) => s"Article with slug ${slug.value} doesn't exist."
-  private val UserWithUsernameNotFoundMessage: String => String = (username: String) => s"User with username $username doesn't exist"
   private val ArticleAndAuthorIdsNotFoundMessage = (slug: ArticleSlug) =>
     s"ArticleId or AuthorId for article with slug ${slug.value} doesn't exist"
   private val ArticleCannotBeRemovedMessage: String = "Can't remove the article you're not an author of"
   private val ArticleCannotBeUpdatedMessage: String = "You're not an author of article that you're trying to update"
+  private val SuccessfullyCreatedArticleMessage: Article => String = (article: Article) => s"Successfully created article $article"
+  private val SuccessfullyDeletedArticleMessage: Int => String = (articleId: Int) => s"Successfully deleted article with id=$articleId"
+  private val SuccessfullyMadeFavoriteMessage: (Int, Int) => String = (articleId: Int, userId: Int) =>
+    s"User with id=$userId successfully made favorite article with id=$articleId"
+  private val SuccessfullyRemovedFavoritedMessage: (Int, Int) => String = (articleId: Int, userId: Int) =>
+    s"User with id=$userId successfully removed from favorite article with id=$articleId"
+  private val SuccessfullyUpdatedArticleMessage: Article => String = (article: Article) => s"Successfully updated article $article"
+  private val UserWithUsernameNotFoundMessage: String => String = (username: String) => s"User with username $username doesn't exist"
 
   val live: ZLayer[ArticlesRepository with UsersRepository, Nothing, ArticlesService] =
     ZLayer.fromFunction(ArticlesService(_, _))
