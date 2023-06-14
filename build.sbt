@@ -1,9 +1,9 @@
-val currentScalaVersion = "3.2.2"
+val currentScalaVersion = "3.3.0"
 val emailValidatorVersion = "1.7"
 val flywayVersion = "9.19.4"
 val hikariVersion = "5.0.1"
 val jwtVersion = "4.4.0"
-val logbackVersion = "1.4.7"
+val logbackVersion = "1.4.8"
 val password4jVersion = "1.7.1"
 val quillVersion = "4.6.0.1"
 val sqliteVersion = "3.42.0.0"
@@ -11,7 +11,7 @@ val tapirVersion = "1.5.1"
 val zioConfigVersion = "3.0.7"
 val zioJsonVersion = "3.8.15"
 val zioLoggingVersion = "2.1.13"
-val zioTestVersion = "2.0.14"
+val zioTestVersion = "2.0.15"
 
 val tapir = Seq(
   "com.softwaremill.sttp.tapir" %% "tapir-zio-http-server" % tapirVersion,
