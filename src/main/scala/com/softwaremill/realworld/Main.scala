@@ -11,6 +11,8 @@ import com.softwaremill.realworld.common.*
 import com.softwaremill.realworld.db.{Db, DbConfig, DbMigrator}
 import com.softwaremill.realworld.users.api.UsersEndpoints
 import com.softwaremill.realworld.users.{UsersRepository, UsersServerEndpoints, UsersService}
+import sttp.tapir.server.interceptor.cors.CORSConfig.AllowedOrigin
+import sttp.tapir.server.interceptor.cors.{CORSConfig, CORSInterceptor}
 import sttp.tapir.server.ziohttp
 import sttp.tapir.server.ziohttp.{ZioHttpInterpreter, ZioHttpServerOptions}
 import zio.*
@@ -27,6 +29,13 @@ object Main extends ZIOAppDefault:
     val port = sys.env.get("HTTP_PORT").flatMap(_.toIntOption).getOrElse(8080)
     val options: ZioHttpServerOptions[Any] = ZioHttpServerOptions.customiseInterceptors
       .exceptionHandler(new DefectHandler())
+      .corsInterceptor(
+        CORSInterceptor.customOrThrow(
+          CORSConfig.default.copy(
+            allowedOrigin = AllowedOrigin.All
+          )
+        )
+      )
       .decodeFailureHandler(CustomDecodeFailureHandler.create())
       .options
 
