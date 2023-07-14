@@ -78,11 +78,11 @@ class ArticlesRepository(quill: Quill.Sqlite[SnakeCase]):
                     AND (${lift(favoritedFilter)} = '' OR ${lift(favoritedFilter)} = fu.username)
                     AND (${lift(authorFilter)} = '' OR ${lift(authorFilter)} = authors.username)
                GROUP BY a.slug, a.title, a.description, a.body, a.created_at, a.updated_at, a.author_id
+               ORDER BY a.created_at DESC
              """
         .as[Query[ArticleRow]]
         .drop(lift(pagination.offset))
         .take(lift(pagination.limit))
-        .sortBy(ar => ar.slug)
     }
 
     val articleQuery = viewerIdOpt match
