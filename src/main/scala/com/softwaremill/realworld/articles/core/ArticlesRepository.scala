@@ -103,11 +103,11 @@ class ArticlesRepository(quill: Quill.Sqlite[SnakeCase]):
                SELECT DISTINCT * FROM articles a
                WHERE a.author_id IN (SELECT f.user_id FROM followers f
                                      WHERE f.follower_id = ${lift(viewerId)})
+               ORDER BY a.created_at DESC
              """
         .as[Query[ArticleRow]]
         .drop(lift(pagination.offset))
         .take(lift(pagination.limit))
-        .sortBy(ar => ar.slug)
     }
 
     val articleQuery = buildArticleQueryWithFavoriteAndFollowing(articleRow, viewerId)
