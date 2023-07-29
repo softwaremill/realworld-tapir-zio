@@ -100,5 +100,5 @@ class ArticlesService(
 object ArticlesService:
   private def ArticleNotFoundMessage(slug: ArticleSlug): String = s"Article with slug ${slug.value} doesn't exist."
 
-  val live: ZLayer[ArticlesRepository with UsersRepository, Nothing, ArticlesService] =
+  val live: ZLayer[ArticlesRepository & UsersRepository, Nothing, ArticlesService] =
     ZLayer.fromFunction(ArticlesService(_, _))

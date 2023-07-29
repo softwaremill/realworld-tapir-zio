@@ -24,7 +24,7 @@ object Main extends ZIOAppDefault:
 
   override val bootstrap: ZLayer[ZIOAppArgs, Any, Any] = SLF4J.slf4j(LogFormat.colored)
 
-  override def run: ZIO[Any with ZIOAppArgs with Scope, Any, Any] =
+  override def run: ZIO[Any & ZIOAppArgs & Scope, Any, Any] =
 
     val port = sys.env.get("HTTP_PORT").flatMap(_.toIntOption).getOrElse(8080)
     val options: ZioHttpServerOptions[Any] = ZioHttpServerOptions.customiseInterceptors

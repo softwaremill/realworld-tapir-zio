@@ -134,7 +134,7 @@ object ArticleRepositoryTestSupport:
   def checkIfArticleAlreadyExistsInCreate(
       articleCreateData: ArticleCreateData,
       userEmail: String
-  ): ZIO[ArticlesRepository with UsersRepository, Object, TestResult] =
+  ): ZIO[ArticlesRepository & UsersRepository, Object, TestResult] =
     assertZIO((for {
       userId <- callFindUserIdByEmail(userEmail).someOrFail(s"User $userEmail doesn't exist")
       _ <- callCreateArticle(articleCreateData, userId)
@@ -179,7 +179,7 @@ object ArticleRepositoryTestSupport:
       articleCreateData: ArticleCreateData,
       userEmail: String,
       viewerId: Int
-  ): ZIO[ArticlesRepository with UsersRepository, Object, TestResult] =
+  ): ZIO[ArticlesRepository & UsersRepository, Object, TestResult] =
     for {
       userId <- callFindUserIdByEmail(userEmail).someOrFail(s"User $userEmail doesn't exist")
       articleOrError <- callCreateArticle(articleCreateData, userId).either
@@ -544,7 +544,7 @@ object ArticleRepositoryTestSupport:
       articleCreateData: ArticleCreateData,
       userEmail: String,
       viewerId: Int
-  ): ZIO[ArticlesRepository with UsersRepository, Object, TestResult] =
+  ): ZIO[ArticlesRepository & UsersRepository, Object, TestResult] =
     for {
       userId <- callFindUserIdByEmail(userEmail).someOrFail(s"User $userEmail doesn't exist")
       _ <- callCreateArticle(articleCreateData, userId)
@@ -577,7 +577,7 @@ object ArticleRepositoryTestSupport:
       updatedDescription: String,
       updatedBody: String,
       viewerId: Int
-  ): ZIO[ArticlesRepository with UsersRepository, Object, TestResult] =
+  ): ZIO[ArticlesRepository & UsersRepository, Object, TestResult] =
     for {
       articleId <- callFindArticleIdBySlug(existingSlug).someOrFail(s"Article $existingSlug doesn't exist")
       articleUpdateData = Article(
@@ -606,7 +606,7 @@ object ArticleRepositoryTestSupport:
   def deleteArticle(
       slug: ArticleSlug,
       viewerId: Int
-  ): ZIO[ArticlesRepository with UsersRepository with CommentsRepository with TagsRepository, Object, TestResult] =
+  ): ZIO[ArticlesRepository & UsersRepository & CommentsRepository & TagsRepository, Object, TestResult] =
     for {
       articleId <- callFindArticleIdBySlug(slug).someOrFail(s"Article $slug doesn't exist")
       commentsBefore <- callFindComments(articleId, Some(viewerId))
@@ -630,7 +630,7 @@ object ArticleRepositoryTestSupport:
   def checkMarkFavorite(
       slug: ArticleSlug,
       viewerId: Int
-  ): ZIO[ArticlesRepository with UsersRepository, Object, TestResult] =
+  ): ZIO[ArticlesRepository & UsersRepository, Object, TestResult] =
     for {
       articleId <- callFindArticleIdBySlug(slug).someOrFail(s"Article $slug doesn't exist")
       _ <- callMakeFavorite(articleId, viewerId)
@@ -645,7 +645,7 @@ object ArticleRepositoryTestSupport:
   def checkRemoveFavorite(
       slug: ArticleSlug,
       viewerId: Int
-  ): ZIO[ArticlesRepository with UsersRepository, Object, TestResult] =
+  ): ZIO[ArticlesRepository & UsersRepository, Object, TestResult] =
     for {
       articleId <- callFindArticleIdBySlug(slug).someOrFail(s"Article $slug doesn't exist")
       _ <- callRemoveFavorite(articleId, viewerId)

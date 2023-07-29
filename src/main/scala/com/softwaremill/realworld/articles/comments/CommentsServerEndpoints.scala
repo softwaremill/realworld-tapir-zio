@@ -41,5 +41,5 @@ class CommentsServerEndpoints(commentsService: CommentsService, commentsEndpoint
     )
 
 object CommentsServerEndpoints:
-  val live: ZLayer[CommentsService with CommentsEndpoints, Nothing, CommentsServerEndpoints] =
+  val live: ZLayer[CommentsService & CommentsEndpoints, Nothing, CommentsServerEndpoints] =
     ZLayer.fromFunction(new CommentsServerEndpoints(_, _))

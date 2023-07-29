@@ -34,7 +34,7 @@ object TestUtils:
       .thenRunLogic()
       .backend()
 
-  type TestDbLayer = DbConfig with DataSource with DbMigrator with Quill.Sqlite[SnakeCase]
+  type TestDbLayer = DbConfig & DataSource & DbMigrator & Quill.Sqlite[SnakeCase]
 
   def getValidTokenAuthenticationHeader(email: String = exampleUser1.email): RIO[AuthService, Map[String, String]] =
     for {

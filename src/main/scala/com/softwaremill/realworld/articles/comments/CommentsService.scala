@@ -43,5 +43,5 @@ class CommentsService(
 
 object CommentsService:
 
-  val live: ZLayer[CommentsRepository with ArticlesRepository, Nothing, CommentsService] =
+  val live: ZLayer[CommentsRepository & ArticlesRepository, Nothing, CommentsService] =
     ZLayer.fromFunction(CommentsService(_, _))
