@@ -26,7 +26,7 @@ class Endpoints(
 
 object Endpoints:
   val live: ZLayer[
-    ArticlesServerEndpoints with CommentsServerEndpoints with TagsServerEndpoints with UsersServerEndpoints,
+    ArticlesServerEndpoints & CommentsServerEndpoints & TagsServerEndpoints & UsersServerEndpoints,
     Nothing,
     Endpoints
   ] =

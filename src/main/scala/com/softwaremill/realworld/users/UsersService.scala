@@ -168,4 +168,4 @@ object UsersService:
   private def UserWithEmailAlreadyInUseMessage(email: String): String = s"User with email $email already in use"
   private def UserWithUsernameAlreadyInUseMessage(username: String): String = s"User with username $username already in use"
 
-  val live: ZLayer[AuthService with UsersRepository, Nothing, UsersService] = ZLayer.fromFunction(UsersService(_, _))
+  val live: ZLayer[AuthService & UsersRepository, Nothing, UsersService] = ZLayer.fromFunction(UsersService(_, _))

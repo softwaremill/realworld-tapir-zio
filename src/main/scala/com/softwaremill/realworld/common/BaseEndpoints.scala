@@ -52,7 +52,7 @@ class BaseEndpoints(authService: AuthService, usersRepository: UsersRepository):
 object BaseEndpoints:
   private val UserWithEmailNotFoundMessage: String => String = (email: String) => s"User with email $email doesn't exist"
 
-  val live: ZLayer[AuthService with UsersRepository, Nothing, BaseEndpoints] = ZLayer.fromFunction(new BaseEndpoints(_, _))
+  val live: ZLayer[AuthService & UsersRepository, Nothing, BaseEndpoints] = ZLayer.fromFunction(new BaseEndpoints(_, _))
 
   val defaultErrorOutputs: EndpointOutput.OneOf[ErrorInfo, ErrorInfo] = oneOf[ErrorInfo](
     oneOfVariant(statusCode(StatusCode.BadRequest).and(jsonBody[BadRequest])),

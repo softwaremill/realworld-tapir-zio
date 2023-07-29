@@ -21,4 +21,4 @@ class TagsServerEndpoints(tagsEndpoints: TagsEndpoints, tagsService: TagsService
     List(getTagsServerEndpoint)
 
 object TagsServerEndpoints:
-  val live: ZLayer[TagsEndpoints with TagsService, Nothing, TagsServerEndpoints] = ZLayer.fromFunction(new TagsServerEndpoints(_, _))
+  val live: ZLayer[TagsEndpoints & TagsService, Nothing, TagsServerEndpoints] = ZLayer.fromFunction(new TagsServerEndpoints(_, _))

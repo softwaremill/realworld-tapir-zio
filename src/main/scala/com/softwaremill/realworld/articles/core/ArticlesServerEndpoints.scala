@@ -100,5 +100,5 @@ class ArticlesServerEndpoints(articlesEndpoints: ArticlesEndpoints, articlesServ
     )
 
 object ArticlesServerEndpoints:
-  val live: ZLayer[ArticlesEndpoints with ArticlesService, Nothing, ArticlesServerEndpoints] =
+  val live: ZLayer[ArticlesEndpoints & ArticlesService, Nothing, ArticlesServerEndpoints] =
     ZLayer.fromFunction(new ArticlesServerEndpoints(_, _))
