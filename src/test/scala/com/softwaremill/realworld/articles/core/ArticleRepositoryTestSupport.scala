@@ -151,7 +151,7 @@ object ArticleRepositoryTestSupport:
       updatedDescription: String,
       updatedBody: String,
       viewerId: Int
-  ): ZIO[ArticlesRepository with UsersRepository, Object, TestResult] =
+  ): ZIO[ArticlesRepository & UsersRepository, Object, TestResult] =
     assertZIO((for {
       articleId <- callFindArticleIdBySlug(existingSlug).someOrFail(s"Article $existingSlug doesn't exist")
       articleToUpdate = Article(
