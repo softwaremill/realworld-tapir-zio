@@ -1,5 +1,5 @@
 val sbtSoftwareMillVersion = "2.0.12"
-val scalaFmtVersion = "2.5.0"
+val scalaFmtVersion = "2.5.1"
 val sbtRevolverVersion = "0.10.0"
 
 addSbtPlugin("org.scalameta" % "sbt-scalafmt" % scalaFmtVersion)

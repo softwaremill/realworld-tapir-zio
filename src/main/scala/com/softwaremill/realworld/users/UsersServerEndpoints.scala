@@ -82,5 +82,5 @@ class UsersServerEndpoints(usersService: UsersService, userEndpoints: UsersEndpo
   )
 
 object UsersServerEndpoints:
-  val live: ZLayer[UsersService with UsersEndpoints, Nothing, UsersServerEndpoints] =
+  val live: ZLayer[UsersService & UsersEndpoints, Nothing, UsersServerEndpoints] =
     ZLayer.fromFunction(new UsersServerEndpoints(_, _))
