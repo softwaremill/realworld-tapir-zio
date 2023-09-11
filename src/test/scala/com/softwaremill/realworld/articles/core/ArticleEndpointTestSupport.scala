@@ -256,7 +256,8 @@ object ArticleEndpointTestSupport:
             """{"errors":{"body":["Invalid value for: body (
               |expected article.title to have length greater than or equal to 1, but got: \"\",
               | expected article.description to have length greater than or equal to 1, but got: \"\",
-              | expected article.body to have length greater than or equal to 1, but got: \"\")"]}}""".stripMargin.replaceAll("\\r?\\n", ""),
+              | expected article.body to have length greater than or equal to 1, but got: \"\")"]}}""".stripMargin
+              .replaceAll("\\r?\\n", ""),
             sttp.model.StatusCode(422)
           )
         )
