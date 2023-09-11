@@ -50,7 +50,7 @@ object TestUtils:
 
   private def clearDb(cfg: DbConfig): RIO[Any, Unit] = for {
     dbPath <- ZIO.succeed(
-      Paths.get(cfg.jdbcUrl.dropWhile(_ != '/'))
+      Paths.get(cfg.jdbcUrl.replace("jdbc:sqlite:", ""))
     )
     _ <- ZIO.attemptBlocking(
       Files.deleteIfExists(dbPath)
@@ -64,7 +64,8 @@ object TestUtils:
 
   private val createTestDbConfig: ZIO[Any, Nothing, DbConfig] = for {
     uuid <- Random.RandomLive.nextUUID
-  } yield DbConfig(s"jdbc:sqlite:/tmp/realworld-test-$uuid.sqlite")
+    tmpDir <- zio.System.SystemLive.propertyOrElse("java.io.tmpdir", ".").orDie
+  } yield DbConfig(s"jdbc:sqlite:$tmpDir/realworld-test-$uuid.sqlite")
 
   private val testDbConfigLive: ZLayer[Any, Nothing, DbConfig] =
     ZLayer.scoped {
