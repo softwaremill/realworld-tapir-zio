@@ -235,7 +235,7 @@ object ArticleEndpointTestSupport:
               | expected article.description to have length greater than or equal to 1, but got: \"\",
               | expected article.body to have length greater than or equal to 1, but got: \"\",
               | expected article.tagList to pass validation: each element in the tagList is
-              | expected to have a length greater than or equal to 1, but got: List())"]}}""".stripMargin.replaceAll("\\n", ""),
+              | expected to have a length greater than or equal to 1, but got: List())"]}}""".stripMargin.replaceAll("\\r?\\n", ""),
             sttp.model.StatusCode(422)
           )
         )
@@ -256,7 +256,8 @@ object ArticleEndpointTestSupport:
             """{"errors":{"body":["Invalid value for: body (
               |expected article.title to have length greater than or equal to 1, but got: \"\",
               | expected article.description to have length greater than or equal to 1, but got: \"\",
-              | expected article.body to have length greater than or equal to 1, but got: \"\")"]}}""".stripMargin.replaceAll("\\n", ""),
+              | expected article.body to have length greater than or equal to 1, but got: \"\")"]}}""".stripMargin
+              .replaceAll("\\r?\\n", ""),
             sttp.model.StatusCode(422)
           )
         )
