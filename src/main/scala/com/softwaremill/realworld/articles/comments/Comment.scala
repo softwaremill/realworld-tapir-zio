@@ -1,7 +1,7 @@
 package com.softwaremill.realworld.articles.comments
 
 import sttp.tapir.{Schema, SchemaType}
-import zio.json.{DeriveJsonDecoder, DeriveJsonEncoder, JsonCodec, JsonDecoder, JsonEncoder}
+import zio.json.{DeriveJsonDecoder, DeriveJsonEncoder, JsonDecoder, JsonEncoder}
 
 import java.time.Instant
 
