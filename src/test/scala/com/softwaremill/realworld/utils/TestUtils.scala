@@ -20,11 +20,13 @@ import javax.sql.DataSource
 
 object TestUtils:
 
+  given RIOMonadError[Any] = new RIOMonadError[Any]
+
   def zioTapirStubInterpreter: TapirStubInterpreter[[_$1] =>> RIO[Any, _$1], Nothing, ZioHttpServerOptions[Any]] =
     TapirStubInterpreter(
       ZioHttpServerOptions.customiseInterceptors
         .exceptionHandler(new DefectHandler())
-        .decodeFailureHandler(CustomDecodeFailureHandler.create()),
+        .decodeFailureHandler(CustomDecodeFailureHandler.create[RIO[Any, *]]()),
       SttpBackendStub(new RIOMonadError[Any])
     )
 

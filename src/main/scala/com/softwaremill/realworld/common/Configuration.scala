@@ -1,8 +1,9 @@
 package com.softwaremill.realworld.common
 
 import zio.ZLayer
-import zio.config.magnolia.descriptor
-import zio.config.{ReadError, read}
+import zio._
+import zio.config.magnolia._
+import zio.config.typesafe.TypesafeConfigProvider
 
 final case class RootConfig(
     config: AppConfig
@@ -23,5 +24,5 @@ final case class DbConfig(
 object Configuration:
   import zio.config.typesafe.*
 
-  val live: ZLayer[Any, ReadError[String], AppConfig] =
-    ZLayer.fromZIO(read(descriptor[RootConfig].from(TypesafeConfigSource.fromResourcePath)).map(_.config))
+  val live: ZLayer[Any, Config.Error, AppConfig] =
+    ZLayer.fromZIO(TypesafeConfigProvider.fromResourcePath().load(deriveConfig[RootConfig]).map(_.config))

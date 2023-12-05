@@ -3,13 +3,13 @@ val emailValidatorVersion = "1.7"
 val flywayVersion = "10.1.0"
 val hikariVersion = "5.1.0"
 val jwtVersion = "4.4.0"
-val logbackVersion = "1.4.11"
+val logbackVersion = "1.4.14"
 val password4jVersion = "1.7.3"
 val quillVersion = "4.8.0"
 val sqliteVersion = "3.44.1.0"
-val tapirVersion = "1.8.3"
-val zioConfigVersion = "3.0.7"
-val zioJsonVersion = "3.9.1"
+val tapirVersion = "1.9.3"
+val zioConfigVersion = "4.0.0-RC16"
+val sttpZioJsonVersion = "3.9.1"
 val zioLoggingVersion = "2.1.16"
 val zioTestVersion = "2.0.19"
 
@@ -43,7 +43,7 @@ val tests = Seq(
   "ch.qos.logback" % "logback-classic" % logbackVersion,
   "dev.zio" %% "zio-test" % zioTestVersion % Test,
   "dev.zio" %% "zio-test-sbt" % zioTestVersion % Test,
-  "com.softwaremill.sttp.client3" %% "zio-json" % zioJsonVersion % Test
+  "com.softwaremill.sttp.client3" %% "zio-json" % sttpZioJsonVersion % Test
 )
 
 val emailValidator = Seq("commons-validator" % "commons-validator" % emailValidatorVersion)

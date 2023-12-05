@@ -15,6 +15,7 @@ import sttp.tapir.server.interceptor.cors.CORSConfig.AllowedOrigin
 import sttp.tapir.server.interceptor.cors.{CORSConfig, CORSInterceptor}
 import sttp.tapir.server.ziohttp
 import sttp.tapir.server.ziohttp.{ZioHttpInterpreter, ZioHttpServerOptions}
+import sttp.tapir.ztapir.RIOMonadError
 import zio.*
 import zio.http.*
 import zio.logging.LogFormat
@@ -23,6 +24,7 @@ import zio.logging.backend.SLF4J
 object Main extends ZIOAppDefault:
 
   override val bootstrap: ZLayer[ZIOAppArgs, Any, Any] = SLF4J.slf4j(LogFormat.colored)
+  given RIOMonadError[Any] = new RIOMonadError[Any]
 
   override def run: ZIO[Any & ZIOAppArgs & Scope, Any, Any] =
 
@@ -44,7 +46,7 @@ object Main extends ZIOAppDefault:
       _ <- migrator.migrate()
       endpoints <- ZIO.service[Endpoints]
       httpApp = ZioHttpInterpreter(options).toHttp(endpoints.endpoints)
-      actualPort <- Server.install(httpApp.withDefaultErrorResponse)
+      actualPort <- Server.install(httpApp)
       _ <- Console.printLine(s"Application realworld-tapir-zio started")
       _ <- Console.printLine(s"Go to http://localhost:$actualPort/docs to open SwaggerUI")
       _ <- ZIO.never
