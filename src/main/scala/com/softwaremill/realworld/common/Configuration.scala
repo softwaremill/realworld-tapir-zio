@@ -22,8 +22,7 @@ final case class DbConfig(
 )
 
 object Configuration:
-  import zio.config.typesafe.* 
+  import zio.config.typesafe.*
 
   val live: ZLayer[Any, Config.Error, AppConfig] =
     ZLayer.fromZIO(TypesafeConfigProvider.fromResourcePath().load(deriveConfig[RootConfig]).map(_.config))
-
