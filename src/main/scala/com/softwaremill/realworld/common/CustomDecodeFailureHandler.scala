@@ -1,6 +1,8 @@
 package com.softwaremill.realworld.common
 
 import sttp.model.{Header, StatusCode}
+import sttp.monad.MonadError
+import sttp.monad.syntax.*
 import sttp.tapir.generic.auto.*
 import sttp.tapir.json.zio.jsonBody
 import sttp.tapir.server.interceptor.DecodeFailureContext
@@ -12,13 +14,13 @@ import sttp.tapir.{EndpointIO, EndpointInput, headers, statusCode}
 // Spec requires using invalid field name as a key in object returned in response.
 // Tapir gives us only a message, thus custom handler.
 // Problem mentioned in https://github.com/softwaremill/tapir/issues/2729
-class CustomDecodeFailureHandler(
-    defaultHandler: DecodeFailureHandler,
+class CustomDecodeFailureHandler[F[_]](
+    defaultHandler: DecodeFailureHandler[F],
     failureMessage: DecodeFailureContext => String,
     defaultRespond: DecodeFailureContext => Option[(StatusCode, List[Header])]
-) extends DecodeFailureHandler:
+) extends DecodeFailureHandler[F]:
 
-  override def apply(ctx: DecodeFailureContext): Option[ValuedEndpointOutput[_]] = {
+  override def apply(ctx: DecodeFailureContext)(using MonadError[F]): F[Option[ValuedEndpointOutput[_]]] = {
     ctx.failingInput match
       case EndpointInput.Query(name, _, _, _)    => getErrorResponseForField(name, ctx)
       case EndpointInput.PathCapture(name, _, _) => getErrorResponseForField(name.getOrElse("?"), ctx)
@@ -27,8 +29,8 @@ class CustomDecodeFailureHandler(
       case _                                     => defaultHandler(ctx)
   }
 
-  private def getErrorResponseForField(name: String, ctx: DecodeFailureContext): Option[ValuedEndpointOutput[_]] = {
-    defaultRespond(ctx) match
+  private def getErrorResponseForField(name: String, ctx: DecodeFailureContext)(using MonadError[F]): F[Option[ValuedEndpointOutput[_]]] = {
+    val output = defaultRespond(ctx) match
       case Some((_, hs)) =>
         val failureMsg = failureMessage(ctx)
         Some(
@@ -38,13 +40,14 @@ class CustomDecodeFailureHandler(
           )
         )
       case None => None
+    output.unit
   }
 
 object CustomDecodeFailureHandler:
 
-  def create(): DecodeFailureHandler =
-    new CustomDecodeFailureHandler(
-      DefaultDecodeFailureHandler.default,
+  def create[F[_]: MonadError](): DecodeFailureHandler[F] =
+    new CustomDecodeFailureHandler[F](
+      DefaultDecodeFailureHandler[F],
       FailureMessages.failureMessage,
       DefaultDecodeFailureHandler.respond
     )
