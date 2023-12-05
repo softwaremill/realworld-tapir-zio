@@ -11,7 +11,6 @@ import com.softwaremill.realworld.utils.DbData.{exampleArticle2, exampleUser2}
 import com.softwaremill.realworld.utils.TestUtils.*
 import sttp.client3.UriContext
 import zio.ZLayer
-import zio.config.ReadError
 import zio.test.ZIOSpecDefault
 
 object ArticlesEndpointsSpec extends ZIOSpecDefault:
