@@ -3,7 +3,6 @@ package com.softwaremill.realworld.common
 import zio.ZLayer
 import zio._
 import zio.config.magnolia._
-import zio.config.typesafe.TypesafeConfigProvider
 
 final case class RootConfig(
     config: AppConfig
