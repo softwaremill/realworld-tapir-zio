@@ -5,7 +5,6 @@ import com.softwaremill.realworld.common.*
 import com.softwaremill.realworld.common.BaseEndpoints.{UserWithEmailNotFoundMessage, defaultErrorOutputs}
 import com.softwaremill.realworld.users.UsersRepository
 import sttp.model.StatusCode
-import sttp.model.headers.WWWAuthenticateChallenge
 import sttp.tapir.generic.auto.*
 import sttp.tapir.json.zio.jsonBody
 import sttp.tapir.ztapir.*

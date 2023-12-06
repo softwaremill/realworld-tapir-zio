@@ -1,6 +1,5 @@
 package com.softwaremill.realworld.articles.comments
 
-import com.softwaremill.realworld.articles.comments.CommentsService.*
 import com.softwaremill.realworld.articles.core.{ArticleSlug, ArticlesRepository}
 import com.softwaremill.realworld.common.Exceptions
 import com.softwaremill.realworld.common.Exceptions.{BadRequest, NotFound, Unauthorized}
