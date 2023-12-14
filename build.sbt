@@ -11,7 +11,7 @@ val tapirVersion = "1.9.5"
 val zioConfigVersion = "4.0.0-RC16"
 val sttpZioJsonVersion = "3.9.1"
 val zioLoggingVersion = "2.1.16"
-val zioTestVersion = "2.0.19"
+val zioTestVersion = "2.0.20"
 
 val tapir = Seq(
   "com.softwaremill.sttp.tapir" %% "tapir-zio-http-server" % tapirVersion,
