@@ -9,7 +9,7 @@ val quillVersion = "4.8.3"
 val sqliteVersion = "3.45.2.0"
 val tapirVersion = "1.10.0"
 val zioConfigVersion = "4.0.1"
-val sttpZioJsonVersion = "3.9.4"
+val sttpZioJsonVersion = "3.9.5"
 val zioLoggingVersion = "2.2.2"
 val zioTestVersion = "2.0.21"
 
