@@ -28,6 +28,7 @@ object Main extends ZIOAppDefault:
 
   override def run: ZIO[Any & ZIOAppArgs & Scope, Any, Any] =
 
+    val host = sys.env.get("HTTP_HOST").getOrElse("localhost")
     val port = sys.env.get("HTTP_PORT").flatMap(_.toIntOption).getOrElse(8080)
     val options: ZioHttpServerOptions[Any] = ZioHttpServerOptions.customiseInterceptors
       .exceptionHandler(new DefectHandler())
@@ -41,7 +42,7 @@ object Main extends ZIOAppDefault:
       httpApp = ZioHttpInterpreter(options).toHttp(endpoints.endpoints)
       actualPort <- Server.install(httpApp)
       _ <- Console.printLine(s"Application realworld-tapir-zio started")
-      _ <- Console.printLine(s"Go to http://localhost:$actualPort/docs to open SwaggerUI")
+      _ <- Console.printLine(s"Go to http://$host:$actualPort/docs to open SwaggerUI")
       _ <- ZIO.never
     yield ())
       .provide(
@@ -69,6 +70,6 @@ object Main extends ZIOAppDefault:
         TagsServerEndpoints.live,
         TagsService.live,
         TagsRepository.live,
-        Server.defaultWithPort(port)
+        Server.defaultWith(_.binding(host, port))
       )
       .exitCode
