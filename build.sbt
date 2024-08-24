@@ -10,7 +10,7 @@ val sqliteVersion = "3.46.1.0"
 val tapirVersion = "1.11.1"
 val zioConfigVersion = "4.0.2"
 val sttpZioJsonVersion = "3.9.8"
-val zioLoggingVersion = "2.3.0"
+val zioLoggingVersion = "2.3.1"
 val zioTestVersion = "2.1.7"
 
 val tapir = Seq(
