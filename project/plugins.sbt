@@ -1,4 +1,4 @@
-val sbtSoftwareMillVersion = "2.0.20"
+val sbtSoftwareMillVersion = "2.0.21"
 val scalaFmtVersion = "2.5.1"
 val sbtRevolverVersion = "0.10.0"
 
