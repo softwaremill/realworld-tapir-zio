@@ -1,5 +1,5 @@
 val currentScalaVersion = "3.3.3"
-val emailValidatorVersion = "1.9.0"
+val emailValidatorVersion = "1.10.0"
 val flywayVersion = "10.20.0"
 val hikariVersion = "6.0.0"
 val jwtVersion = "4.4.0"
