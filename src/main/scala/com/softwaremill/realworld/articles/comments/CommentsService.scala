@@ -1,7 +1,6 @@
 package com.softwaremill.realworld.articles.comments
 
 import com.softwaremill.realworld.articles.core.{ArticleSlug, ArticlesRepository}
-import com.softwaremill.realworld.common.Exceptions
 import com.softwaremill.realworld.common.Exceptions.{BadRequest, NotFound, Unauthorized}
 import zio.{Task, ZIO, ZLayer}
 

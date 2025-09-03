@@ -10,7 +10,6 @@ import sttp.tapir.{EndpointInput, Validator}
 import zio.ZLayer
 
 import java.time.Instant
-import scala.util.chaining.*
 
 class ArticlesEndpoints(base: BaseEndpoints):
 

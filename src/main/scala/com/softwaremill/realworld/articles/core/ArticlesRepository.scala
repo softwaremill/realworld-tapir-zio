@@ -7,12 +7,11 @@ import com.softwaremill.realworld.common.{Exceptions, Pagination}
 import io.getquill.*
 import io.getquill.jdbczio.*
 import org.sqlite.SQLiteErrorCode.SQLITE_CONSTRAINT_UNIQUE
-import org.sqlite.{SQLiteErrorCode, SQLiteException}
-import zio.{IO, RIO, Task, ZIO, ZLayer}
+import org.sqlite.SQLiteException
+import zio.{IO, RIO, Task, ZLayer}
 
 import java.sql.SQLException
 import java.time.Instant
-import scala.collection.immutable
 import scala.util.chaining.*
 
 case class ArticleFavoriteRow(profileId: Int, articleId: Int)

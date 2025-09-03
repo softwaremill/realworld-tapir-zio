@@ -13,7 +13,6 @@ import com.softwaremill.realworld.users.api.UsersEndpoints
 import com.softwaremill.realworld.users.{UsersRepository, UsersServerEndpoints, UsersService}
 import sttp.tapir.server.interceptor.cors.CORSConfig.AllowedOrigin
 import sttp.tapir.server.interceptor.cors.{CORSConfig, CORSInterceptor}
-import sttp.tapir.server.ziohttp
 import sttp.tapir.server.ziohttp.{ZioHttpInterpreter, ZioHttpServerOptions}
 import sttp.tapir.ztapir.RIOMonadError
 import zio.*
@@ -46,9 +45,9 @@ object Main extends ZIOAppDefault:
       _ <- migrator.migrate()
       endpoints <- ZIO.service[Endpoints]
       httpApp = ZioHttpInterpreter(options).toHttp(endpoints.endpoints)
-      actualPort <- Server.install(httpApp)
+      _ <- Server.serve(httpApp)
       _ <- Console.printLine(s"Application realworld-tapir-zio started")
-      _ <- Console.printLine(s"Go to http://localhost:$actualPort/docs to open SwaggerUI")
+      _ <- Console.printLine(s"Go to http://localhost:$port/docs to open SwaggerUI")
       _ <- ZIO.never
     yield ())
       .provide(
@@ -78,4 +77,4 @@ object Main extends ZIOAppDefault:
         TagsRepository.live,
         Server.defaultWithPort(port)
       )
-      .exitCode
+//      .exitCode

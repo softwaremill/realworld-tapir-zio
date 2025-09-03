@@ -1,7 +1,6 @@
 package com.softwaremill.realworld.articles.comments
 
 import com.softwaremill.realworld.articles.comments.api.*
-import com.softwaremill.realworld.common.*
 import com.softwaremill.realworld.common.ErrorMapper.defaultErrorsMappings
 import sttp.tapir.ztapir.*
 import zio.ZLayer

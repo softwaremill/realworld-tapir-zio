@@ -6,15 +6,14 @@ import com.softwaremill.realworld.articles.core.api.{ArticleResponse, ArticlesEn
 import com.softwaremill.realworld.articles.core.{ArticlesRepository, ArticlesServerEndpoints, ArticlesService}
 import com.softwaremill.realworld.auth.AuthService
 import com.softwaremill.realworld.common.model.auth.*
-import com.softwaremill.realworld.users.UsersEndpointsSpec.test
 import com.softwaremill.realworld.users.api.{UserResponse, UsersEndpoints}
 import com.softwaremill.realworld.users.{UsersRepository, UsersServerEndpoints, UsersService}
 import com.softwaremill.realworld.utils.TestUtils.*
 import sttp.client3.ziojson.*
-import sttp.client3.{HttpError, ResponseException}
+import sttp.client3.HttpError
 import zio.test.Assertion.*
 import zio.test.{Spec, ZIOSpecDefault, assertZIO}
-import zio.{ZIO, ZLayer}
+import zio.ZLayer
 
 object AuthorizationSpec extends ZIOSpecDefault:
 
@@ -217,13 +216,13 @@ object AuthorizationSpec extends ZIOSpecDefault:
 
   override def spec = suite("check authorization")(
     suite("articles endpoints")(
-      articleTestParameters.map(articleEndpointsAuthorizationTest): _*
+      articleTestParameters.map(articleEndpointsAuthorizationTest)*
     ),
     suite("user endpoints")(
-      userTestParameters.map(userEndpointsAuthorizationTest): _*
+      userTestParameters.map(userEndpointsAuthorizationTest)*
     ),
     suite("user endpoints")(
-      commentTestParameters.map(commentEndpointsAuthorizationTest): _*
+      commentTestParameters.map(commentEndpointsAuthorizationTest)*
     )
   ).provide(
     Configuration.live,

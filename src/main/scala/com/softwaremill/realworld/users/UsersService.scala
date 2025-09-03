@@ -1,7 +1,6 @@
 package com.softwaremill.realworld.users
 
 import com.softwaremill.realworld.auth.AuthService
-import com.softwaremill.realworld.common.Exceptions
 import com.softwaremill.realworld.common.Exceptions.{AlreadyInUse, BadRequest, NotFound, Unauthorized}
 import com.softwaremill.realworld.common.domain.Username
 import com.softwaremill.realworld.users.UsersService.*
