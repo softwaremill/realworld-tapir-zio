@@ -1,0 +1,20 @@
+<configuration>
+
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>[%highlight(%-5level)] %d - logger: %logger - thread: %cyan(%thread) - message: %msg %n</pattern>
+        </encoder>
+    </appender>
+
+    <appender name="ASYNC-CONSOLE" class="ch.qos.logback.classic.AsyncAppender">
+        <appender-ref ref="STDOUT"/>
+    </appender>
+
+    <!-- uncomment and set to DEBUG to log all failing HTTP requests -->
+    <!-- uncomment and set to TRACE to log all HTTP requests -->
+    <logger name="io.gatling.http.engine.response" level="DEBUG" />
+
+    <root level="INFO">
+        <appender-ref ref="ASYNC-CONSOLE"/>
+    </root>
+</configuration>
