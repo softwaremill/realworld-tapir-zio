@@ -71,3 +71,25 @@ lazy val rootProject = (project in file(".")).settings(
     testFrameworks := Seq(new TestFramework("zio.test.sbt.ZTestFramework"))
   )
 )
+
+lazy val simulation = (project in file("simulation"))
+  .enablePlugins(GatlingPlugin)
+  .settings(inConfig(Gatling)(Defaults.testSettings))
+  .settings(
+    Seq(
+      name := "realworld-tapir-zio-simulation",
+      version := "0.1.0-SNAPSHOT",
+      organization := "com.softwaremill",
+      scalaVersion := currentScalaVersion,
+      Test / fork := true,
+      scalacOptions ++= Seq(
+        "-Xmax-inlines",
+        "64"
+      ),
+      libraryDependencies ++= Seq(
+        "io.gatling.highcharts" % "gatling-charts-highcharts" % "3.14.3",
+        "io.gatling"            % "gatling-test-framework"    % "3.14.3",
+        "net.datafaker"         % "datafaker"                 % "2.4.4"
+      )
+    )
+  )
