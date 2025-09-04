@@ -12,6 +12,7 @@ val zioConfigVersion = "4.0.4"
 val sttpZioJsonVersion = "3.11.0"
 val zioLoggingVersion = "2.5.1"
 val zioTestVersion = "2.1.20"
+val zioMetrics = "2.5.0"
 
 val tapir = Seq(
   "com.softwaremill.sttp.tapir" %% "tapir-zio-http-server" % tapirVersion,
@@ -46,6 +47,12 @@ val tests = Seq(
   "com.softwaremill.sttp.client3" %% "zio-json" % sttpZioJsonVersion % Test
 )
 
+val monitoring = Seq(
+  "dev.zio"                     %% "zio-metrics-connectors"            % zioMetrics,
+  "dev.zio"                     %% "zio-metrics-connectors-prometheus" % zioMetrics,
+  "com.softwaremill.sttp.tapir" %% "tapir-zio-metrics"                 % tapirVersion
+)
+
 val emailValidator = Seq("commons-validator" % "commons-validator" % emailValidatorVersion)
 
 lazy val rootProject = (project in file(".")).settings(
@@ -60,7 +67,7 @@ lazy val rootProject = (project in file(".")).settings(
       "-Xmax-inlines",
       "64"
     ),
-    libraryDependencies ++= tapir ++ config ++ security ++ db ++ tests ++ emailValidator,
+    libraryDependencies ++= tapir ++ config ++ security ++ db ++ tests ++ emailValidator ++ monitoring,
     testFrameworks := Seq(new TestFramework("zio.test.sbt.ZTestFramework"))
   )
 )
