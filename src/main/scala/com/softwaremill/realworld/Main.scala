@@ -54,9 +54,9 @@ object Main extends ZIOAppDefault:
       _ <- migrator.migrate()
       endpoints <- ZIO.service[Endpoints]
       httpApp = ZioHttpInterpreter(options).toHttp(endpoints.endpoints)
-      _ <- Server.serve(httpApp ++ PrometheusPublisherApp())
+      actualPort <- Server.install(httpApp ++ PrometheusPublisherApp())
       _ <- Console.printLine(s"Application realworld-tapir-zio started")
-      _ <- Console.printLine(s"Go to http://localhost:$port/docs to open SwaggerUI")
+      _ <- Console.printLine(s"Go to http://localhost:$actualPort/docs to open SwaggerUI")
       _ <- ZIO.never
     yield ())
       .provide(
