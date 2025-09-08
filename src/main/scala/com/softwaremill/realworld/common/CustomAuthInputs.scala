@@ -10,12 +10,12 @@ import sttp.tapir.{Codec, CodecFormat, DecodeResult, EndpointInput, Mapping, Sch
   */
 object CustomAuthInputs {
 
-  type StringListCodec[T] = Codec[List[String], T, CodecFormat.TextPlain]
+  private type StringListCodec[T] = Codec[List[String], T, CodecFormat.TextPlain]
 
   def authBearerOrTokenHeaders[T: StringListCodec]: EndpointInput.Auth[T, EndpointInput.AuthType.Http] = {
     val codec = implicitly[StringListCodec[T]]
 
-    def filterBearerAndTokenHeaders[T: StringListCodec](headers: List[String]) =
+    def filterBearerAndTokenHeaders(headers: List[String]) =
       headers.filter(x => x.startsWith("Token") || x.startsWith("Bearer"))
 
     val authCodec = Codec
@@ -26,7 +26,7 @@ object CustomAuthInputs {
       .schema(codec.schema)
 
     EndpointInput.Auth(
-      header[T](HeaderNames.Authorization)(authCodec),
+      header[T](HeaderNames.Authorization)(using authCodec),
       WWWAuthenticateChallenge.bearer,
       EndpointInput.AuthType.Http("Bearer"),
       EndpointInput.AuthInfo.Empty

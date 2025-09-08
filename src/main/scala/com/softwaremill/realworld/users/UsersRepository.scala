@@ -7,7 +7,7 @@ import io.getquill.*
 import io.getquill.jdbczio.*
 import org.sqlite.SQLiteErrorCode.SQLITE_CONSTRAINT_UNIQUE
 import org.sqlite.SQLiteException
-import zio.{IO, RIO, Task, ZIO, ZLayer}
+import zio.{IO, RIO, Task, ZLayer}
 
 import java.sql.SQLException
 import scala.util.chaining.*

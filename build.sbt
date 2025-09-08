@@ -1,17 +1,18 @@
-val currentScalaVersion = "3.3.3"
-val emailValidatorVersion = "1.9.0"
-val flywayVersion = "10.20.0"
-val hikariVersion = "6.0.0"
-val jwtVersion = "4.4.0"
-val logbackVersion = "1.5.11"
-val password4jVersion = "1.8.2"
-val quillVersion = "4.8.5"
-val sqliteVersion = "3.46.1.3"
-val tapirVersion = "1.11.7"
-val zioConfigVersion = "4.0.2"
-val sttpZioJsonVersion = "3.10.1"
-val zioLoggingVersion = "2.3.1"
-val zioTestVersion = "2.1.11"
+val currentScalaVersion = "3.7.2"
+val emailValidatorVersion = "1.10.0"
+val flywayVersion = "11.11.2"
+val hikariVersion = "7.0.2"
+val jwtVersion = "4.5.0"
+val logbackVersion = "1.5.18"
+val password4jVersion = "1.8.4"
+val quillVersion = "4.8.6"
+val sqliteVersion = "3.50.3.0"
+val tapirVersion = "1.11.43"
+val zioConfigVersion = "4.0.4"
+val sttpZioJsonVersion = "3.11.0"
+val zioLoggingVersion = "2.5.1"
+val zioTestVersion = "2.1.20"
+val zioMetrics = "2.5.0"
 
 val tapir = Seq(
   "com.softwaremill.sttp.tapir" %% "tapir-zio-http-server" % tapirVersion,
@@ -46,6 +47,12 @@ val tests = Seq(
   "com.softwaremill.sttp.client3" %% "zio-json" % sttpZioJsonVersion % Test
 )
 
+val monitoring = Seq(
+  "dev.zio"                     %% "zio-metrics-connectors"            % zioMetrics,
+  "dev.zio"                     %% "zio-metrics-connectors-prometheus" % zioMetrics,
+  "com.softwaremill.sttp.tapir" %% "tapir-zio-metrics"                 % tapirVersion
+)
+
 val emailValidator = Seq("commons-validator" % "commons-validator" % emailValidatorVersion)
 
 lazy val rootProject = (project in file(".")).settings(
@@ -54,12 +61,35 @@ lazy val rootProject = (project in file(".")).settings(
     version := "0.1.0-SNAPSHOT",
     organization := "com.softwaremill",
     scalaVersion := currentScalaVersion,
+    run / fork := true,
     Test / fork := true,
     scalacOptions ++= Seq(
       "-Xmax-inlines",
       "64"
     ),
-    libraryDependencies ++= tapir ++ config ++ security ++ db ++ tests ++ emailValidator,
+    libraryDependencies ++= tapir ++ config ++ security ++ db ++ tests ++ emailValidator ++ monitoring,
     testFrameworks := Seq(new TestFramework("zio.test.sbt.ZTestFramework"))
   )
 )
+
+lazy val simulation = (project in file("simulation"))
+  .enablePlugins(GatlingPlugin)
+  .settings(inConfig(Gatling)(Defaults.testSettings))
+  .settings(
+    Seq(
+      name := "realworld-tapir-zio-simulation",
+      version := "0.1.0-SNAPSHOT",
+      organization := "com.softwaremill",
+      scalaVersion := currentScalaVersion,
+      Test / fork := true,
+      scalacOptions ++= Seq(
+        "-Xmax-inlines",
+        "64"
+      ),
+      libraryDependencies ++= Seq(
+        "io.gatling.highcharts" % "gatling-charts-highcharts" % "3.14.3",
+        "io.gatling"            % "gatling-test-framework"    % "3.14.3",
+        "net.datafaker"         % "datafaker"                 % "2.4.4"
+      )
+    )
+  )

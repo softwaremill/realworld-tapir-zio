@@ -20,7 +20,7 @@ class CustomDecodeFailureHandler[F[_]](
     defaultRespond: DecodeFailureContext => Option[(StatusCode, List[Header])]
 ) extends DecodeFailureHandler[F]:
 
-  override def apply(ctx: DecodeFailureContext)(using MonadError[F]): F[Option[ValuedEndpointOutput[_]]] = {
+  override def apply(ctx: DecodeFailureContext)(using MonadError[F]): F[Option[ValuedEndpointOutput[?]]] = {
     ctx.failingInput match
       case EndpointInput.Query(name, _, _, _)    => getErrorResponseForField(name, ctx)
       case EndpointInput.PathCapture(name, _, _) => getErrorResponseForField(name.getOrElse("?"), ctx)
@@ -29,7 +29,7 @@ class CustomDecodeFailureHandler[F[_]](
       case _                                     => defaultHandler(ctx)
   }
 
-  private def getErrorResponseForField(name: String, ctx: DecodeFailureContext)(using MonadError[F]): F[Option[ValuedEndpointOutput[_]]] = {
+  private def getErrorResponseForField(name: String, ctx: DecodeFailureContext)(using MonadError[F]): F[Option[ValuedEndpointOutput[?]]] = {
     val output = defaultRespond(ctx) match
       case Some((_, hs)) =>
         val failureMsg = failureMessage(ctx)
@@ -45,7 +45,7 @@ class CustomDecodeFailureHandler[F[_]](
 
 object CustomDecodeFailureHandler:
 
-  def create[F[_]: MonadError](): DecodeFailureHandler[F] =
+  def create[F[_]](): DecodeFailureHandler[F] =
     new CustomDecodeFailureHandler[F](
       DefaultDecodeFailureHandler[F],
       FailureMessages.failureMessage,

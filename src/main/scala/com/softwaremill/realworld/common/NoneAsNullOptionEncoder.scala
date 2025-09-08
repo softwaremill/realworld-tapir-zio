@@ -7,7 +7,7 @@ import zio.json.internal.Write
 trait NoneAsNullOptionEncoder {
 
   implicit def optionEnc[A](implicit jea: JsonEncoder[A]): zio.json.JsonEncoder[Option[A]] = {
-    val delegate = JsonEncoder.option(jea)
+    val delegate = JsonEncoder.option(using jea)
     new JsonEncoder[Option[A]] {
       override def isNothing(a: Option[A]): Boolean = a match {
         case None    => false

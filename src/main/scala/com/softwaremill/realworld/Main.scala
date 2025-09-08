@@ -9,27 +9,35 @@ import com.softwaremill.realworld.articles.tags.{TagsRepository, TagsServerEndpo
 import com.softwaremill.realworld.auth.AuthService
 import com.softwaremill.realworld.common.*
 import com.softwaremill.realworld.db.{Db, DbConfig, DbMigrator}
+import com.softwaremill.realworld.monitoring.PrometheusPublisherApp
 import com.softwaremill.realworld.users.api.UsersEndpoints
 import com.softwaremill.realworld.users.{UsersRepository, UsersServerEndpoints, UsersService}
 import sttp.tapir.server.interceptor.cors.CORSConfig.AllowedOrigin
 import sttp.tapir.server.interceptor.cors.{CORSConfig, CORSInterceptor}
-import sttp.tapir.server.ziohttp
+import sttp.tapir.server.metrics.zio.ZioMetrics
 import sttp.tapir.server.ziohttp.{ZioHttpInterpreter, ZioHttpServerOptions}
 import sttp.tapir.ztapir.RIOMonadError
 import zio.*
 import zio.http.*
 import zio.logging.LogFormat
 import zio.logging.backend.SLF4J
+import zio.metrics.connectors.{MetricsConfig, prometheus}
+import zio.metrics.connectors.prometheus.PrometheusPublisher
 
 object Main extends ZIOAppDefault:
 
   override val bootstrap: ZLayer[ZIOAppArgs, Any, Any] = SLF4J.slf4j(LogFormat.colored)
   given RIOMonadError[Any] = new RIOMonadError[Any]
 
+  private val metricsConfig = ZLayer.succeed(MetricsConfig(5.seconds))
+
+  private val zioMetrics: ZioMetrics[Task] = ZioMetrics.default[Task]()
+
   override def run: ZIO[Any & ZIOAppArgs & Scope, Any, Any] =
 
     val port = sys.env.get("HTTP_PORT").flatMap(_.toIntOption).getOrElse(8080)
     val options: ZioHttpServerOptions[Any] = ZioHttpServerOptions.customiseInterceptors
+      .addInterceptor(zioMetrics.metricsInterceptor())
       .exceptionHandler(new DefectHandler())
       .corsInterceptor(
         CORSInterceptor.customOrThrow(
@@ -46,7 +54,7 @@ object Main extends ZIOAppDefault:
       _ <- migrator.migrate()
       endpoints <- ZIO.service[Endpoints]
       httpApp = ZioHttpInterpreter(options).toHttp(endpoints.endpoints)
-      actualPort <- Server.install(httpApp)
+      actualPort <- Server.install(httpApp ++ PrometheusPublisherApp())
       _ <- Console.printLine(s"Application realworld-tapir-zio started")
       _ <- Console.printLine(s"Go to http://localhost:$actualPort/docs to open SwaggerUI")
       _ <- ZIO.never
@@ -76,6 +84,15 @@ object Main extends ZIOAppDefault:
         TagsServerEndpoints.live,
         TagsService.live,
         TagsRepository.live,
-        Server.defaultWithPort(port)
+        Server.defaultWithPort(port),
+
+        // general config for all metric backend
+        metricsConfig,
+
+        // The prometheus reporting layer
+        prometheus.publisherLayer,
+        prometheus.prometheusLayer,
+
+        // zio runtime metrics
+        Runtime.enableFlags(RuntimeFlag.all.toList*)
       )
-      .exitCode

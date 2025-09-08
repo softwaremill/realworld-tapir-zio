@@ -10,7 +10,6 @@ import sttp.tapir.ztapir.*
 import zio.ZLayer
 
 import java.time.Instant
-import scala.util.chaining.*
 
 class CommentsEndpoints(base: BaseEndpoints):
 

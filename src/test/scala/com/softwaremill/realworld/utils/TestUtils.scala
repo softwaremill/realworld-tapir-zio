@@ -22,11 +22,11 @@ object TestUtils:
 
   given RIOMonadError[Any] = new RIOMonadError[Any]
 
-  def zioTapirStubInterpreter: TapirStubInterpreter[[_$1] =>> RIO[Any, _$1], Nothing, ZioHttpServerOptions[Any]] =
+  def zioTapirStubInterpreter: TapirStubInterpreter[[A] =>> RIO[Any, A], Nothing, ZioHttpServerOptions[Any]] =
     TapirStubInterpreter(
       ZioHttpServerOptions.customiseInterceptors
         .exceptionHandler(new DefectHandler())
-        .decodeFailureHandler(CustomDecodeFailureHandler.create[RIO[Any, *]]()),
+        .decodeFailureHandler(CustomDecodeFailureHandler.create[[A] =>> RIO[Any, A]]()),
       SttpBackendStub(new RIOMonadError[Any])
     )
 

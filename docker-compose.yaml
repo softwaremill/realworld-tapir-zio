@@ -1,0 +1,27 @@
+services:
+  prometheus:
+    image: prom/prometheus:v3.5.0
+    volumes:
+      - ./src/main/resources/monitoring/prometheus/prometheus.yaml:/etc/prometheus/prometheus.yml
+      - prometheus-data:/prometheus
+    ports:
+      - "9090:9090"
+
+  grafana:
+    image: grafana/grafana-oss:12.1.1
+    volumes:
+      - grafana-storage:/var/lib/grafana
+      - ./src/main/resources/monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards
+      - ./src/main/resources/monitoring/grafana/datasources:/etc/grafana/provisioning/datasources
+    depends_on:
+      - prometheus
+    environment:
+      - GF_AUTH_DISABLE_LOGIN_FORM=true
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+    ports:
+      - "3000:3000"
+
+volumes:
+  prometheus-data:
+  grafana-storage:

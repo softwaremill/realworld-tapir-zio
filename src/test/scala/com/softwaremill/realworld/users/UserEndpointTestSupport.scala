@@ -317,7 +317,7 @@ object UserEndpointTestSupport:
       uri: Uri
   ): ZIO[UsersServerEndpoints, Throwable, TestResult] =
     assertZIO(callGetProfile(authorizationHeaderOpt, uri))(
-      isLeft(isSubtype[HttpError[_]](hasField("statusCode", _.statusCode, equalTo(StatusCode.Unauthorized))))
+      isLeft(isSubtype[HttpError[?]](hasField("statusCode", _.statusCode, equalTo(StatusCode.Unauthorized))))
     )
 
   def checkIfUnauthorizedErrorOccurInFollow(
@@ -325,7 +325,7 @@ object UserEndpointTestSupport:
       uri: Uri
   ): ZIO[UsersServerEndpoints, Throwable, TestResult] =
     assertZIO(callFollowUser(authorizationHeaderOpt, uri))(
-      isLeft(isSubtype[HttpError[_]](hasField("statusCode", _.statusCode, equalTo(StatusCode.Unauthorized))))
+      isLeft(isSubtype[HttpError[?]](hasField("statusCode", _.statusCode, equalTo(StatusCode.Unauthorized))))
     )
 
   def checkIfUnauthorizedErrorOccurInUnfollow(
@@ -333,7 +333,7 @@ object UserEndpointTestSupport:
       uri: Uri
   ): ZIO[UsersServerEndpoints, Throwable, TestResult] =
     assertZIO(callUnfollowUser(authorizationHeaderOpt, uri))(
-      isLeft(isSubtype[HttpError[_]](hasField("statusCode", _.statusCode, equalTo(StatusCode.Unauthorized))))
+      isLeft(isSubtype[HttpError[?]](hasField("statusCode", _.statusCode, equalTo(StatusCode.Unauthorized))))
     )
 
   def checkIfUserNotChangeInUpdate(

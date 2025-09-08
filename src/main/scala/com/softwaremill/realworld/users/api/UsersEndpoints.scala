@@ -9,8 +9,6 @@ import sttp.tapir.json.zio.jsonBody
 import sttp.tapir.ztapir.*
 import zio.ZLayer
 
-import scala.util.chaining.*
-
 class UsersEndpoints(base: BaseEndpoints):
 
   val registerEndpoint: Endpoint[Unit, UserRegisterRequest, ErrorInfo, UserResponse, Any] = base.publicEndpoint.post

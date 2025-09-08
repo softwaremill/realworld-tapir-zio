@@ -140,3 +140,31 @@ sbt run # run the application (Main)
 
 Swagger documentation by default is available at URL:
 http://localhost:8080/docs
+
+# Monitoring
+
+The service will expose metrics at `/metrics` endpoint that will be consumed by [prometheus](https://prometheus.io/).
+
+For monitoring the app, [grafana](https://grafana.com/) and [prometheus](https://prometheus.io/) can be started with 
+docker compose just with the following command.
+
+```shell
+docker compose up -d
+```
+
+Once both services are up, they can be accessed from the browser
+
+| Service    | URL                   |
+|------------|-----------------------|
+| Grafana    | http://localhost:3000 |
+| Prometheus | http://localhost:9090 |
+
+# Simulate requests
+
+Http requests can be simulated using [gatling](https://gatling.io/) running the following command
+
+```shell
+sbt simulation/Gatling/test
+```
+
+At the end of the execution, a report is generated and placed at `./simulation/target/gatling/`.
