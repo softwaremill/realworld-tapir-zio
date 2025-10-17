@@ -11,7 +11,7 @@ val tapirVersion = "1.11.43"
 val zioConfigVersion = "4.0.4"
 val sttpZioJsonVersion = "3.11.0"
 val zioLoggingVersion = "2.5.1"
-val zioTestVersion = "2.1.20"
+val zioTestVersion = "2.1.22"
 val zioMetrics = "2.5.0"
 
 val tapir = Seq(
@@ -48,9 +48,9 @@ val tests = Seq(
 )
 
 val monitoring = Seq(
-  "dev.zio"                     %% "zio-metrics-connectors"            % zioMetrics,
-  "dev.zio"                     %% "zio-metrics-connectors-prometheus" % zioMetrics,
-  "com.softwaremill.sttp.tapir" %% "tapir-zio-metrics"                 % tapirVersion
+  "dev.zio" %% "zio-metrics-connectors" % zioMetrics,
+  "dev.zio" %% "zio-metrics-connectors-prometheus" % zioMetrics,
+  "com.softwaremill.sttp.tapir" %% "tapir-zio-metrics" % tapirVersion
 )
 
 val emailValidator = Seq("commons-validator" % "commons-validator" % emailValidatorVersion)
@@ -88,8 +88,8 @@ lazy val simulation = (project in file("simulation"))
       ),
       libraryDependencies ++= Seq(
         "io.gatling.highcharts" % "gatling-charts-highcharts" % "3.14.3",
-        "io.gatling"            % "gatling-test-framework"    % "3.14.3",
-        "net.datafaker"         % "datafaker"                 % "2.4.4"
+        "io.gatling" % "gatling-test-framework" % "3.14.3",
+        "net.datafaker" % "datafaker" % "2.4.4"
       )
     )
   )
