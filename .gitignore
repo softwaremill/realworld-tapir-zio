@@ -16,11 +16,7 @@
 
 
 # IDE - VSCode
-.vscode/*
-!.vscode/settings.json
-!.vscode/tasks.json
-!.vscode/launch.json
-!.vscode/extensions.json
+.vscode
 .history/*
 
 
@@ -45,3 +41,5 @@ project/project
 *.sqlite
 /http_requests/http-client.private.env.json
 /postman_collections/Conduit.postman_collection.json
+
+.cursor
