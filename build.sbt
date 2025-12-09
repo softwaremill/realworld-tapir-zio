@@ -1,6 +1,6 @@
 val currentScalaVersion = "3.7.2"
 val emailValidatorVersion = "1.10.0"
-val flywayVersion = "11.11.2"
+val flywayVersion = "11.19.0"
 val hikariVersion = "7.0.2"
 val jwtVersion = "4.5.0"
 val logbackVersion = "1.5.18"
@@ -48,9 +48,9 @@ val tests = Seq(
 )
 
 val monitoring = Seq(
-  "dev.zio"                     %% "zio-metrics-connectors"            % zioMetrics,
-  "dev.zio"                     %% "zio-metrics-connectors-prometheus" % zioMetrics,
-  "com.softwaremill.sttp.tapir" %% "tapir-zio-metrics"                 % tapirVersion
+  "dev.zio" %% "zio-metrics-connectors" % zioMetrics,
+  "dev.zio" %% "zio-metrics-connectors-prometheus" % zioMetrics,
+  "com.softwaremill.sttp.tapir" %% "tapir-zio-metrics" % tapirVersion
 )
 
 val emailValidator = Seq("commons-validator" % "commons-validator" % emailValidatorVersion)
@@ -88,8 +88,8 @@ lazy val simulation = (project in file("simulation"))
       ),
       libraryDependencies ++= Seq(
         "io.gatling.highcharts" % "gatling-charts-highcharts" % "3.14.3",
-        "io.gatling"            % "gatling-test-framework"    % "3.14.3",
-        "net.datafaker"         % "datafaker"                 % "2.4.4"
+        "io.gatling" % "gatling-test-framework" % "3.14.3",
+        "net.datafaker" % "datafaker" % "2.4.4"
       )
     )
   )
