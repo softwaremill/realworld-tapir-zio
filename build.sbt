@@ -48,48 +48,38 @@ val tests = Seq(
 )
 
 val monitoring = Seq(
-  "dev.zio"                     %% "zio-metrics-connectors"            % zioMetrics,
-  "dev.zio"                     %% "zio-metrics-connectors-prometheus" % zioMetrics,
-  "com.softwaremill.sttp.tapir" %% "tapir-zio-metrics"                 % tapirVersion
+  "dev.zio" %% "zio-metrics-connectors" % zioMetrics,
+  "dev.zio" %% "zio-metrics-connectors-prometheus" % zioMetrics,
+  "com.softwaremill.sttp.tapir" %% "tapir-zio-metrics" % tapirVersion
 )
 
 val emailValidator = Seq("commons-validator" % "commons-validator" % emailValidatorVersion)
 
-lazy val rootProject = (project in file(".")).settings(
-  Seq(
+version := "0.1.0-SNAPSHOT"
+organization := "com.softwaremill"
+scalaVersion := currentScalaVersion
+Test / fork := true
+scalacOptions ++= Seq(
+  "-Xmax-inlines",
+  "64"
+)
+
+lazy val root = rootProject
+  .settings(
     name := "realworld-tapir-zio",
-    version := "0.1.0-SNAPSHOT",
-    organization := "com.softwaremill",
-    scalaVersion := currentScalaVersion,
     run / fork := true,
-    Test / fork := true,
-    scalacOptions ++= Seq(
-      "-Xmax-inlines",
-      "64"
-    ),
     libraryDependencies ++= tapir ++ config ++ security ++ db ++ tests ++ emailValidator ++ monitoring,
     testFrameworks := Seq(new TestFramework("zio.test.sbt.ZTestFramework"))
   )
-)
 
 lazy val simulation = (project in file("simulation"))
   .enablePlugins(GatlingPlugin)
   .settings(inConfig(Gatling)(Defaults.testSettings))
   .settings(
-    Seq(
-      name := "realworld-tapir-zio-simulation",
-      version := "0.1.0-SNAPSHOT",
-      organization := "com.softwaremill",
-      scalaVersion := currentScalaVersion,
-      Test / fork := true,
-      scalacOptions ++= Seq(
-        "-Xmax-inlines",
-        "64"
-      ),
-      libraryDependencies ++= Seq(
-        "io.gatling.highcharts" % "gatling-charts-highcharts" % "3.14.3",
-        "io.gatling"            % "gatling-test-framework"    % "3.14.3",
-        "net.datafaker"         % "datafaker"                 % "2.4.4"
-      )
+    name := "realworld-tapir-zio-simulation",
+    libraryDependencies ++= Seq(
+      "io.gatling.highcharts" % "gatling-charts-highcharts" % "3.14.3",
+      "io.gatling" % "gatling-test-framework" % "3.14.3",
+      "net.datafaker" % "datafaker" % "2.4.4"
     )
   )
