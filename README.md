@@ -23,7 +23,6 @@ This application uses:
 * HikariCP to manage the database connection pool
 * Flyway for database migrations
 * Swagger to expose API documentation
-* sbt-revolver for hot reloading when code changes while the app is running 
 
 Additionally, executing Realworld Postman collection is part of CI acceptance tests.
 
@@ -167,4 +166,4 @@ Http requests can be simulated using [gatling](https://gatling.io/) running the 
 sbt simulation/Gatling/test
 ```
 
-At the end of the execution, a report is generated and placed at `./simulation/target/gatling/`.
+At the end of the execution, a report is generated and placed at `./target/out/jvm/scala-<scala version>/realworld-tapir-zio-simulation/gatling/`.
