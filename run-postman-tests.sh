@@ -5,7 +5,7 @@ if [ ! -f ./postman_collections/Conduit.postman_collection.json ]
 then
   echo "Downloading Postman collection tests from upstream realworld project repository"
   mkdir -p ./postman_collections
-  wget -q -O ./postman_collections/Conduit.postman_collection.json https://raw.githubusercontent.com/gothinkster/realworld/main/api/Conduit.postman_collection.json
+  wget -q -O ./postman_collections/Conduit.postman_collection.json https://raw.githubusercontent.com/gothinkster/realworld/065e87e8c7401d56b2f8b7548f5aee1c61c63a63/api/Conduit.postman_collection.json || exit 1
 else
   echo "Postman collection with tests found. Will use it."
 fi
