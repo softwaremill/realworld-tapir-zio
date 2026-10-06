@@ -86,8 +86,8 @@ class UsersRepository(quill: Quill.Sqlite[SnakeCase]):
         setOpt[UserRow, String](_.email, updateData.email),
         setOpt[UserRow, String](_.username, updateData.username),
         setOpt[UserRow, String](_.password, updateData.password),
-        setOpt[UserRow, String](_.bio.orNull, updateData.bio),
-        setOpt[UserRow, String](_.image.orNull, updateData.image)
+        setOpt[UserRow, Option[String]](_.bio, updateData.bio.map(Some(_))),
+        setOpt[UserRow, Option[String]](_.image, updateData.image.map(Some(_)))
       )
 
     val read = quote(
