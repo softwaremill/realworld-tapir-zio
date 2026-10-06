@@ -11,7 +11,7 @@ val tapirVersion = "1.11.43"
 val zioConfigVersion = "4.0.4"
 val sttpZioJsonVersion = "3.11.0"
 val zioLoggingVersion = "2.5.1"
-val zioTestVersion = "2.1.20"
+val zioTestVersion = "2.1.26"
 val zioMetrics = "2.5.0"
 
 val tapir = Seq(
