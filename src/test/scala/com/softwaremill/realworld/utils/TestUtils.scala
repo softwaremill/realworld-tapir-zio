@@ -30,7 +30,7 @@ object TestUtils:
       SttpBackendStub(new RIOMonadError[Any])
     )
 
-  def backendStub(endpoint: ZServerEndpoint[Any, Any]): SttpBackend[[_$1] =>> RIO[Any, _$1], Nothing] =
+  def backendStub(endpoint: ZServerEndpoint[Any, Any]): SttpBackend[[A] =>> RIO[Any, A], Nothing] =
     zioTapirStubInterpreter
       .whenServerEndpoint(endpoint)
       .thenRunLogic()
